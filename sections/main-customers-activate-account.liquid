@@ -1,0 +1,43 @@
+<div class="color-scheme color-scheme--{{ settings.default_color_scheme.id }}">
+  <div class="container">
+    <div class="empty-state">
+      <div class="v-stack justify-items-center gap-8 sm:gap-10">
+        <div class="prose prose-justify-center">
+          <h1 class="h3">{{ 'customer.activate_account.title' | t }}</h1>
+          <p>{{ 'customer.activate_account.instructions' | t }}</p>
+        </div>
+
+        {%- form 'activate_customer_password', name: 'activate', class: 'form w-full max-w-xs', id: 'activate-customer-password' -%}
+          <div class="fieldset">
+            {% liquid
+              if form.errors
+                assign content = form.errors | default_errors
+                render 'banner', status: 'error', content: content
+              endif
+
+              assign password_label = 'customer.activate_account.password' | t
+              render 'input', type: 'password', name: 'customer[password]', label: password_label, autocomplete: 'new-password'
+
+              assign password_label_confirmation = 'customer.activate_account.password_confirmation' | t
+              render 'input', type: 'password', name: 'customer[password_confirmation]', label: password_label_confirmation, autocomplete: 'new-password'
+
+              assign submit_label = 'customer.activate_account.submit' | t
+              render 'button', content: submit_label, type: 'submit'
+
+              assign cancel_label = 'customer.activate_account.cancel' | t
+              render 'button', content: cancel_label, name: 'decline', type: 'submit', style: 'outline'
+            %}
+          </div>
+        {%- endform -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.main_customers_activate_account.name",
+  "class": "shopify-section--main-customers-activate-account",
+  "tag": "section"
+}
+{% endschema %}

@@ -1,0 +1,216 @@
+{%- liquid
+  assign use_color_scheme = true
+
+  if section.settings.background != blank or section.settings.text_color != blank
+    assign use_color_scheme = false
+  endif
+-%}
+
+{%- if section.settings.allow_transparent_header and section.settings.transparent_header_use_primary_colors -%}
+  <style>
+    {%- comment -%}
+    When this setting is enabled, we use the transparent header, but we force the header to use the primary colors and primary logo.
+    {%- endcomment -%}
+
+    .header {
+      --header-show-transparent-logo: 0 !important;
+      --header-transparent-header-text-color: initial;
+    }
+  </style>
+{%- endif -%}
+
+<div {% if use_color_scheme %}class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}"{% else %}style="{% render 'surface', background: section.settings.background, text_color: section.settings.text_color %}"{% endif %} {% if section.settings.allow_transparent_header %}allow-transparent-header{% endif %}>
+  {%- capture article_meta -%}
+    {%- if section.settings.show_category and article.tags.size > 0 -%}
+      <a href="{{ blog.url }}/tagged/{{ article.tags.first | handle }}">{{ article.tags | first }}</a>
+    {%- endif -%}
+
+    {%- if section.settings.show_date -%}
+      <span>{{ article.published_at | date: format: 'abbreviated_date' }}</span>
+    {%- endif -%}
+
+    {%- if section.settings.show_reading_time -%}
+      {%- assign reading_time = article.content | strip_html | split: ' ' | size | times: 1.0 | divided_by: 250 | ceil -%}
+      <span>{{ 'blog.post.reading_time' | t: time: reading_time }}</span>
+    {%- endif -%}
+  {%- endcapture -%}
+
+  {%- if article.image != blank and section.settings.image_layout == 'split' -%}
+    <div class="section-split">
+      <div class="section-split__column section-split__column--image {% unless section.settings.add_image_spacing %}section-split__column--flushed{% endunless %}">
+        {{- article.image | image_url: width: article.image.width | image_tag: sizes: '(max-width: 699px) 100vw, 50vw', widths: '300,400,500,600,800,1000,1200,1400,1600,1800,2000', class: 'size-full' -}}
+      </div>
+
+      <div class="content-box align-self-center">
+        <div class="v-stack gap-6">
+          {%- if article_meta != blank -%}
+            <div class="meta-information subheading">
+              {%- if settings.subheading_icon != blank -%}
+                <span class="shape shape--{{ settings.subheading_icon }}"></span>
+              {%- endif -%}
+
+              {{- article_meta -}}
+            </div>
+          {%- endif -%}
+
+          <h1 class="{{ section.settings.heading_size }}">{{ article.title }}</h1>
+        </div>
+      </div>
+    </div>
+  {%- else -%}
+    <div class="container section-spacing">
+      <div class="v-stack justify-items-center gap-8">
+        <h1 class="{{ section.settings.heading_size }} text-center isolate">{{ article.title }}</h1>
+
+        {%- if article.image != blank -%}
+          {{- article.image | image_url: width: article.image.width | image_tag: sizes: '(max-width: 699px) 100vw, 50vw', widths: '300,400,500,600,800,1000,1200,1400,1600,1800,2000', class: 'blog-post-banner__image' -}}
+        {%- endif -%}
+
+        {%- if article_meta != blank -%}
+          <div class="meta-information subheading">
+            {%- if settings.subheading_icon != blank -%}
+              <span class="shape shape--{{ settings.subheading_icon }}"></span>
+            {%- endif -%}
+
+            {{- article_meta -}}
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.blog_post_banner.name",
+  "class": "shopify-section--blog-post-banner",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-2"
+    },
+    {
+      "type": "checkbox",
+      "id": "allow_transparent_header",
+      "label": "t:global.section.allow_transparent_header",
+      "info": "t:global.section.allow_transparent_header_info",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "transparent_header_use_primary_colors",
+      "label": "t:global.section.transparent_header_use_primary_colors",
+      "default": false,
+      "visible_if": "{{ section.settings.allow_transparent_header }}"
+    },
+    {
+      "type": "select",
+      "id": "image_layout",
+      "label": "t:sections.blog_post_banner.image_layout",
+      "options": [
+        {
+          "value": "split",
+          "label": "t:sections.blog_post_banner.image_layout_options.split"
+        },
+        {
+          "value": "stacked",
+          "label": "t:sections.blog_post_banner.image_layout_options.stacked"
+        }
+      ],
+      "default": "split"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_image_spacing",
+      "label": "t:sections.blog_post_banner.add_image_spacing",
+      "default": false,
+      "visible_if": "{{ section.settings.image_layout == 'split' }}"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "label": "t:global.text.size",
+      "options": [
+        {
+          "value": "display-xl",
+          "label": "Display XL"
+        },
+        {
+          "value": "display-l",
+          "label": "Display L"
+        },
+        {
+          "value": "display-m",
+          "label": "Display M"
+        },
+        {
+          "value": "h1",
+          "label": "XX-Large"
+        },
+        {
+          "value": "h2",
+          "label": "X-Large"
+        },
+        {
+          "value": "h3",
+          "label": "Large"
+        },
+        {
+          "value": "h4",
+          "label": "Medium"
+        },
+        {
+          "value": "h5",
+          "label": "Small"
+        },
+        {
+          "value": "h6",
+          "label": "X-Small"
+        },
+        {
+          "value": "h7",
+          "label": "XX-Small"
+        }
+      ],
+      "default": "display-m"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_category",
+      "label": "t:global.blog.show_category",
+      "info": "t:global.blog.show_category_info",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_date",
+      "label": "t:global.blog.show_date",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_reading_time",
+      "label": "t:global.blog.show_reading_time",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "t:global.colors.category",
+      "info": "t:sections.blog_post_banner.colors_category_info"
+    },
+    {
+      "type": "color",
+      "id": "background",
+      "label": "t:global.colors.background"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "t:global.colors.text"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,168 @@
+<div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+  {%- if collections.size == 0 -%}
+    <div class="empty-state">
+      <div class="prose prose-justify-center">
+        <h1 class="h3">{{ 'collection.general.all_collections' | t }}</h1>
+        <p>{{ 'collection.general.no_collections' | t }}</p>
+        
+        {%- assign button_content = 'collection.general.continue_shopping' | t -%}
+        {%- assign button_link = routes.all_products_collection_url -%}
+        {%- render 'button', content: button_content, href: button_link -%}
+      </div>
+    </div>
+  {%- else -%}
+    <style>
+      #shopify-section-{{ section.id }} {
+        --overlay: {{ section.settings.overlay_color.rgb }} / {{ section.settings.overlay_opacity | divided_by: 100.0 }};
+        --collection-list-grid: {% if section.settings.stack_on_mobile %}auto-flow / minmax(0, 1fr){% else %}auto / auto-flow 78vw{% endif %};
+        --collection-list-gap: {% if section.settings.column_spacing == 'none' %}0px{% elsif section.settings.column_spacing == 'sm' %}calc(var(--container-gutter) / 2){% elsif section.settings.column_spacing == 'md' %}var(--container-gutter){% elsif section.settings.column_spacing == 'lg' %}calc(var(--container-gutter) * 1.5){% endif %};
+      }
+
+      @media screen and (min-width: 700px) {
+        #shopify-section-{{ section.id }} {
+          --collection-list-grid: {% if section.settings.stack_on_mobile %}auto-flow / repeat(2, minmax(0, 1fr)){% else %}auto / auto-flow 37vw{% endif %};
+        }
+      }
+
+      @media screen and (min-width: 1000px) {
+        #shopify-section-{{ section.id }} {
+          --collection-list-grid: auto-flow / repeat({{ section.settings.items_per_row }}, minmax(0, 1fr));
+        }
+      }
+    </style>
+
+    <div class="{% if section.settings.add_horizontal_spacing %}container{% endif %} section-spacing">
+      <div class="section-stack">
+        <div class="{% unless section.settings.add_horizontal_spacing %}container{% endunless %}">          
+          <div class="prose prose-justify-center">
+            <h1 class="h3">{{ 'collection.general.all_collections' | t }}</h1>
+          </div>
+        </div>
+
+        {%- paginate collections by 48 -%}
+          <div class="v-stack gap-8">
+            <div class="collection-list {% unless section.settings.stack_on_mobile %}scroll-area snap-x bleed{% endunless %}">
+              {%- assign collections_to_show = section.settings.collections | default: collections -%}
+
+              {%- for collection in collections_to_show -%}
+                {%- if section.settings.collections == empty and collection.handle == 'frontpage' -%}
+                  {%- continue -%}
+                {%- endif -%}
+
+                {%- content_for 'block', type: 'collection-card', id: 'collection-card', closest.collection: collection -%}
+              {%- endfor -%}
+            </div>
+
+            {%- if section.settings.collections == empty -%}
+              {%- render 'pagination', paginate: paginate -%}
+            {%- endif -%}
+          </div>
+        {%- endpaginate -%}
+      </div>
+    </div>
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.main_list_collections.name",
+  "class": "shopify-section--main-list-collections",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "collection_list",
+      "id": "collections",
+      "label": "t:sections.main_list_collections.selected_collections",
+      "limit": 48
+    },
+    {
+      "type": "range",
+      "id": "items_per_row",
+      "min": 2,
+      "max": 4,
+      "label": "t:sections.collection_list.items_per_row",
+      "default": 3
+    },
+    {
+      "type": "checkbox",
+      "id": "stack_on_mobile",
+      "label": "t:sections.collection_list.stack_on_mobile",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "add_horizontal_spacing",
+      "label": "t:global.spacing.add_horizontal_spacing",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "content_position",
+      "label": "t:sections.collection_list.content_position",
+      "options": [
+        {
+          "value": "inside",
+          "label": "t:sections.collection_list.content_position_options.inside"
+        },
+        {
+          "value": "outside",
+          "label": "t:sections.collection_list.content_position_options.outside"
+        }
+      ],
+      "default": "inside"
+    },
+    {
+      "type": "select",
+      "id": "column_spacing",
+      "label": "t:global.spacing.column_spacing",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:global.spacing.spacing_options.none"
+        },
+        {
+          "value": "sm",
+          "label": "t:global.spacing.spacing_options.small"
+        },
+        {
+          "value": "md",
+          "label": "t:global.spacing.spacing_options.medium"
+        },
+        {
+          "value": "lg",
+          "label": "t:global.spacing.spacing_options.large"
+        }
+      ],
+      "default": "md"
+    },
+    {
+      "type": "select",
+      "id": "image_size",
+      "label": "t:global.image.size",
+      "options": [
+        {
+          "value": "auto",
+          "label": "t:global.sizes.original_image_ratio"
+        },
+        {
+          "value": "sm",
+          "label": "t:global.sizes.small"
+        },
+        {
+          "value": "md",
+          "label": "t:global.sizes.medium"
+        }
+      ],
+      "info": "t:global.image.ratio_avoid_cropping_info",
+      "default": "auto"
+    }
+  ]
+}
+{% endschema %}
+

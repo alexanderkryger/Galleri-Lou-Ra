@@ -1,0 +1,162 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+MAIN MENU DROPDOWN SIDEBAR
+----------------------------------------------------------------------------------------------------------------------
+
+This component is used to render dropdown menu that can be enabled by setting the desktop layout to 
+"logo center, navigation inline" and the dropdown menu style to "sidebar". When configured like this, the dropdown 
+menu will open in a lateral sidebar.
+
+It is important to note that the code is quite similar to the "main-menu-drawer" snippet. However, the major difference
+is that the main-menu-drawer will start from the level 1, while this actually only show the level 2 and 3 (the first) level
+being shown inline. This is therefore a hybrid mode, whose logic in JS is actually quite different, so we had to do this
+approach.
+
+********************************************
+Supported variables
+********************************************
+
+* primary_menu: the main links to display in the sidebar
+* secondary_menu: show secondary links after the main links
+* color_scheme: the color scheme to use for the menu
+{%- endcomment -%}
+
+<header-menu-dropdown-sidebar id="menu-dropdown-sidebar" class="menu-drawer menu-drawer--dropdown-sidebar color-scheme color-scheme--{{ color_scheme.id }}">
+  <template>
+    <div part="overlay"></div>
+
+    <div part="content">
+      <slot></slot>
+    </div>
+  </template>
+
+  <div class="menu-drawer__panel is-visible">
+    <div class="menu-drawer__panel-header">
+      {%- comment -%}In this mode the menu drawer replicate the links in the main header{%- endcomment -%}
+      <div class="header__primary-nav">
+        <button type="button" aria-controls="menu-dropdown-sidebar" class="tap-area">
+          <span class="sr-only">{{ 'header.general.close_menu' | t }}</span>
+
+          <div class="h-stack gap-3" aria-hidden="true">
+            <div class="header__hamburger">
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        </button>
+
+        <ul class="contents unstyled-list">
+          {%- for link in primary_menu.links -%}
+            {%- liquid
+              assign link_title_downcase = link.title | strip | downcase
+              assign mega_menu_block = ''
+        
+              for block in section.blocks
+                assign menu_item_downcase = block.settings.menu_item | strip | downcase
+        
+                if menu_item_downcase == link_title_downcase
+                  assign mega_menu_block = block
+                  break
+                endif
+              endfor
+            -%}
+
+            <li>
+              {%- if link.levels > 0 or mega_menu_block != '' -%}
+                <button class="block subheading link-reversed" aria-current="false" data-link-position="{{ forloop.index }}">
+                  {{- link.title -}}
+                </button>
+              {%- else -%}
+                <a href="{{ link.url }}" class="block subheading link-reversed">
+                  {{- link.title -}}
+                </a>
+              {%- endif -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+      </div>
+    </div>
+
+    <div class="menu-drawer__panel-body">
+      {%- for link in primary_menu.links -%}
+        {%- liquid
+          assign link_title_downcase = link.title | strip | downcase
+          assign mega_menu_block = ''
+    
+          for block in section.blocks
+            assign menu_item_downcase = block.settings.menu_item | strip | downcase
+    
+            if menu_item_downcase == link_title_downcase
+              assign mega_menu_block = block
+              break
+            endif
+          endfor
+        -%}
+
+        {%- if link.levels > 0 or mega_menu_block != '' -%}
+          <header-menu-dropdown-sidebar-level data-level-position="{{ forloop.index }}" class="menu-drawer__dropdown-sidebar-level">
+            <div class="v-stack gap-8">
+              {%- if link.levels > 0 -%}
+                {%- if link.levels == 1 -%}
+                  <ul class="v-stack gap-2.5 unstyled-list">
+                    {%- for sub_link in link.links -%}
+                      <li>
+                        <a href="{{ sub_link.url }}" class="link-faded-reverse">{{ sub_link.title }}</a>
+                      </li>
+                    {%- endfor -%}
+                  </ul>
+                {%- else -%}
+                  {%- for sub_link in link.links -%}
+                    <div class="v-stack justify-items-start gap-4">
+                      <a href="{{ sub_link.url }}" class="subheading text-subdued link-faded">{{ sub_link.title }}</a>
+
+                      {%- if sub_link.links.size > 0 -%}
+                        <ul class="v-stack gap-2.5 unstyled-list">
+                          {%- for sub_sub_link in sub_link.links -%}
+                            <li>
+                              <a href="{{ sub_sub_link.url }}" class="link-faded-reverse">{{ sub_sub_link.title }}</a>
+                            </li>
+                          {%- endfor -%}
+                        </ul>
+                      {%- endif -%}
+                    </div>
+                  {%- endfor -%}
+                {%- endif -%}
+              {%- endif -%}
+
+              {%- if mega_menu_block != blank -%}
+                {%- render 'menu-promo', block: mega_menu_block, context: 'main-menu' -%}
+              {%- endif -%}
+            </div>
+          </header-menu-dropdown-sidebar-level>
+        {%- endif -%}
+      {%- endfor -%}
+
+      {%- if primary_menu.links.size > 0 and secondary_menu.links.size > 0 -%}
+        <hr class="menu-drawer__separator">
+      {%- endif -%}
+
+      {%- if secondary_menu.links.size > 0 -%}
+        <ul class="v-stack gap-3 unstyled-list">
+          {%- for link in secondary_menu.links -%}
+            <li>
+              <a href="{{ link.url }}" class="subheading link-faded-reverse">{{ link.title }}</a>
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+    </div>
+
+    {%- capture social_media -%}
+      {%- render 'social-media' -%}
+    {%- endcapture -%}
+
+    {%- if social_media != blank -%}
+      <div class="menu-drawer__panel-footer">
+        <div class="menu-drawer__footer-item">
+          {{- social_media -}}
+        </div>
+      </div>
+    {%- endif -%}
+  </div>
+</header-menu-dropdown-sidebar>

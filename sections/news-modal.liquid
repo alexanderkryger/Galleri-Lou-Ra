@@ -1,0 +1,199 @@
+{%- if section.blocks.size > 0 -%}
+  <style>
+    .header__news-link {
+      display: contents !important;
+    }
+  </style>
+
+  <news-modal id="news-modal" class="modal modal--news color-scheme color-scheme--{{ section.settings.color_scheme.id }}" handle-editor-events>
+    <div class="news-modal__container">
+      {%- if section.settings.title != blank -%}
+        <span class="subheading">{{ section.settings.title }}</span>
+      {%- endif -%}
+
+      <div class="news-modal__wrapper">
+        {%- for block in section.blocks -%}
+          {%- if block.settings.image != blank or block.settings.title != blank or block.settings.subheading != blank -%}
+            {%- assign panel_id = 'news-modal-item-' | append: block.id | append: '-' | append: block.settings.title | handle -%}
+
+            <div class="news-modal-item">
+              <news-panel-toggle-button>
+                <button class="news-modal-button" aria-expanded="false" aria-controls="{{ panel_id}}">
+                  {%- if block.settings.image != blank -%}
+                    {%- render 'media' with block.settings.image, class: 'news-modal-button__image', sizes: '(max-width: 699px) 80px, 104px' -%}
+                  {%- endif -%}
+
+                  {%- if block.settings.title != blank or block.settings.subheading != blank -%}
+                    <div class="news-modal-button__content">
+                      {%- render 'heading', content: block.settings.title, balance_text: true, style: 'h7', instant: true -%}
+
+                      {%- if block.settings.subheading != blank -%}
+                        <span class="subheading">{{ block.settings.subheading }}</span>
+                      {%- endif -%}
+                    </div>
+                  {%- endif -%}
+                </button>
+              </news-panel-toggle-button>
+
+              <news-modal-panel id="{{ panel_id }}" class="news-modal-panel" {{ block.shopify_attributes }}>
+                <news-panel-toggle-button class="news-modal-panel__header">
+                  <button class="h-stack gap-3" aria-expanded="false" aria-controls="{{ panel_id }}">
+                    <span class="circle-button">
+                      {%- render 'icon' with 'big-arrow-left', width: 8, stroke_width: 4, direction_aware: true -%}
+                    </span>
+
+                    {%- assign back_button_content = 'header.general.navigation_back' | t -%}
+                    <span class="subheading">{{ back_button_content }}</span>
+                  </button>
+                </news-panel-toggle-button>
+
+                <div class="v-stack gap-7">
+                  {%- if block.settings.image != blank -%}
+                    {%- render 'media' with block.settings.image, class: 'w-full', sizes: '(max-width: 699px) 100vw, 480px' -%}
+                  {%- endif -%}
+
+                  {%- if block.settings.title != blank or block.settings.subheading != blank or block.settings.content -%}
+                    <div class="prose prose--compact">
+                      {%- liquid
+                        render 'subheading', content: block.settings.subheading
+                        render 'heading', content: block.settings.title, balance_text: true, style: 'h5', instant: true
+                        echo block.settings.content
+
+                        if block.settings.button_text != blank
+                          render 'button', content: block.settings.button_text, href: block.settings.button_url, style: block.settings.button_style, stretch: true
+                        endif
+                      -%}
+                    </div>
+                  {%- endif -%}
+                </div>
+              </news-modal-panel>
+            </div>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    </div>
+  </news-modal>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.news_modal.name",
+  "class": "shopify-section--news-modal",
+  "max_blocks": 10,
+  "limit": 1,
+  "enabled_on": {
+    "groups": ["custom.overlay"]
+  },
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "t:sections.news_modal.modal_title",
+      "default": "News"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "news",
+      "name": "t:sections.news_modal.blocks.news.name",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:global.image.image",
+          "info": "t:sections.news_modal.blocks.news.image_size_recommendation"
+        },
+        {
+          "type": "header",
+          "content": "t:global.text.content"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "subheading",
+          "label": "t:global.text.subheading"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "title",
+          "label": "t:global.text.heading",
+          "default": "Title"
+        },
+        {
+          "type": "richtext",
+          "id": "content",
+          "label": "t:global.text.content",
+          "default": "<p>Use this text to share news about your brand with your customers. Describe a product, share announcements, or welcome customers to your store.</p>"
+        },
+        {
+          "type": "header",
+          "content": "t:global.text.button_category"
+        },
+        {
+          "type": "select",
+          "id": "button_style",
+          "label": "t:global.text.button_style",
+          "options": [
+            {
+              "value": "outline",
+              "label": "t:global.text.button_style_options.outline"
+            },
+            {
+              "value": "solid",
+              "label": "t:global.text.button_style_options.solid"
+            },
+            {
+              "value": "link",
+              "label": "t:global.text.button_style_options.link"
+            }
+          ],
+          "default": "solid"
+        },
+        {
+          "type": "url",
+          "id": "button_url",
+          "label": "t:global.text.button_link"
+        },
+        {
+          "type": "text",
+          "id": "button_text",
+          "label": "t:global.text.button_text"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.news_modal.name",
+      "blocks": [
+        {
+          "type": "news",
+          "settings": {
+            "title": "Title 1",
+            "subheading": "Subheading 1"
+          }
+        },
+        {
+          "type": "news",
+          "settings": {
+            "title": "Title 2",
+            "subheading": "Subheading 2"
+          }
+        },
+        {
+          "type": "news",
+          "settings": {
+            "title": "Title 3",
+            "subheading": "Subheading 3"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

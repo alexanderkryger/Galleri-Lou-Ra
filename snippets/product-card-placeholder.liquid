@@ -1,0 +1,131 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+PRODUCT CARD PLACEHOLDER COMPONENT
+----------------------------------------------------------------------------------------------------------------------
+
+This component is used to show a placeholder card of a product. It accepts nearly the same information, but display
+fake information instead.
+
+********************************************
+Supported variables
+********************************************
+
+* loop_index: the loop index to show a placeholder image (pass the forloop.index0)
+* color_scheme: the color scheme to use (if none is set, it defaults to the default card scheme)
+* section_color_scheme: the color scheme of the section, which is used to calculate if the card blends or not with the section
+* show_rating: show or not the rating. If nothing is set, the theme uses the default product card setting
+* show_vendor: show or not the vendor. If nothing is set, the theme uses the default product card setting
+{%- endcomment -%}
+
+{%- liquid
+  assign color_scheme = color_scheme | default: settings.product_card_color_scheme
+  assign section_color_scheme = section_color_scheme | default: section.settings.color_scheme | default: settings.default_color_scheme
+  assign show_rating = show_rating | default: settings.product_card_show_rating, allow_false: true
+  assign show_vendor = show_vendor | default: settings.product_card_show_vendor, allow_false: true
+
+  assign product_card_classes = 'product-card'
+
+  if settings.product_listing_spacing == 'none'
+    assign product_card_classes = product_card_classes | append: ' product-card--bordered'
+  endif
+
+  if settings.product_card_info_position == 'outside'
+    assign product_card_classes = product_card_classes | append: ' product-card--info-outside'
+  else
+    assign product_card_classes = product_card_classes | append: ' product-card--info-inside'
+  endif
+
+  # In this condition, we try to detect if the color scheme of the card has the same background as the section. If yes, we have to
+  # remove some padding in the info. We do not try to handle every possible conditions (especially with gradients), as this would
+  # make this code extremely complex for a very limited use case
+  if settings.product_listing_spacing != 'none' and color_scheme == section_color_scheme and section_color_scheme.settings.background_gradient == blank or color_scheme.settings.background == section_color_scheme.settings.background or color_scheme.settings.background == 'rgba(0,0,0,0)'
+    assign product_card_classes = product_card_classes | append: ' product-card--blends'
+  endif
+
+  case settings.product_card_style
+    when 'subheading'
+      assign vendor_class = 'subheading text-subdued'
+      assign title_class = 'subheading'
+
+    when 'body_text'
+      assign vendor_class = 'text-sm text-subdued'
+      assign title_class = 'text-sm'
+
+    when 'heading'
+      assign vendor_class = 'heading text-subdued'
+      assign title_class = 'heading'
+  endcase
+-%}
+
+<product-card class="{{ product_card_classes }} color-scheme color-scheme--{{ color_scheme.id }}">
+  {%- comment -%}
+  --------------------------------------------------------------------------------------------------------------------
+  PRODUCT MEDIA
+  --------------------------------------------------------------------------------------------------------------------
+  {%- endcomment -%}
+
+  <div class="product-card__figure">
+    <a href="#" class="product-card__media">
+      {%- capture product_placeholder -%}product-{{ loop_index | modulo: 6 | plus: 1 | default: 1 }}{%- endcapture -%}
+      {{- product_placeholder | placeholder_svg_tag: 'product-card__image product-card__image--primary' -}}
+    </a>
+  </div>
+
+  {%- comment -%}
+  --------------------------------------------------------------------------------------------------------------------
+  PRODUCT INFO
+  --------------------------------------------------------------------------------------------------------------------
+  {%- endcomment -%}
+
+  {%- liquid
+    case settings.product_card_info_horizontal_alignment
+      when 'start'
+        assign info_alignment_class = 'v-stack gap-2.5 justify-items-start text-start'
+
+      when 'center'
+        assign info_alignment_class = 'v-stack gap-2.5 justify-items-center text-center'
+
+      when 'end'
+        assign info_alignment_class = 'v-stack gap-2.5 justify-items-end text-end'
+
+      when 'split'
+        assign info_alignment_class = 'h-stack gap-2.5 align-start justify-between wrap'
+    endcase
+  -%}
+
+  <div class="product-card__info">
+    <div class="{{ info_alignment_class }}">
+      <div class="{% if settings.product_card_info_horizontal_alignment == 'split' %}contents{% else %}v-stack gap-0.5{% endif %}">
+        <div class="v-stack gap-2.5">
+          <div class="v-stack gap-1">
+            <div class="v-stack">
+              {%- if show_vendor -%}
+                <a href="#" class="vendor {{ vendor_class }}">
+                  {{- 'general.on_boarding.product_vendor' | t -}}
+                </a>
+              {%- endif -%}
+
+              <a href="#" class="product-title {{ title_class }}">{{- 'general.on_boarding.product_title' | t -}}</a>
+            </div>
+
+            {%- if show_rating and settings.product_card_info_horizontal_alignment == 'split' -%}
+              {%- render 'product-rating', show_placeholder: true, display_mode: settings.product_card_rating_mode -%}
+            {%- endif -%}
+          </div>
+        </div>
+
+        {%- if settings.product_card_info_horizontal_alignment == 'split' -%}
+          {%- render 'price-list', context: 'card' -%}
+        {%- else -%}
+          <div class="v-stack gap-1">
+            {%- render 'price-list', context: 'card' -%}
+
+            {%- if show_rating -%}
+              {%- render 'product-rating', show_placeholder: true, display_mode: settings.product_card_rating_mode -%}
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</product-card>

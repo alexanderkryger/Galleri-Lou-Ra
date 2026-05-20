@@ -1,0 +1,188 @@
+<div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+  <height-observer variable="countdown-condensed">
+    {%- assign accessibility_expiration_date = section.settings.expiration_date | date: format: 'date_at_time' -%}
+    {%- assign accessibility_text = 'sections.countdown_timer.expires_accessibility_text' | t: expiration_date: accessibility_expiration_date -%}
+
+    {%- if section.settings.connect_button_with_heading -%}
+      {%- assign button_class = 'button--connect-with-heading' -%}
+    {%- endif -%}
+
+    <div class="countdown-condensed countdown-condensed--{{ section.settings.layout }} container container--narrow">
+      <div class="countdown-condensed__content-with-timer">
+        {%- if section.settings.heading != blank or section.settings.button_text != blank and section.settings.connect_button_with_heading -%}
+          <div class="countdown-condensed__content-wrapper">
+            {%- if section.settings.heading != blank -%}
+              <p class="subheading">{{ section.settings.heading }}</p>
+            {%- endif -%}
+
+            {%- if section.settings.button_text != blank -%}
+              {%- render 'button', content: section.settings.button_text, href: section.settings.button_url, style: section.settings.button_style, size: 'sm', class: button_class -%}
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+
+        <countdown-timer 
+          class="countdown-condensed__timer {% if section.settings.show_inline_timer %}countdown-condensed__timer--inline{% endif %}" 
+          role="timer" 
+          expires-at="{{ section.settings.expiration_date | date: '%FT%T%:z' | escape }}" 
+          expiration-behavior="{{ section.settings.expiration_behavior }}"
+          aria-label="{{ accessibility_text | escape }}" 
+        >
+          <div class="countdown-condensed__timer-item" aria-hidden="true">
+            <countdown-timer-flip type="days" class="subheading bold">00</countdown-timer-flip>
+            <span class="countdown-condensed__unit subheading subheading-xs">{{ 'sections.countdown_timer.days' | t }}</span>
+            <span class="countdown-condensed__unit-short subheading subheading-xs">D</span>
+          </div>
+
+          <span class="subheading subheading-xs" aria-hidden="true">:</span>
+
+          <div class="countdown-condensed__timer-item" aria-hidden="true">
+            <countdown-timer-flip type="hours" class="subheading bold">00</countdown-timer-flip>
+            <span class="countdown-condensed__unit subheading subheading-xs">{{ 'sections.countdown_timer.hours' | t }}</span>
+            <span class="countdown-condensed__unit-short subheading subheading-xs">H</span>
+          </div>
+
+          <span class="subheading subheading-xs" aria-hidden="true">:</span>
+
+          <div class="countdown-condensed__timer-item" aria-hidden="true">
+            <countdown-timer-flip type="minutes" class="subheading bold">00</countdown-timer-flip>
+            <span class="countdown-condensed__unit subheading subheading-xs">{{ 'sections.countdown_timer.minutes' | t }}</span>
+            <span class="countdown-condensed__unit-short subheading subheading-xs">M</span>
+          </div>
+
+          <span class="subheading subheading-xs" aria-hidden="true">:</span>
+
+          <div class="countdown-condensed__timer-item" aria-hidden="true">
+            <countdown-timer-flip type="seconds" class="subheading bold">00</countdown-timer-flip>
+            <span class="countdown-condensed__unit subheading subheading-xs">{{ 'sections.countdown_timer.seconds' | t }}</span>
+            <span class="countdown-condensed__unit-short subheading subheading-xs">S</span>
+          </div>
+        </countdown-timer>
+      </div>
+
+      {%- if section.settings.button_text != blank -%}
+        {%- render 'button', content: section.settings.button_text, href: section.settings.button_url, style: section.settings.button_style, size: 'sm', class: button_class -%}
+      {%- endif -%}
+    </div>
+  </height-observer>
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.countdown_timer.name",
+  "class": "shopify-section--countdown-condensed",
+  "tag": "section",
+  "enabled_on": {
+    "groups": ["header"]
+  },
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "t:global.text.heading",
+      "default": "Special sale ends in"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "t:sections.countdown_timer.layout",
+      "options": [
+        {
+          "value": "center",
+          "label": "t:sections.countdown_timer.layout_options.center"
+        },
+        {
+          "value": "split",
+          "label": "t:sections.countdown_timer.layout_options.split"
+        }
+      ],
+      "default": "split"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.countdown_timer.timer_category",
+      "info": "t:sections.countdown_timer.timezone_information"
+    },
+    {
+      "type": "text",
+      "id": "expiration_date",
+      "label": "t:sections.countdown_timer.expiration_date",
+      "placeholder": "Eg. 2025-12-25 12:00",
+      "info": "t:sections.countdown_timer.expiration_date_info"
+    },
+    {
+      "type": "select",
+      "id": "expiration_behavior",
+      "label": "t:sections.countdown_timer.expiration_behavior",
+      "options": [
+        {
+          "value": "hide",
+          "label": "t:sections.countdown_timer.expiration_behavior_options.hide"
+        },
+        {
+          "value": "leave",
+          "label": "t:sections.countdown_timer.expiration_behavior_options.leave"
+        }
+      ],
+      "default": "leave"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_inline_timer",
+      "label": "t:sections.countdown_timer.show_inline_timer",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "t:sections.countdown_timer.button_category"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "t:global.text.text"
+    },
+    {
+      "type": "url",
+      "id": "button_url",
+      "label": "t:global.text.link"
+    },
+    {
+      "type": "select",
+      "id": "button_style",
+      "label": "t:global.text.button_style",
+      "options": [
+        {
+          "value": "outline",
+          "label": "t:global.text.button_style_options.outline"
+        },
+        {
+          "value": "solid",
+          "label": "t:global.text.button_style_options.solid"
+        },
+        {
+          "value": "link",
+          "label": "t:global.text.button_style_options.link"
+        }
+      ],
+      "default": "solid"
+    },
+    {
+      "type": "checkbox",
+      "id": "connect_button_with_heading",
+      "label": "t:sections.countdown_timer.connect_button_with_heading",
+      "default": false
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.countdown_timer.name"
+    }
+  ]
+}
+{% endschema %}

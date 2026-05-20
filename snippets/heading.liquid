@@ -1,0 +1,98 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+HEADING COMPONENT
+----------------------------------------------------------------------------------------------------------------------
+
+Stretch selling point is about the ability to highlight words inside headings, to create unique effect. To highlight
+a word, the merchant must use the italic tool to transform a part of the heading.
+
+Please note that highlight only work on heading from display texts to h4. Smaller headings (h5 and h6) won't have
+highlight because the text is too small for the highlight to look good.
+
+********************************************
+Supported variables
+********************************************
+
+* content: the text content to show for the heading.
+* html_tag: the HTML tag to use. By default, it will use the <p> tag if none is set
+* style: the style to use for the heading. Can be "h1" to "h6", "display-m", "display-l", "display-xl" for larger sizes, "heading" for
+         the default style or "body" for applying the effect using the body font. If nothing is passed, "heading" is used as default.
+* highlight_effect: can be "none", "italic", "circle", "circle_pencil", "underline", "underline_pencil", "marker" or "tilted_marker"
+* highlight_accent_color: the primary accent color. This color is ignored for "none" and "italic".
+* highlight_text_color: the accent text color. Only used for marker and tilted_marker effect
+* indent: adds an indentation before the heading, with an optional icon. Can be "none", "empty_space", "circle", "square", "diamond". If none
+          is explicitly passed, no indent is added.
+* show_vertically: if true, the text is displayed vertically. When displayed vertically, heading effects (except italic) are not
+                   ignored.
+* balance_text: if set to true, the text will be balanced using CSS text-wrap. This is only supported on bleeding-edge browsers.
+* instant: if set to true, no animation will happen (independently of the global settings)
+* block: the block context (optional) to output the theme editor attributes
+{%- endcomment -%}
+
+{%- if content != blank -%}
+  {%- liquid
+    assign html_tag = html_tag | default: 'p'
+
+    if highlight_effect == 'default' or highlight_effect == blank
+      assign highlight_effect = settings.heading_default_highlight_effect
+    endif
+
+    if show_vertically and highlight_effect != 'italic'
+      # It is too complex to have the marker and other SVG effects when text is vertical, so we fallback to italic
+      assign highlight_effect = 'none'
+    endif
+
+    assign heading_style = nil
+    assign heading_class = style | default: 'heading'
+
+    if highlight_accent_color != blank and highlight_accent_color != 'rgba(0,0,0,0)'
+      assign heading_style = heading_style | append: '--heading-highlight-accent-color: ' | append: highlight_accent_color.rgb | append: ';'
+    endif
+
+    if highlight_accent_color != blank and highlight_accent_color != 'rgba(0,0,0,0)'
+      assign heading_style = heading_style | append: '--heading-highlight-text-color: ' | append: highlight_text_color.rgb | append: ';'
+    endif
+
+    if show_vertically
+      assign heading_class = heading_class | append: ' vertical-text'
+    endif
+
+    if indent != blank and indent != 'none'
+      assign heading_class = heading_class | append: ' text-indent'
+
+      if indent != 'empty_space' and indent != true
+        assign heading_class = heading_class | append: ' text-indent--' | append: indent
+      endif
+    endif
+
+    if balance_text
+      assign heading_class = heading_class | append: ' text-balance'
+    endif
+  -%}
+
+  {%- comment -%}
+  Under the hood, the theme uses the <em> formatter to highlight text, and wrap the text around a custom element. However, if this text does not
+  contains any <em>, this means there are no effect to apply, so we completely skip this and output the heading directly, which allows to not create
+  the custom element at all and avoid any performance overhead.
+  {%- endcomment -%}
+  {%- unless highlight_effect != 'none' and content contains '<em>' -%}
+    <{{ html_tag }} {% if block %}id="shopify-block-{{ block.id }}"{% endif %} class="{{ heading_class }}" {{ block.shopify_attributes }}>{{ content }}</{{ html_tag }}>
+  {%- else -%}
+    <{{ html_tag }} {% if block %}id="shopify-block-{{ block.id }}"{% endif %} class="{{ heading_class }}" {{ block.shopify_attributes }}>
+      <highlighted-heading effect="{{ highlight_effect | replace: '_', '-' | escape }}" {% if instant %}instant{% endif %} class="highlighted-heading" {% if heading_style %}style="{{ heading_style }}"{% endif %}>
+        {%- comment -%}Replacing this in Liquid to add the <split-lines> component is much more efficient as it avoids a costly reflow if done in JS{%- endcomment -%}
+        {%- liquid
+          if highlight_effect != 'italic'
+            if content contains '<strong>'
+              echo content | replace: '<em>', '<em class="bold"><split-lines>' | replace: '</em>', '</split-lines></em>'
+            else
+              echo content | replace: '<em>', '<em><split-lines>' | replace: '</em>', '</split-lines></em>'
+            endif
+          else
+            echo content
+          endif
+        -%}
+      </highlighted-heading>
+    </{{ html_tag }}>
+  {%- endunless -%}
+{%- endif -%}

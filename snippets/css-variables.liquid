@@ -1,0 +1,349 @@
+{%- comment -%}
+This file defines all the CSS variables used throughout the theme. Feel free to adjust them at your own need, but
+note that this may have impact on different places.
+{%- endcomment -%}
+
+{%- assign language_code = localization.language.iso_code | split: '-' | first -%}
+
+<style>
+  {%- liquid
+    assign subheading_font_italic = settings.subheading_font | font_modify: 'style', 'italic'
+    assign heading_font_italic = settings.heading_font | font_modify: 'style', 'italic'
+    assign heading_font_bold = settings.heading_font | font_modify: 'weight', '600'
+    assign heading_font_italic_override = settings.heading_italic_font | font_modify: 'style', 'italic'
+    assign text_font_italic = settings.text_font | font_modify: 'style', 'italic'
+    assign text_font_medium = settings.text_font | font_modify: 'weight', '500'
+    assign text_font_bold = settings.text_font | font_modify: 'weight', '600'
+
+    unless text_font_bold
+      # For body text, bold is often too bold, so we try first to load the semi-bold and, if not available, fallback to 700
+      assign text_font_bold = settings.text_font | font_modify: 'style', 'bolder'
+    endunless
+
+    assign text_font_bold_italic = text_font_bold | font_modify: 'style', 'italic'
+
+    # Typography (subheading)
+    echo settings.subheading_font | font_face: font_display: 'fallback'
+
+    if subheading_font_italic
+      echo subheading_font_italic | font_face: font_display: 'fallback'
+    endif
+
+    # Typography (heading)
+    echo settings.heading_font | font_face: font_display: 'fallback'
+
+    if heading_font_italic
+      echo heading_font_italic | font_face: font_display: 'fallback'
+    endif
+
+    if heading_font_bold
+      echo heading_font_bold | font_face: font_display: 'fallback'
+    endif
+
+    if heading_font_italic_override
+      echo heading_font_italic_override | font_face: font_display: 'fallback'
+    endif
+
+    # Typography (body)
+    echo settings.text_font | font_face: font_display: 'fallback'
+
+    if text_font_italic
+      echo text_font_italic | font_face: font_display: 'fallback'
+    endif
+
+    if text_font_medium
+      echo text_font_medium | font_face: font_display: 'fallback'
+    endif
+
+    if text_font_bold
+      echo text_font_bold | font_face: font_display: 'fallback'
+    endif
+
+    if text_font_bold_italic
+      echo text_font_bold_italic | font_face: font_display: 'fallback'
+    endif
+  -%}
+
+  :root {
+    /* Container */
+    --container-max-width: 100%;
+    --container-gutter: 1.25rem;
+
+    /* Spacing */
+    --section-vertical-spacing: {% if settings.section_spacing == 'tight' %}2rem{% elsif settings.section_spacing == 'normal' %}2.5rem{% else %}3rem{% endif %};
+    --section-stack-row-gap: {% if settings.section_spacing == 'tight' %}1.5rem{% else %}2rem{% endif %};
+
+    /* Form settings */
+    --form-gap: 1rem; /* Gap between fieldset and submit button */
+    --fieldset-gap: 0.5rem; /* Gap between each form input within a fieldset */
+    --form-control-gap: 0.5rem; /* Gap between input and label (ignored for floating label) */
+    --checkbox-control-gap: 0.75rem; /* Horizontal gap between checkbox and its associated label */
+    --input-padding-block: 0.65rem; /* Vertical padding for input, textarea and native select */
+    --input-padding-inline: 1rem; /* Horizontal padding for input, textarea and native select */
+    --checkbox-size: 0.875rem; /* Size (width and height) for checkbox */
+
+    /* Product listing gaps */
+    --product-list-column-gap: {% if settings.product_listing_spacing == 'none' %}0px{% elsif settings.product_listing_spacing == 'x-small' %}0.125rem{% elsif settings.product_listing_spacing == 'small' %}0.25rem{% elsif settings.product_listing_spacing == 'medium' %}0.5rem{% else %}0.75rem{% endif %};
+    --product-list-padding-inline: clamp(0px, var(--product-list-column-gap) {% if settings.product_listing_spacing == 'x-small' %}- 4px{% endif %}, min(1.75rem, var(--product-list-column-gap)));
+
+    {%- if settings.product_card_info_position == 'outside' -%}
+      --product-list-row-gap: {% if settings.product_listing_spacing == 'none' %}0px{% elsif settings.product_listing_spacing == 'x-small' %}1.5rem{% elsif settings.product_listing_spacing == 'small' %}1.75rem{% elsif settings.product_listing_spacing == 'medium' %}2rem{% else %}2.25rem{% endif %};
+    {%- else -%}
+      --product-list-row-gap: var(--product-list-column-gap);
+    {%- endif -%}
+
+    /* Other sizes */
+    --header-group-height: calc(var(--announcement-bar-height, 0px) + var(--countdown-condensed-height, 0px) + var(--header-height, 0px));
+    --sticky-area-height: calc(var(--announcement-bar-is-sticky, 0) * var(--announcement-bar-height, 0px) + var(--header-is-sticky, 0) * var(--header-height, 0px));
+    --sticky-offset: calc(var(--announcement-bar-is-sticky, 0) * var(--announcement-bar-height, 0px) + var(--header-is-sticky, 0) * var(--header-is-visible, 1) * var(--header-height, 0px));
+
+    /* RTL support */
+    --transform-logical-flip: 1;
+    --transform-origin-start: left;
+    --transform-origin-end: right;
+
+    /**
+     * ---------------------------------------------------------------------
+     * TYPOGRAPHY
+     * ---------------------------------------------------------------------
+     */
+
+    /* Font properties */
+    --subheading-font-family: {{ settings.subheading_font.family }}, {{ settings.subheading_font.fallback_families }};
+    --subheading-font-weight: {{ settings.subheading_font.weight }};
+    --subheading-font-style: {{ settings.subheading_font.style }};
+    --subheading-font-size: {{ settings.subheading_font_size | minus: 1 | divided_by: 16.0 }}rem;
+    --subheading-text-transform: {{ settings.subheading_text_transform }};
+    --subheading-letter-spacing: {% if language_code == 'ar' %}0{% else %}{{ settings.subheading_letter_spacing | divided_by: 100.0 }}{% endif %}em;
+    --heading-font-family: {{ settings.heading_font.family }}, {{ settings.heading_font.fallback_families }};
+    --heading-font-weight: {{ settings.heading_font.weight }};
+    --heading-font-style: {{ settings.heading_font.style }};
+    --heading-text-transform: {{ settings.heading_text_transform }};
+    --heading-letter-spacing: {% if language_code == 'ar' %}0{% else %}{{ settings.heading_letter_spacing | divided_by: 100.0 }}{% endif %}em;
+    --heading-line-height: {{ settings.heading_line_height }};
+    --heading-italic-font-family: {{ settings.heading_italic_font.family }}, {{ settings.heading_italic_font.fallback_families }};
+    --heading-italic-font-weight: {{ settings.heading_italic_font.weight }};
+    --heading-italic-font-size-multiplier: {% if settings.heading_font.family != settings.heading_italic_font.family %}{{ settings.heading_italic_font_size_multiplier }}{% else %}0{% endif %}%;
+    --text-font-family: {{ settings.text_font.family }}, {{ settings.text_font.fallback_families }};
+    --text-font-weight: {{ settings.text_font.weight }};
+    --text-font-style: {{ settings.text_font.style }};
+    --text-transform: {{ settings.text_font_text_transform }};
+    --text-letter-spacing: {% if language_code == 'ar' %}0{% else %}{{ settings.text_font_letter_spacing | divided_by: 100.0 }}{% endif %}em;
+    --text-line-height: {{ settings.text_line_height }};
+    --text-font-medium-weight: {{ text_font_medium.weight | default: 500 }};
+    --text-font-bold-weight: {{ text_font_bold.weight | default: 700 }};
+    --button-font: {% if settings.button_text_font == 'heading' %}var(--heading-font-style) 500 var(--button-font-size) / normal var(--heading-font-family){% else %}var(--text-font-style) var(--text-font-weight) var(--button-font-size) / normal var(--text-font-family){% endif %};
+    --button-text-transform: {{ settings.button_text_transform }};
+    --button-letter-spacing: {% if language_code == 'ar' %}0{% else %}{{ settings.button_letter_spacing | divided_by: 100.0 }}{% endif %}em;
+
+    /* Font sizes */
+    {%- comment -%}
+    IMPLEMENTATION NOTE: Stretch being a full-width theme, it is important for the typography to scale. To do that, we are
+    using a fluid-based typography using vw unit (ratio of viewport size), with a minimum and maximum size to avoid huge sizes. The idea
+    is to scale the font size from mobile (375px) to large desktop (we defined the max to be reached at 1920px). If you wish to
+    re-calculate the values, you can use this tool online: https://xgkft.csb.app/
+
+    The max(0.75rem) ensure that, even with a low size factor, we do not have font size below 12px (which is considered the minimum for
+    good accessibility).
+    {%- endcomment -%}
+    --text-heading-size-factor: {{ settings.heading_font_size_factor }};
+    --text-display-xl: max(0.75rem, clamp(3.5rem, 1.9223rem + 6.7314vw, 10rem) * var(--text-heading-size-factor));
+    --text-display-l: max(0.75rem, clamp(3.375rem, 2.1311rem + 5.3074vw, 8.5rem) * var(--text-heading-size-factor));
+    --text-display-m: max(0.75rem, clamp(3.25rem, 2.3701rem + 3.7540vw, 6.875rem) * var(--text-heading-size-factor));
+    --text-h1: max(0.75rem, clamp(3rem, 2.3325rem + 2.8479vw, 5.75rem) * var(--text-heading-size-factor));
+    --text-h2: max(0.75rem, clamp(2.5rem, 1.9539rem + 2.3301vw, 4.75rem) * var(--text-heading-size-factor));
+    --text-h3: max(0.75rem, clamp(2rem, 1.6359rem + 1.5534vw, 3.5rem) * var(--text-heading-size-factor));
+    --text-h4: max(0.75rem, clamp(1.75rem, 1.4466rem + 1.2945vw, 3rem) * var(--text-heading-size-factor));
+    --text-h5: max(0.75rem, clamp(1.375rem, 1.2233rem + 0.6472vw, 2rem) * var(--text-heading-size-factor));
+    --text-h6: max(0.75rem, clamp(1.1875rem, 1.1117rem + 0.3236vw, 1.5rem) * var(--text-heading-size-factor));
+    --text-h7: max(0.75rem, clamp(1rem, 0.9545rem + 0.1942vw, 1.1875rem) * var(--text-heading-size-factor));
+    --text-xs: {{ settings.text_font_size_mobile | minus: 3 | at_least: 11 | divided_by: 16.0 }}rem;
+    --text-sm: {{ settings.text_font_size_mobile | minus: 2 | at_least: 12 | divided_by: 16.0 }}rem;
+    --text-base: {{ settings.text_font_size_mobile | divided_by: 16.0 }}rem;
+    --text-lg: {{ settings.text_font_size_mobile | plus: 3 | divided_by: 16.0 }}rem;
+    --button-font-size: {{ settings.button_font_size_mobile | divided_by: 16.0 }}rem;
+
+    /* Rounded variables (used for border radius) */
+    --rounded-full: 9999px;
+    --subheading-border-radius: {{ settings.subheading_border_radius | divided_by: 16.0 }}rem;
+    --button-border-radius: {{ settings.button_border_radius | divided_by: 16.0 }}rem;
+    --input-border-radius: {{ settings.input_border_radius | divided_by: 16.0 }}rem;
+
+    /* Product card variables */
+    --product-card-row-count: {% if settings.product_card_info_position == 'inside' %}1{% else %}2{% endif %};
+
+    /**
+     * ---------------------------------------------------------------------
+     * OTHER
+     * ---------------------------------------------------------------------
+     */
+
+    --icon-stroke-width: {{ settings.icon_stroke_width }}px;
+    --quotation-mark-svg: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" focusable="false" width="62" fill="none" viewBox="0 0 62 57"><path fill="%23000" d="M.79 31.904 11.924.816h12.296l-8.12 31.088h7.888V56.96H.79V31.904Zm37.351 0L49.277.816h12.064l-8.12 31.088h7.888V56.96H38.141V31.904Z" /></svg>');
+  }
+
+  [dir="rtl"]:root {
+    /* RTL support */
+    --transform-logical-flip: -1;
+    --transform-origin-start: right;
+    --transform-origin-end: left;
+  }
+
+  @media screen and (min-width: 700px) {
+    :root {
+      --text-xs: {{ settings.text_font_size_desktop | minus: 4 | at_least: 11 | divided_by: 16.0 }}rem;
+      --text-sm: {{ settings.text_font_size_desktop | minus: 2 | at_least: 12 | divided_by: 16.0 }}rem;
+      --text-base: {{ settings.text_font_size_desktop | divided_by: 16.0 }}rem;
+      --text-lg: {{ settings.text_font_size_desktop | plus: 3 | divided_by: 16.0 }}rem;
+      --subheading-font-size: {{ settings.subheading_font_size | divided_by: 16.0 }}rem;
+
+      /* Spacing */
+      --container-gutter: 2rem;
+
+      /* Form settings */
+      --form-gap: 1.25rem; /* Gap between fieldset and submit button */
+      --fieldset-gap: 0.75rem; /* Gap between each form input within a fieldset */
+      --input-padding-block: 0.75rem; /* Vertical padding for input, textarea and native select */
+
+      /* Font sizes */
+      --button-font-size: {{ settings.button_font_size_desktop | divided_by: 16.0 }}rem;
+
+      /* Product listing gaps */
+      {%- if settings.product_card_info_position == 'outside' -%}
+        --product-list-column-gap: {% if settings.product_listing_spacing == 'none' %}0px{% elsif settings.product_listing_spacing == 'x-small' %}0.25rem{% elsif settings.product_listing_spacing == 'small' %}0.75rem{% elsif settings.product_listing_spacing == 'medium' %}1.75rem{% else %}3rem{% endif %};
+        --product-list-row-gap: {% if settings.product_listing_spacing == 'none' %}0px{% elsif settings.product_listing_spacing == 'x-small' %}2rem{% elsif settings.product_listing_spacing == 'small' %}2.5rem{% elsif settings.product_listing_spacing == 'medium' %}3rem{% else %}4rem{% endif %};
+      {%- else -%}
+        --product-list-column-gap: {% if settings.product_listing_spacing == 'none' %}0px{% elsif settings.product_listing_spacing == 'x-small' %}0.25rem{% elsif settings.product_listing_spacing == 'small' %}0.75rem{% elsif settings.product_listing_spacing == 'medium' %}1.75rem{% else %}3rem{% endif %};
+      {%- endif -%}
+    }
+  }
+
+  @media screen and (min-width: 1000px) {
+    :root {
+      /* Spacing settings */
+      --section-vertical-spacing: {% if settings.section_spacing == 'tight' %}3rem{% elsif settings.section_spacing == 'normal' %}3.5rem{% else %}4.5rem{% endif %};
+      --section-stack-row-gap: {% if section.section_spacing == 'tight' %}2.5rem{% else %}3rem{% endif %};
+    }
+  }
+
+  @media screen and (min-width: 1399px) {
+    :root {
+      /* Spacing settings */
+      --section-vertical-spacing: {% if settings.section_spacing == 'tight' %}3.5rem{% elsif settings.section_spacing == 'normal' %}4.5rem{% else %}5.5rem{% endif %};
+      --container-gutter: 3rem;
+    }
+  }
+
+  /**
+   * ---------------------------------------------------------------------
+   * COLORS
+   * ---------------------------------------------------------------------
+   */
+
+  :root {
+    {%- assign success_background = settings.success_color | color_mix: '#ffffff', 12 -%}
+    {%- assign warning_background = settings.warning_color | color_mix: '#ffffff', 12 -%}
+    {%- assign error_background = settings.error_color | color_mix: '#ffffff', 12 -%}
+    {%- assign product_on_sale_accent_brightness = settings.product_on_sale_accent | color_brightness -%}
+    {%- assign product_sold_out_badge_brightness = settings.product_sold_out_badge_background | color_brightness -%}
+    {%- assign product_custom_badge_brightness = settings.product_custom_badge_background | color_brightness -%}
+
+    --page-overlay: 0 0 0 / 0.4;
+    --dialog-backdrop-blur: {{ settings.dialog_backdrop_blur }}px;
+
+    /* Status colors */
+    --success-background: {{ success_background.rgb }};
+    --success-text: {{ settings.success_color.rgb }};
+    --warning-background: {{ warning_background.rgb }};
+    --warning-text: {{ settings.warning_color.rgb }};
+    --error-background: {{ error_background.rgb }};
+    --error-text: {{ settings.error_color.rgb }};
+
+    /* Product colors */
+    --on-sale-text: {{ settings.product_on_sale_accent.rgb }};
+    --on-sale-badge-background: {{ settings.product_on_sale_accent.rgb }};
+    --on-sale-badge-text: {% if product_on_sale_accent_brightness < 150 %}255 255 255{% else %}0 0 0{% endif %};
+    --sold-out-badge-background: {{ settings.product_sold_out_badge_background.rgb }};
+    --sold-out-badge-text: {% if product_sold_out_badge_brightness < 150 %}255 255 255{% else %}0 0 0{% endif %};
+    --custom-badge-background: {{ settings.product_custom_badge_background.rgb }};
+    --custom-badge-text: {% if product_custom_badge_brightness < 150 %}255 255 255{% else %}0 0 0{% endif %};
+    --star-color: {{ settings.product_rating_color.rgb }};
+  }
+
+  {%- for color_scheme in settings.color_schemes -%}
+    .color-scheme--{{ color_scheme.id }} {
+      --accent: {{ color_scheme.settings.primary_button_background.rgb }};
+      --background: {% if color_scheme.settings.background == 'rgba(0,0,0,0)' %}0 0 0 / 0{% else %}{{ color_scheme.settings.background.rgb }}{% endif %};
+      --background-gradient: {{ color_scheme.settings.background_gradient }};
+      --background-secondary: {{ color_scheme.settings.secondary_background.rgb }};
+      --has-transparent-background: {% if color_scheme.settings.background_gradient == blank and color_scheme.settings.background == 'rgba(0,0,0,0)' %}1{% else %}0{% endif %};
+      --has-filled-background: {% if color_scheme.settings.background_gradient != blank or color_scheme.settings.background != 'rgba(0,0,0,0)' %}1{% else %}0{% endif %};
+      --text-color: {{ color_scheme.settings.text_color.rgb }};
+
+      {%- if color_scheme.settings.background_gradient != blank -%}
+        --border-color: {{ color_scheme.settings.text_color.rgb }} / 0.1;
+      {%- elsif color_scheme.settings.background == 'rgba(0,0,0,0)' -%}
+        --border-color: {{ color_scheme.settings.text_color.rgb }} / 0.6;
+      {%- else -%}
+        {%- assign border_color = color_scheme.settings.text_color | color_mix: color_scheme.settings.background, 10 -%}
+        --border-color: {{ border_color.rgb }};
+      {%- endif -%}
+
+      /* Subheading colors */
+      {%- liquid
+        assign subheading_has_border = true
+        assign subheading_has_background = true
+
+        if color_scheme.settings.subheading_background == blank or color_scheme.settings.subheading_background == 'rgba(0,0,0,0)' or color_scheme.settings.subheading_background == color_scheme.settings.background
+          assign subheading_has_background = false
+        endif
+
+        if color_scheme.settings.subheading_border_color == blank or color_scheme.settings.subheading_border_color == 'rgba(0,0,0,0)'
+          assign subheading_has_border = false
+        endif
+      -%}
+
+      --subheading-background: {% if subheading_has_background %}{{ color_scheme.settings.subheading_background.rgb }}{% else %}0 0 0 / 0.0{% endif %};
+      --subheading-border: {% if subheading_has_border %}1px solid rgb({{ color_scheme.settings.subheading_border_color.rgb }}){% else %}none{% endif %};
+      --subheading-text-color: {{ color_scheme.settings.subheading_text_color.rgb }};
+      --subheading-has-padding: {% if subheading_has_border or subheading_has_background %}1{% else %}0{% endif %};
+
+      /* Heading highlight */
+      --heading-highlight-accent-color: {{ color_scheme.settings.heading_highlight_accent_color.rgb }};
+      --heading-highlight-text-color: {{ color_scheme.settings.heading_highlight_text_color.rgb }};
+
+      /* Button colors */
+      --button-background-primary: {{ color_scheme.settings.primary_button_background.rgb }};
+      --button-text-primary: {{ color_scheme.settings.primary_button_text_color.rgb }};
+
+      /* Form inputs */
+      --input-background: {% if color_scheme.settings.input_background == 'rgba(0,0,0,0)' %}0 0 0 / 0{% else %}{{ color_scheme.settings.input_background.rgb }}{% endif %};
+      --input-text-color: {{ color_scheme.settings.input_text_color.rgb }};
+      --input-text-transform: {% if settings.input_uppercase %}uppercase{% else %}none{% endif %};
+    }
+
+    {%- comment -%}
+    IMPLEMENTATION NOTE: often, we have to apply padding collapsing when two consecutive sections have the same background. This is however pretty
+    complex to do due to sections being completely independent from each other on Shopify. To do that, we actually compare each color schemes to each
+    other, calculate a MD5 hash of the background and, with the help of CSS variables, we output a CSS property that is set to 1 if the two sections
+    share the same background color. This can be then used to apply padding collapsing.
+    {%- endcomment -%}
+    {%- assign current_color_scheme_hash = color_scheme.settings.background_gradient | default: color_scheme.settings.background | md5 -%}
+
+    {%- for compare_to_color_scheme in settings.color_schemes -%}
+      {%- assign compare_to_color_scheme_hash = compare_to_color_scheme.settings.background_gradient | default: compare_to_color_scheme.settings.background | md5 -%}
+
+      {%- if current_color_scheme_hash == compare_to_color_scheme_hash -%}
+        .shopify-section:has(> .color-scheme--{{ color_scheme.id }}) + .shopify-section:has(> .color-scheme--{{ compare_to_color_scheme.id }}) {
+          --section-has-same-background-as-previous-section: 1;
+        }
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endfor -%}
+
+  {%- if settings.show_page_transition -%}
+    @view-transition {
+      navigation: auto;
+    }
+  {%- endif -%}
+</style>

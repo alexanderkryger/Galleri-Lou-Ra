@@ -1,0 +1,156 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+BUTTON COMPONENT
+----------------------------------------------------------------------------------------------------------------------
+
+Generate a button (or link styled as a button). It supports wide range of attributes that can be used to customize
+the appearance and functionality of the button.
+
+All buttons natively support a "loader" state. To show a loader, simply add the aria-busy="true" attribute to the button
+itself (or the link), and remove it once finished. The theme will automatically create the needed transitions.
+
+********************************************
+Supported variables
+********************************************
+
+* content: the content of the button
+* href: an optional link to set. If href is provided, then an "a" tag is generated, otherwise a "button"
+* size: can be "sm". If none is set, the default "base" size is used.
+* background: an optional background color to use that override the default
+* text_color: an optional text color to use that override the default
+* style: "solid", "outline" or "link". If none is set "solid" is assumed
+* stretch: if passed to true, a full width button is generated
+* type: when href is empty, can be either "button" or "submit" (default to button if none is set)
+* name: when the button is a real button, allow to set the name attribute that is submitted
+* icon: the name of an optional icon to render along the button
+* icon_position: can be "before_text" or "after_text" (default to "after_text")
+* disabled: if set to true, the button is disabled
+* form: the form ID that this button is linked to
+* external: if set to true and that a href is passed, it opens into a new window
+* aria_controls: the ID of the element controlled
+* class: extra classes to add to the button
+* focusable: if set to false, a tabindex="-1" is added to ensure the button is not focusable
+* block: an optional block to output theme editor attributes
+{%- endcomment -%}
+
+{% liquid
+  capture class_attribute
+    echo class
+
+    if style == 'link'
+      echo ' link subheading'
+    else
+      echo ' button'
+
+      if size != blank and size != 'base'
+        echo ' button--' | append: size
+      endif
+
+      if style == 'outline'
+        echo ' button--outline'
+      endif
+
+      if stretch
+        echo ' w-full'
+      endif
+    endif
+  endcapture
+
+  capture style_attribute
+    if style != 'link'
+      if style == 'outline'
+        if text_color == blank or text_color == 'rgba(0,0,0,0)'
+          echo '--button-text-color: var(--button-background-primary);'
+        else
+          echo '--button-text-color: ' | append: text_color.rgb | append: ';'
+        endif
+      else
+        if background != blank and background != 'rgba(0,0,0,0)'
+          echo '--button-background: ' | append: background.rgb | append: ';'
+        endif
+
+        if text_color != blank and text_color != 'rgba(0,0,0,0)'
+          echo '--button-text-color: ' | append: text_color.rgb | append: ';'
+        endif
+      endif
+    endif
+  endcapture
+
+  capture attributes
+    assign class_attribute = class_attribute | strip
+
+    if class_attribute != blank
+      echo ' class="' | append: class_attribute | append: '"'
+    endif
+
+    if style_attribute != blank
+      echo ' style="' | append: style_attribute | append: '"'
+    endif
+
+    if aria_controls
+      echo ' aria-controls="' | append: aria_controls | append: '"'
+    endif
+
+    if disabled
+      if href
+        echo ' role="link" aria-disabled="true"'
+      else
+        echo ' disabled'
+      endif
+    endif
+
+    if name
+      echo ' name="' | append: name | append: '"'
+    endif
+
+    if form
+      echo ' form="' | append: form | append: '"'
+    endif
+
+    if href
+      echo ' href="' | append: href | append: '"'
+    endif
+
+    if external and href != blank
+      echo ' target="_blank"'
+    endif
+
+    if focusable == false
+      echo ' tabindex="-1"'
+    endif
+  endcapture
+%}
+
+{%- if content != blank -%}
+  {%- capture button_content -%}
+    {%- if style == 'link' -%}
+      {{- content -}}
+    {%- else -%}
+      {% if icon != blank %}
+        <button-content class="button__content">
+          {%- if icon_position == 'before_text' -%}
+            {%- render 'icon' with icon -%}
+            {{- content -}}
+          {%- else -%}
+            {{- content -}}
+            {%- render 'icon' with icon -%}
+          {%- endif -%}
+        </button-content>
+      {%- else -%}
+        <button-content class="button__content" {% if settings.button_animation == 'rotation' %}rotated-text="{{ content | escape_once }}"{% elsif settings.button_animation == 'up' %}up-text="{{ content | escape_once }}"{% elsif settings.button_animation == 'glowing' %}glowing{% endif %}>
+          {{- content -}}
+        </button-content>
+      {%- endif -%}
+    {%- endif -%}
+  {%- endcapture -%}
+
+  {%- if href != blank -%}
+    <a {{ attributes }} {{ block.shopify_attributes }}>
+      {{- button_content -}}
+    </a>
+  {%- else -%}
+    <button type="{{ type | default: 'button' }}" {{ attributes }} {{ block.shopify_attributes }}>
+      {{- button_content -}}
+    </button>
+  {%- endif -%}
+{%- endif -%}

@@ -1,0 +1,231 @@
+{%- unless section.settings.hide_for_account_holders and customer -%}
+
+  {% liquid
+    assign date_format = 'day-month-year'
+
+    case localization.country.iso_code
+      when 'US'
+        assign date_format = 'month-day-year'
+      when 'CH' or 'JP' or 'KR' or 'KP' or 'TW' or 'HU' or 'MN' or 'LT' or 'BT'
+        assign date_format = 'year-month-day'
+    endcase
+
+    assign date_format = date_format | split: '-'
+  %}
+
+  <age-verifier-modal class="modal modal--age-verifier" required-age="{{ section.settings.required_age | default: 0 }}" verification-type="{{ section.settings.verification_type }}" title="{{ 'sections.age_verifier.accessibility_title' | t | escape }}" handle-editor-events>
+    <div class="age-verifier__content text-center color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+      <div class="max-w-sm mx-auto">
+        <div class="v-stack gap-12">
+          {%- if section.settings.logo != blank -%}
+            {%- capture sizes -%}{{ section.settings.logo_max_width }}px{%- endcapture -%}
+            {%- capture widths -%}{{ section.settings.logo_max_width | times: 2 | at_most: section.settings.logo.width }}, {{ section.settings.logo_max_width | times: 3 | at_most: section.settings.logo.width }}{%- endcapture -%}
+            {%- capture style -%}--image-mobile-max-width: {{ section.settings.logo_mobile_max_width }}px; --image-max-width: {{ section.settings.logo_max_width }}px{%- endcapture -%}
+
+            <span class="sr-only">{{ shop.name }}</span>
+            {%- assign logo = section.settings.logo | default: shop.brand.logo -%}
+            {{- logo | image_url: width: logo.width | image_tag: sizes: sizes, widths: widths, style: style, class: 'constrained-image justify-self-center' -}}
+          {%- else -%}
+            <p class="h7">{{ shop.name }}</p>
+          {%- endif -%}
+
+          <div class="v-stack gap-7">
+            {%- if section.settings.title != blank or section.settings.content != blank -%}
+              <div class="v-stack gap-5">
+                {%- if section.settings.title != blank -%}
+                  <p class="h6">{{ section.settings.title }}</p>
+                {%- endif -%}
+
+                {{- section.settings.content -}}
+              </div>
+
+              <hr>
+            {%- endif -%}
+
+            <div class="text-start v-stack gap-4">
+              {%- if section.settings.form_title != blank and section.settings.verification_type == 'date' -%}
+                <p class="subheading">{{ section.settings.form_title }}</p>
+              {%- endif -%}
+
+              <form class="v-stack gap-5">
+                {%- if section.settings.verification_type == 'date' -%}
+                  <div class="age-verifier__input-group">
+                    {%- for item in date_format -%}
+                      {%- capture input_placeholder_key -%}sections.age_verifier.{{ item }}.input_placeholder{%- endcapture -%}
+                      {%- capture input_label_key -%}sections.age_verifier.{{ item }}.label{%- endcapture -%}
+
+                      <div>
+                        {%- assign input_placeholder = input_placeholder_key | t -%}
+                        <label for="age-verifier-{{ item }}" class="sr-only">{{ input_label_key | t }}</label>
+                        <input id="age-verifier-{{ item }}" title="{{ input_label_key | t }}" name="age-verifier[{{ item }}]" type="text" placeholder="{{ input_placeholder }}" class="input h6 text-center" pattern="{% if item == 'year' %}\d{4}{% elsif item == 'month' %}^(0?[1-9]|1[0-2])${% else %}^[0-2]?[0-9]|3[01]${% endif %}" maxlength="{% if item == 'year' %}4{% else %}2{% endif %}" inputmode="numeric" required>
+                      </div>
+                    {%- endfor -%}
+                  </div>
+                {%- else -%}
+                  <div class="button-group">
+                    {%- render 'button', type: 'button', content: section.settings.confirm_button_label, stretch: true, class: 'age-verifier__confirm-button' -%}
+
+                    {%- render 'button', type: 'button', content: section.settings.decline_button_label, stretch: true, style: 'outline', class: 'age-verifier__decline-button' -%}
+                  </div>
+                {%- endif -%}
+
+                {%- capture banner -%}
+                  <div class="banner banner--error text-center" hidden>
+                    <div class="banner__content">
+                      {{ 'sections.age_verifier.banner_content' | t: age: section.settings.required_age }}
+                    </div>
+                  </div>
+                {%- endcapture -%}
+
+                {%- if section.settings.verification_type == 'date' -%}
+                  <div class="v-stack gap-2.5">
+                    {%- assign button_label = 'sections.age_verifier.submit' | t -%}
+                    {%- render 'button', type: 'submit', content: button_label, stretch: true, size: 'm' -%}
+
+                    {{- banner -}}
+                  </div>
+                {%- else -%}
+                  {{- banner -}}
+                {%- endif -%}
+              </form>
+
+              {%- if section.settings.disclaimer != blank -%}
+                <p class="text-sm text-subdued">{{ section.settings.disclaimer }}</p>
+              {%- endif -%}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </age-verifier-modal>
+{%- endunless -%}
+
+{% schema %}
+{
+  "name": "t:sections.age_verifier_popup.name",
+  "class": "shopify-section--age-verifier",
+  "enabled_on": {
+    "groups": ["custom.overlay"]
+  },
+  "limit": 1,
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.age_verifier_popup.show_age_verifier_info"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "checkbox",
+      "id": "hide_for_account_holders",
+      "label": "t:sections.newsletter_popup.hide_for_account_holders",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "required_age",
+      "label": "t:sections.age_verifier_popup.age",
+      "default": "18"
+    },
+    {
+      "type": "select",
+      "id": "verification_type",
+      "label": "t:sections.age_verifier_popup.verification_type",
+      "options": [
+        {
+           "value": "date",
+           "label": "t:sections.age_verifier_popup.verification_type_options.date"
+        },
+        {
+           "value": "button",
+           "label": "t:sections.age_verifier_popup.verification_type_options.button"
+        }
+      ],
+      "default": "date"
+    },
+    {
+      "type": "text",
+      "id": "confirm_button_label",
+      "label": "t:sections.age_verifier_popup.confirm_button_label",
+      "default": "Enter",
+      "visible_if": "{{ section.settings.verification_type == 'button' }}"
+    },
+    {
+      "type": "text",
+      "id": "decline_button_label",
+      "label": "t:sections.age_verifier_popup.decline_button_label",
+      "default": "Leave",
+      "visible_if": "{{ section.settings.verification_type == 'button' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.age_verifier_popup.logo_category"
+    },
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "t:global.image.image",
+      "info": "t:sections.age_verifier_popup.logo_size_recommendation"
+    },
+    {
+      "type": "range",
+      "id": "logo_max_width",
+      "min": 20,
+      "max": 300,
+      "step": 5,
+      "unit": "px",
+      "label": "t:global.image.width",
+      "default": 140
+    },
+    {
+      "type": "range",
+      "id": "logo_mobile_max_width",
+      "min": 20,
+      "max": 200,
+      "step": 5,
+      "unit": "px",
+      "label": "t:global.image.mobile_width",
+      "default": 100
+    },
+    {
+      "type": "header",
+      "content": "t:global.text.content"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "label": "t:global.text.heading",
+      "default": "Age verifier"
+    },
+    {
+      "type": "richtext",
+      "id": "content",
+      "label": "t:global.text.text",
+      "default": "<p>This website is intended for individuals 18 years and older. By entering, you confirm that you are at least 18 years of age. If you are under 18, you are not permitted to access this site.</p>"
+    },
+    {
+      "type": "text",
+      "id": "form_title",
+      "label": "t:sections.age_verifier_popup.form_title",
+      "default": "Enter your birth date"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "disclaimer",
+      "label": "t:sections.age_verifier_popup.disclaimer"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.age_verifier_popup.name",
+      "settings": {
+        "logo": "{{ shop.brand.logo }}"
+      }
+    }
+  ]
+}
+{% endschema %}

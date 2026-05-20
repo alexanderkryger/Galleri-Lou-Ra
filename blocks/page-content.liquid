@@ -1,0 +1,22 @@
+{%- if block.settings.page.content != blank -%}
+  {{- block.settings.page.content -}}
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:blocks.page.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "page",
+      "id": "page",
+      "label": "t:blocks.page.name"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:blocks.page.name"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,586 @@
+{%- comment -%}
+  Editorial Reveal Section
+  Desktop: interactive fluid mask reveal with cursor tracking.
+  Text dynamically turns white only where it overlaps the image.
+  Mobile: clean static image with white text overlay.
+  Compatible with Maestrooo Stretch theme / Shopify OS 2.0.
+{%- endcomment -%}
+
+{%- style -%}
+  #shopify-section-{{ section.id }} {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    --section-outer-spacing: 0;
+    --section-inner-spacing: 0;
+    --section-spacing-block-start: 0px;
+    --section-spacing-block-end: 0px;
+  }
+
+  .er--{{ section.id }} {
+    position: relative;
+    overflow: hidden;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: 100vw !important;
+    margin-left: calc(50% - 50vw) !important;
+    border-radius: 0 !important;
+  }
+
+  /* ── Media layer (full-bleed, outside theme wrappers) ── */
+  .er__media--{{ section.id }} {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .er__canvas--{{ section.id }} {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .er__src--{{ section.id }} {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .er__static-img--{{ section.id }} {
+    display: none;
+  }
+
+  /* ── SVG clip definition ── */
+  .er__clip-svg--{{ section.id }} {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+  }
+
+  /* ── Content layer (dark text, normal) ── */
+  .er__content-layer--{{ section.id }} {
+    position: relative;
+    z-index: 2;
+  }
+
+  .er__content-layer--{{ section.id }} > .content-box {
+    background: transparent !important;
+    border-radius: 0 !important;
+  }
+
+  /* ── White text clone (clipped to mask, above dark text) ── */
+  .er__content-white--{{ section.id }} {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    clip-path: url(#er-clip-{{ section.id }});
+    -webkit-clip-path: url(#er-clip-{{ section.id }});
+  }
+
+  .er__content-white--{{ section.id }} > .content-box {
+    background: transparent !important;
+    border-radius: 0 !important;
+  }
+
+  .er__content-white--{{ section.id }} *,
+  .er__content-white--{{ section.id }} .prose * {
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
+  }
+
+  @media screen and (min-width: 750px) {
+    .er--{{ section.id }} {
+      cursor: crosshair;
+    }
+
+    .er__static-img--{{ section.id }} {
+      display: none !important;
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .er__canvas--{{ section.id }} {
+      display: none !important;
+    }
+
+    .er__static-img--{{ section.id }} {
+      display: block;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .er__static-img--{{ section.id }} img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      border-radius: 0 !important;
+    }
+
+    /* On mobile the image fills the whole area, so white text everywhere */
+    .er__content-layer--{{ section.id }} *,
+    .er__content-layer--{{ section.id }} .prose * {
+      color: #fff !important;
+      -webkit-text-fill-color: #fff !important;
+    }
+
+    /* Hide the clip layer on mobile (not needed) */
+    .er__content-white--{{ section.id }} {
+      display: none !important;
+    }
+  }
+{%- endstyle -%}
+
+<section
+  class="er--{{ section.id }} color-scheme color-scheme--{{ section.settings.color_scheme }}"
+  id="er-{{ section.id }}"
+  data-distortion="{{ section.settings.distortion_mode }}"
+  data-reveal-size="{{ section.settings.reveal_size }}"
+>
+  {%- comment -%} ═══ Layer 0: Full-bleed media ═══ {%- endcomment -%}
+  <div class="er__media--{{ section.id }}">
+    <canvas class="er__canvas--{{ section.id }}" id="er-cvs-{{ section.id }}"></canvas>
+
+    {%- if section.settings.image != blank -%}
+      <img
+        class="er__src--{{ section.id }}"
+        id="er-img-desktop-{{ section.id }}"
+        src="{{ section.settings.image | image_url: width: 2400 }}"
+        alt="{{ section.settings.image.alt | escape }}"
+        loading="eager"
+        crossorigin="anonymous"
+      />
+    {%- endif -%}
+
+    {%- assign mobile_img = section.settings.image_mobile | default: section.settings.image -%}
+    {%- if mobile_img != blank -%}
+      <div class="er__static-img--{{ section.id }}">
+        {{
+          mobile_img
+          | image_url: width: 1200
+          | image_tag:
+              loading: 'eager',
+              sizes: '100vw',
+              widths: '400,600,800,1000,1200',
+              alt: mobile_img.alt
+        }}
+      </div>
+    {%- endif -%}
+  </div>
+
+  {%- comment -%} ═══ SVG clip path (updated by JS each frame) ═══ {%- endcomment -%}
+  <svg class="er__clip-svg--{{ section.id }}" aria-hidden="true">
+    <defs>
+      <clipPath id="er-clip-{{ section.id }}" clipPathUnits="userSpaceOnUse">
+        <path id="er-clip-path-{{ section.id }}" d="" />
+      </clipPath>
+    </defs>
+  </svg>
+
+  {%- comment -%} ═══ Layer 2: Normal text (dark color from theme) ═══ {%- endcomment -%}
+  <div class="er__content-layer--{{ section.id }}" id="er-content-{{ section.id }}">
+    <div class="content-box min-h-{{ section.settings.image_size }}">
+      <div class="{{ section.settings.mobile_content_position }} {{ section.settings.desktop_content_position }}" style="max-width: {{ section.settings.content_max_width }}px; position: relative; z-index: 2">
+        <div class="prose prose-justify-{{ section.settings.mobile_content_position | split: '-' | last }} sm:prose-justify-{{ section.settings.desktop_content_position | split: '-' | last }}">
+          {%- content_for 'blocks' -%}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {%- comment -%} ═══ Layer 3: White text clone (clipped to mask) ═══ {%- endcomment -%}
+  <div class="er__content-white--{{ section.id }}" id="er-content-white-{{ section.id }}" aria-hidden="true"></div>
+</section>
+
+<script>
+(function () {
+  'use strict';
+
+  var ID = '{{ section.id }}';
+  var isTouch = matchMedia('(pointer: coarse)').matches;
+
+  /* ── Clone content for white text overlay (desktop only) ── */
+  if (!isTouch) {
+    var srcContent = document.getElementById('er-content-' + ID);
+    var whiteLayer = document.getElementById('er-content-white-' + ID);
+    if (srcContent && whiteLayer) {
+      whiteLayer.innerHTML = srcContent.innerHTML;
+    }
+  }
+
+  /* ── Skip canvas interaction on touch ── */
+  if (isTouch) return;
+
+  window.__erRaf = window.__erRaf || {};
+  if (window.__erRaf[ID]) cancelAnimationFrame(window.__erRaf[ID]);
+
+  var section   = document.getElementById('er-' + ID);
+  var canvas    = document.getElementById('er-cvs-' + ID);
+  var img       = document.getElementById('er-img-desktop-' + ID);
+  var clipPathEl = document.getElementById('er-clip-path-' + ID);
+  if (!section || !canvas || !img || !clipPathEl) return;
+
+  var ctx = canvas.getContext('2d');
+  var offCvs = document.createElement('canvas');
+  var oc = offCvs.getContext('2d');
+
+  var MODE = section.dataset.distortion || 'fbm';
+  var REVEAL_SIZE = parseInt(section.dataset.revealSize, 10) || 350;
+  var OFFSET_X = 700;
+
+  var LERP_POS = 0.05, LERP_VEL = 0.07, BLOB_PTS = 300, BLUR_MAIN = 4;
+  var FRINGE_RE = 8, FRINGE_BL = 5, FRINGE_BS = 10;
+
+  var w = 0, h = 0, dpr = 1;
+  var tgtX = 0, tgtY = 0, curX = 0, curY = 0;
+  var sVelX = 0, sVelY = 0, prevX = 0, prevY = 0;
+  var dirX = 0, dirY = 0;
+  var time = 0, alive = true;
+
+  function hash(x, y) { var v = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return v - Math.floor(v); }
+  function sstep(t) { return t * t * (3 - 2 * t); }
+  function noise2d(x, y) {
+    var ix = Math.floor(x), iy = Math.floor(y), fx = sstep(x - ix), fy = sstep(y - iy);
+    var a = hash(ix, iy), b = hash(ix + 1, iy), c = hash(ix, iy + 1), d = hash(ix + 1, iy + 1);
+    return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+  }
+
+  function resize() {
+    var rect = section.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = rect.width; h = rect.height;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    offCvs.width = canvas.width; offCvs.height = canvas.height;
+    if (!curX && !curY) { tgtX = curX = prevX = w * 0.58; tgtY = curY = prevY = h * 0.40; }
+  }
+
+  /* ── Compute blob points (reused for canvas + SVG clip) ── */
+  function computeBlob(cx, cy, baseR, dx, dy, speedPx, t) {
+    var speedN = speedPx / baseR;
+    var pxN = (cx - w * 0.5) / (w * 0.5);
+    var pyN = (cy - h * 0.5) / (h * 0.5);
+    var edgeDist = Math.sqrt(pxN * pxN + pyN * pyN);
+    var edgeAngle = Math.atan2(pyN, pxN);
+    var edgeStrength = sstep(Math.min(edgeDist / 1.2, 1.0));
+
+    var velAngle = Math.atan2(dy, dx);
+    var velT = Math.min(speedN / 3.5, 1.0);
+    var velEase = velT * velT * (3 - 2 * velT);
+
+    var velWeight = Math.min(1, speedN * 0.5);
+    var blendAngle;
+    if (velWeight > 0.01) {
+      var posVx = Math.cos(edgeAngle) * edgeStrength * (1 - velWeight);
+      var posVy = Math.sin(edgeAngle) * edgeStrength * (1 - velWeight);
+      var velVx = Math.cos(velAngle) * velEase * velWeight;
+      var velVy = Math.sin(velAngle) * velEase * velWeight;
+      blendAngle = Math.atan2(posVy + velVy, posVx + velVx);
+    } else {
+      blendAngle = edgeAngle;
+    }
+
+    var totalStretch = Math.max(edgeStrength * 0.55, velEase);
+    var pts = [];
+
+    for (var i = 0; i <= BLOB_PTS; i++) {
+      var a = (i / BLOB_PTS) * Math.PI * 2;
+      var cosD = Math.cos(a - blendAngle);
+      var sinD = Math.sin(a - blendAngle);
+
+      var stretchFwd = 1 + totalStretch * 3.5;
+      var compressSide = 1 / (1 + totalStretch * 0.45);
+      var rE = baseR / Math.sqrt(
+        (cosD * cosD) / (stretchFwd * stretchFwd) +
+        (sinD * sinD) / (compressSide * compressSide)
+      );
+
+      var trailRaw = (-cosD + 1) * 0.5;
+      var rr = rE * (1 - Math.pow(trailRaw, 1.2 + totalStretch * 0.8) * totalStretch * 0.92);
+
+      var lead = Math.max(0, cosD);
+      rr *= 1 + lead * lead * totalStretch * 0.18;
+      rr *= 1 + Math.cos(a - Math.atan2(pyN, pxN)) * edgeStrength * 0.12;
+
+      var breathAmp = 0.04 * (1 - velEase * 0.7);
+      rr *= 1
+        + Math.sin(a * 2 + t * 0.4) * breathAmp * 0.6
+        + Math.sin(a * 3 - t * 0.3 + 1.5) * breathAmp * 0.3
+        + Math.sin(a * 5 + t * 0.22 + 3.1) * breathAmp * 0.1;
+
+      if (MODE === 'noise') {
+        rr *= 1 + (noise2d(a * 2.2 + pxN * 2 + t * 0.15, pyN * 3 + t * 0.1) - 0.5) * 0.08 * (1 - totalStretch * 0.4);
+      } else {
+        var fs = a * 1.5 + pxN * 2 + t * 0.12;
+        rr *= 1 + (noise2d(fs * 0.6, pyN * 2.5 + t * 0.08) - 0.5) * 0.05 * (1 - totalStretch * 0.4);
+      }
+
+      pts.push({ x: cx + Math.cos(a) * rr, y: cy + Math.sin(a) * rr });
+    }
+    return pts;
+  }
+
+  /* ── Draw blob path on a canvas context from precomputed points ── */
+  function drawBlobFromPts(c, pts) {
+    c.beginPath();
+    c.moveTo(pts[0].x, pts[0].y);
+    for (var i = 1; i < pts.length; i++) c.lineTo(pts[i].x, pts[i].y);
+    c.closePath();
+  }
+
+  /* ── Update SVG clipPath from points ── */
+  function updateClipPath(pts) {
+    var d = 'M' + pts[0].x.toFixed(1) + ' ' + pts[0].y.toFixed(1);
+    for (var i = 1; i < pts.length; i += 3) {
+      d += 'L' + pts[i].x.toFixed(1) + ' ' + pts[i].y.toFixed(1);
+    }
+    d += 'Z';
+    clipPathEl.setAttribute('d', d);
+  }
+
+  function drawMasked(imgX, imgY, imgW, imgH, blobPts, blur, alpha, tint) {
+    oc.setTransform(dpr, 0, 0, dpr, 0, 0);
+    oc.clearRect(0, 0, w, h);
+    oc.globalCompositeOperation = 'source-over'; oc.filter = 'none'; oc.globalAlpha = 1;
+    oc.drawImage(img, imgX, imgY, imgW, imgH);
+    if (tint) { oc.globalCompositeOperation = 'source-atop'; oc.fillStyle = tint; oc.fillRect(0, 0, w, h); }
+    oc.globalCompositeOperation = 'destination-in';
+    oc.filter = 'blur(' + blur + 'px)';
+    drawBlobFromPts(oc, blobPts);
+    oc.fillStyle = '#fff'; oc.fill();
+    oc.filter = 'none'; oc.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(offCvs, 0, 0, offCvs.width, offCvs.height, 0, 0, w, h);
+    ctx.globalAlpha = 1;
+  }
+
+  function render() {
+    if (!alive) { window.__erRaf[ID] = requestAnimationFrame(render); return; }
+
+    curX += (tgtX - curX) * LERP_POS;
+    curY += (tgtY - curY) * LERP_POS;
+    var vx = curX - prevX, vy = curY - prevY;
+    sVelX += (vx - sVelX) * LERP_VEL;
+    sVelY += (vy - sVelY) * LERP_VEL;
+    dirX += (sVelX - dirX) * 0.035;
+    dirY += (sVelY - dirY) * 0.035;
+    prevX = curX; prevY = curY;
+    time += 0.016;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    if (!img.complete || !img.naturalWidth) { window.__erRaf[ID] = requestAnimationFrame(render); return; }
+
+    var cx = curX, cy = curY, baseR = REVEAL_SIZE;
+    var shVx = sVelX * 0.65 + dirX * 0.35;
+    var shVy = sVelY * 0.65 + dirY * 0.35;
+    var speed = Math.sqrt(shVx * shVx + shVy * shVy);
+    var va = Math.atan2(shVy, shVx);
+
+    var iw = img.naturalWidth, ih = img.naturalHeight;
+    var sc = Math.max((w + OFFSET_X) / iw, h / ih);
+    var sw = iw * sc, sh = ih * sc;
+    var ix = ((w + OFFSET_X) - sw) * 0.5 - OFFSET_X, iy = (h - sh) * 0.5;
+
+    var fs = FRINGE_BS + Math.min(18, speed * 1.5);
+    var wdx = Math.cos(va) * fs, wdy = Math.sin(va) * fs;
+
+    /* ── Compute blobs for each layer ── */
+    var mainPts  = computeBlob(cx, cy, baseR, shVx, shVy, speed, time);
+    var warmOPts = computeBlob(cx + wdx * .25, cy + wdy * .25, baseR + FRINGE_RE + speed * .12, shVx, shVy, speed, time);
+    var warmIPts = computeBlob(cx + wdx * .14, cy + wdy * .14, baseR + FRINGE_RE * .5 + speed * .06, shVx, shVy, speed, time);
+    var coolOPts = computeBlob(cx - wdx * .22, cy - wdy * .22, baseR + FRINGE_RE + speed * .12, shVx, shVy, speed, time);
+    var coolIPts = computeBlob(cx - wdx * .12, cy - wdy * .12, baseR + FRINGE_RE * .5 + speed * .06, shVx, shVy, speed, time);
+    var pdx = Math.cos(va + Math.PI * .5) * fs * .15, pdy = Math.sin(va + Math.PI * .5) * fs * .15;
+    var greenPts = computeBlob(cx + pdx * .6, cy + pdy * .6, baseR + FRINGE_RE * .3, shVx, shVy, speed, time);
+
+    /* ── Draw chromatic fringe + main image ── */
+    drawMasked(ix + wdx * .4, iy + wdy * .4, sw, sh, warmOPts, FRINGE_BL, .55 + Math.min(.25, speed * .02), 'rgba(255,120,0,.85)');
+    drawMasked(ix + wdx * .22, iy + wdy * .22, sw, sh, warmIPts, FRINGE_BL * .7, .35 + Math.min(.15, speed * .01), 'rgba(255,40,0,.7)');
+    drawMasked(ix - wdx * .35, iy - wdy * .35, sw, sh, coolOPts, FRINGE_BL, .50 + Math.min(.25, speed * .02), 'rgba(0,140,255,.80)');
+    drawMasked(ix - wdx * .18, iy - wdy * .18, sw, sh, coolIPts, FRINGE_BL * .7, .30 + Math.min(.15, speed * .01), 'rgba(0,60,255,.65)');
+    drawMasked(ix + pdx, iy + pdy, sw, sh, greenPts, FRINGE_BL * .6, .20 + Math.min(.1, speed * .008), 'rgba(0,220,80,.55)');
+    drawMasked(ix, iy, sw, sh, mainPts, BLUR_MAIN, 1, null);
+
+    /* ── Update SVG clipPath for white text knockout ── */
+    /* Use a slightly expanded blob so white text appears at the visible image edge */
+    var clipPts = computeBlob(cx, cy, baseR + 6, shVx, shVy, speed, time);
+    updateClipPath(clipPts);
+
+    window.__erRaf[ID] = requestAnimationFrame(render);
+  }
+
+  section.addEventListener('pointermove', function (e) {
+    var rect = section.getBoundingClientRect();
+    tgtX = e.clientX - rect.left; tgtY = e.clientY - rect.top;
+  });
+  section.addEventListener('pointerleave', function () { tgtX = w * 0.58; tgtY = h * 0.40; });
+
+  var obs = new IntersectionObserver(function (entries) { alive = entries[0].isIntersecting; }, { threshold: 0.05 });
+  obs.observe(section);
+
+  function init() { resize(); render(); }
+  if (img.complete && img.naturalWidth) init();
+  else img.addEventListener('load', init);
+
+  var rt;
+  window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(resize, 120); });
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Editorial Reveal",
+  "tag": "section",
+  "class": "editorial-reveal-section full-bleed",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Images"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Desktop image"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_mobile",
+      "label": "Mobile image",
+      "info": "Optional. Falls back to the desktop image if empty."
+    },
+    {
+      "type": "select",
+      "id": "image_size",
+      "label": "Section height",
+      "options": [
+        { "value": "sm", "label": "Small" },
+        { "value": "md", "label": "Medium" },
+        { "value": "lg", "label": "Large" },
+        { "value": "fill", "label": "Full screen" }
+      ],
+      "default": "fill"
+    },
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "range",
+      "id": "content_max_width",
+      "label": "Content maximum width",
+      "min": 400,
+      "max": 1400,
+      "step": 20,
+      "unit": "px",
+      "default": 1000
+    },
+    {
+      "type": "select",
+      "id": "mobile_content_position",
+      "label": "Mobile content position",
+      "options": [
+        { "value": "place-self-start", "label": "Top left" },
+        { "value": "place-self-start-center", "label": "Top center" },
+        { "value": "place-self-start-end", "label": "Top right" },
+        { "value": "place-self-center-start", "label": "Middle left" },
+        { "value": "place-self-center", "label": "Middle center" },
+        { "value": "place-self-center-end", "label": "Middle right" },
+        { "value": "place-self-end-start", "label": "Bottom left" },
+        { "value": "place-self-end-center", "label": "Bottom center" },
+        { "value": "place-self-end", "label": "Bottom right" }
+      ],
+      "default": "place-self-end-start"
+    },
+    {
+      "type": "select",
+      "id": "desktop_content_position",
+      "label": "Desktop content position",
+      "options": [
+        { "value": "sm:place-self-start", "label": "Top left" },
+        { "value": "sm:place-self-start-center", "label": "Top center" },
+        { "value": "sm:place-self-start-end", "label": "Top right" },
+        { "value": "sm:place-self-center-start", "label": "Middle left" },
+        { "value": "sm:place-self-center", "label": "Middle center" },
+        { "value": "sm:place-self-center-end", "label": "Middle right" },
+        { "value": "sm:place-self-end-start", "label": "Bottom left" },
+        { "value": "sm:place-self-end-center", "label": "Bottom center" },
+        { "value": "sm:place-self-end", "label": "Bottom right" }
+      ],
+      "default": "sm:place-self-end-start"
+    },
+    {
+      "type": "header",
+      "content": "Mask effect (desktop)"
+    },
+    {
+      "type": "select",
+      "id": "distortion_mode",
+      "label": "Distortion mode",
+      "options": [
+        { "value": "fbm", "label": "FBM (smooth organic)" },
+        { "value": "noise", "label": "Noise (grainy)" }
+      ],
+      "default": "fbm"
+    },
+    {
+      "type": "range",
+      "id": "reveal_size",
+      "label": "Reveal size",
+      "min": 150,
+      "max": 600,
+      "step": 10,
+      "default": 350,
+      "unit": "px"
+    },
+    {
+      "type": "header",
+      "content": "Style"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "scheme-1"
+    }
+  ],
+  "blocks": [
+    { "type": "subheading" },
+    { "type": "heading" },
+    { "type": "icon" },
+    { "type": "rich-text" },
+    { "type": "button-group" },
+    { "type": "button" }
+  ],
+  "presets": [
+    {
+      "name": "Editorial Reveal",
+      "blocks": [
+        {
+          "type": "subheading"
+        },
+        {
+          "type": "heading",
+          "settings": {
+            "text": "Explore what's possible",
+            "heading_size": "h1"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,298 @@
+{%- if section.blocks.size > 0 -%}
+  {%- if section.settings.layout == 'reveal' -%}
+    <style>
+      @media screen and (min-width: 1000px) {
+        #shopify-section-{{ section.id }} .section-spacing {
+          min-height: calc(100svh - var(--sticky-area-height, 0px));
+        }
+      }
+    </style>
+  {%- endif -%}
+
+  <div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+    {%- comment -%}
+    --------------------------------------------------------------------------------------------------------------------------------
+    DESKTOP LAYOUT
+    --------------------------------------------------------------------------------------------------------------------------------
+    {%- endcomment -%}
+
+    {%- if section.settings.layout == 'reveal' -%}
+      <div class="container">
+        <div class="section-spacing grid content-center">
+          <div class="section-stack justify-items-center">
+            {% render 'subheading', content: section.settings.title %}
+
+            <featured-links class="featured-links">
+              <custom-cursor class="custom-cursor" for-links>
+                <span class="circle-button circle-button--xl circle-button--blurred">
+                  {%- render 'icon' with 'big-arrow-right', direction_aware: true, width: 14 -%}
+                </span>
+              </custom-cursor>
+    
+              <featured-links-image-cursor class="custom-cursor featured-links__image-cursor" for-links>
+                <div class="featured-links__cursor-image-list">
+                  {%- liquid
+                    for block in section.blocks
+                      assign data_block_id = block.id
+                      assign class_attribute = 'featured-links__cursor-image'
+    
+                      unless forloop.first
+                        # Other images are lazyloaded and visually hidden by default
+                        assign class_attribute = class_attribute | append: ' opacity-0'
+                      endunless
+    
+                      if block.settings.image != blank
+                        echo block.settings.image | image_url: width: block.settings.image.width | image_tag: class: class_attribute, sizes: '350px', widths: '350,700,1050', data-block-id: data_block_id
+                      endif
+                    endfor
+                  -%}
+                </div>
+              </featured-links-image-cursor>
+
+              <div class="{% if section.settings.show_dividers %}divide-y{% endif %}">
+                {%- for block in section.blocks -%}
+                  <a href="{{ block.settings.url | default: '#' }}" data-block-id="{{ block.id }}" class="big-link {% unless section.settings.show_dividers %}big-link--tight{% endunless %} big-link--opacity">
+                    <div class="v-stack gap-2">
+                      {%- render 'heading', content: block.settings.title, style: block.settings.heading_tag -%}
+    
+                      {%- if block.settings.content != blank -%}
+                        <p>{{ block.settings.content }}</p>
+                      {%- endif -%}
+                    </div>
+                  </a>
+                {%- endfor -%}
+              </div>
+            </featured-links>
+          </div>
+        </div>
+      </div>
+    {%- else -%}
+      <div class="container">
+        <div class="section-spacing">
+          <div class="section-stack">
+            {%- render 'subheading', content: section.settings.title -%}
+
+            <div class="divide-y border-t border-b">
+              {%- for block in section.blocks -%}
+                {%- liquid
+                  assign class = ''
+                  assign style = ''
+
+                  if section.settings.change_colors_on_hover
+                  assign class = 'big-link--colors'
+
+                    if block.settings.background_hover == 'rgba(0,0,0,0)' or block.settings.background_hover == blank
+                    assign style = '--big-link-background-hover: ' | append: section.settings.color_scheme.settings.text_color.rgb | append: '; --big-link-text-color-hover: ' | append: section.settings.color_scheme.settings.background.rgb
+                    else
+                      assign style = '--big-link-background-hover: ' | append: block.settings.background_hover.rgb | append: '; --big-link-text-color-hover: ' | append: block.settings.text_color_hover.rgb
+                    endif
+                  else
+                    assign class = 'big-link--opacity'
+                  endif  
+                -%}
+
+                <a href="{{ block.settings.url | default: '#' }}" class="big-link {{ class }}" style="{{ style }}">
+                  {%- if block.settings.image != blank -%}
+                    {{- block.settings.image | image_url: width: block.settings.image.width | image_tag: loading: 'lazy', sizes: '(max-width: 699px) 80px, 120px', widths: '80,120,160,240', class: 'big-link__image' -}}
+                  {%- endif -%}
+
+                  <div class="v-stack gap-2">
+                    {%- render 'heading', content: block.settings.title, style: block.settings.heading_tag -%}
+
+                    {%- if block.settings.content != blank -%}
+                      <p>{{ block.settings.content }}</p>
+                    {%- endif -%}
+                  </div>
+
+                  {%- if section.settings.change_colors_on_hover -%}
+                    {%- render 'icon' with 'big-arrow-right', direction_aware: true, class: 'big-link__arrow sm-max:hidden' -%}
+                  {%- endif -%}
+                </a>
+              {%- endfor -%}
+            </div>
+          </div>
+        </div>
+      </div>
+    {%- endif -%}
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.featured_links.name",
+  "class": "shopify-section--featured-links",
+  "tag": "section",
+  "disabled_on": {
+    "groups": ["header", "custom.overlay"]
+  },
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "label": "t:global.text.subheading",
+      "default": "Our categories"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.featured_links.blocks_category"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "t:sections.featured_links.layout",
+      "options": [
+        {
+          "value": "list",
+          "label": "t:sections.featured_links.layout_options.list"
+        },
+        {
+          "value": "reveal",
+          "label": "t:sections.featured_links.layout_options.reveal"
+        }
+      ],
+      "default": "reveal"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_dividers",
+      "label": "t:sections.featured_links.show_dividers",
+      "default": true,
+      "visible_if": "{{ section.settings.layout != 'list' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "change_colors_on_hover",
+      "label": "t:sections.featured_links.change_colors_on_hover",
+      "default": false,
+      "visible_if": "{{ section.settings.layout != 'reveal' }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "link",
+      "name": "t:sections.featured_links.blocks.link.name",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:global.image.image",
+          "info": "t:sections.featured_links.blocks.link.image_size_recommendation"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "title",
+          "label": "t:global.text.heading",
+          "default": "Title"
+        },
+        {
+          "type": "text",
+          "id": "content",
+          "label": "t:global.text.content"
+        },
+        {
+          "type": "url",
+          "id": "url",
+          "label": "t:global.text.link_url"
+        },
+        {
+          "type": "select",
+          "id": "heading_tag",
+          "label": "t:global.text.heading_size",
+          "options": [
+            {
+              "value": "display-xl",
+              "label": "Display XL"
+            },
+            {
+              "value": "display-l",
+              "label": "Display L"
+            },
+            {
+              "value": "display-m",
+              "label": "Display M"
+            },
+            {
+              "value": "h1",
+              "label": "XX-Large"
+            },
+            {
+              "value": "h2",
+              "label": "X-Large"
+            },
+            {
+              "value": "h3",
+              "label": "Large"
+            },
+            {
+              "value": "h4",
+              "label": "Medium"
+            },
+            {
+              "value": "h5",
+              "label": "Small"
+            },
+            {
+              "value": "h6",
+              "label": "X-Small"
+            },
+            {
+              "value": "h7",
+              "label": "XX-Small"
+            }
+          ],
+          "default": "h4"
+        },
+        {
+          "type": "header",
+          "content": "t:global.colors.category",
+          "visible_if": "{{ section.settings.layout != 'reveal' }}"
+        },
+        {
+          "type": "color",
+          "id": "background_hover",
+          "label": "t:sections.featured_links.blocks.link.background_hover",
+          "visible_if": "{{ section.settings.layout != 'reveal' }}"
+        },
+        {
+          "type": "color",
+          "id": "text_color_hover",
+          "label": "t:sections.featured_links.blocks.link.text_color_hover",
+          "visible_if": "{{ section.settings.layout != 'reveal' }}"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.featured_links.name",
+      "category": "t:global.categories.media",
+      "blocks": [
+        {
+          "type": "link",
+          "settings": {
+            "title": "Category 1"
+          }
+        },
+        {
+          "type": "link",
+          "settings": {
+            "title": "Category 2"
+          }
+        },
+        {
+          "type": "link",
+          "settings": {
+            "title": "Category 3"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

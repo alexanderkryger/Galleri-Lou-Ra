@@ -1,0 +1,53 @@
+{%- if block.settings.text != blank -%}
+  <div class="{% if block.settings.content_width != 'full' %}max-w-{{ block.settings.content_width }}{% endif %}" {{ block.shopify_attributes }}>
+    {{- block.settings.text -}}
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:blocks.rich_text.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "t:global.text.content",
+      "default": "<p>Write some text about your products or your brand.</p>"
+    },
+    {
+      "type": "select",
+      "id": "content_width",
+      "label": "t:global.sizes.content_width",
+      "options": [
+        {
+          "value": "xs",
+          "label": "t:global.sizes.x_small"
+        },
+        {
+          "value": "sm",
+          "label": "t:global.sizes.small"
+        },
+        {
+          "value": "md",
+          "label": "t:global.sizes.medium"
+        },
+        {
+          "value": "lg",
+          "label": "t:global.sizes.large"
+        },
+        {
+          "value": "full",
+          "label": "t:global.sizes.full_width"
+        }
+      ],
+      "default": "sm"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:blocks.rich_text.name"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,45 @@
+{%- if block.settings.video != blank -%}
+  <figure {{ block.shopify_attributes }}>
+    {%- render 'media' with block.settings.video, mobile_media: block.settings.mobile_video, autoplay: block.settings.autoplay, loop: block.settings.autoplay, playsinline: block.settings.autoplay, block: block -%}
+
+    {%- if block.settings.caption != blank -%}
+      <figcaption>{{ block.settings.caption }}</figcaption>
+    {%- endif -%}
+  </figure>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:blocks.video.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "autoplay",
+      "label": "t:global.video.autoplay",
+      "info": "t:global.video.autoplay_info",
+      "default": true
+    },
+    {
+      "type": "video",
+      "id": "video",
+      "label": "t:global.video.video"
+    },
+    {
+      "type": "video",
+      "id": "mobile_video",
+      "label": "t:global.video.mobile_video"
+    },
+    {
+      "type": "text",
+      "id": "caption",
+      "label": "t:global.video.caption"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:blocks.video.name"
+    }
+  ]
+}
+{% endschema %}

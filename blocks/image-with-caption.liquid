@@ -1,0 +1,60 @@
+{%- if block.settings.image != blank -%}
+  <figure {{ block.shopify_attributes }}>
+    {%- render 'media' with block.settings.image, mobile_media: block.settings.mobile_image, max_width: block.settings.max_width, mobile_max_width: block.settings.mobile_max_width, preload: false, block: block -%}
+
+    {%- if block.settings.caption != blank -%}
+      <figcaption>{{ block.settings.caption }}</figcaption>
+    {%- endif -%}
+  </figure>
+{%- elsif request.visual_preview_mode or request.design_mode -%}
+  <figure {{ block.shopify_attributes }}>
+    {{- 'collection-apparel-1' | placeholder_svg_tag: 'placeholder-svg' -}}
+  </figure>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:blocks.image.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:global.image.image"
+    },
+    {
+      "type": "image_picker",
+      "id": "mobile_image",
+      "label": "t:global.image.mobile_image"
+    },
+    {
+      "type": "text",
+      "id": "caption",
+      "label": "t:global.image.caption"
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "min": 20,
+      "max": 100,
+      "unit": "%",
+      "label": "t:global.image.maximum_width",
+      "default": 100
+    },
+    {
+      "type": "range",
+      "id": "mobile_max_width",
+      "min": 20,
+      "max": 100,
+      "unit": "%",
+      "label": "t:global.image.mobile_maximum_width",
+      "default": 100
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:blocks.image.name"
+    }
+  ]
+}
+{% endschema %}

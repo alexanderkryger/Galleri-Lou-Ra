@@ -1,0 +1,65 @@
+<div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+  <div class="section-spacing section-spacing--tight">
+    <div class="container">
+      <div class="max-w-{{ section.settings.content_width }} mx-auto">
+        <div class="section-stack">
+          {%- if section.settings.show_title -%}
+            <h1 class="h2 text-center">{{ page.title }}</h1>
+          {%- endif -%}
+
+          {%- if page.content != empty %}
+            <div class="prose">
+              {{- page.content -}}
+            </div>
+          {%- endif -%}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.main_page.name",
+  "class": "shopify-section--main-page",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_title",
+      "label": "t:sections.main_page.show_title",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "content_width",
+      "label": "t:global.sizes.content_width",
+      "options": [
+        {
+          "value": "sm",
+          "label": "t:global.sizes.small"
+        },
+        {
+          "value": "md",
+          "label": "t:global.sizes.medium"
+        },
+        {
+          "value": "lg",
+          "label": "t:global.sizes.large"
+        },
+        {
+          "value": "full",
+          "label": "t:global.sizes.full_width"
+        }
+      ],
+      "default": "md"
+    }
+  ]
+}
+{% endschema %}

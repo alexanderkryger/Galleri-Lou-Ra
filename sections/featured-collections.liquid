@@ -1,0 +1,347 @@
+{%- if section.blocks.size > 0 -%}
+  <style>
+    #shopify-section-{{ section.id }} {
+      --product-list-column-count: {{ section.settings.products_per_row_mobile | times: 1 }};
+    }
+  
+    @media screen and (min-width: 700px) {
+      #shopify-section-{{ section.id }} {
+        --product-list-column-count: 2;
+      }
+    }
+  
+    @media screen and (min-width: 1000px) {
+      #shopify-section-{{ section.id }} {
+        --product-list-column-count: {{ section.settings.products_per_row_desktop }};
+      }
+    }
+  </style>
+
+  <div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+    <div class="container section-spacing">
+      {%- liquid
+        assign has_at_least_one_description = false
+
+        for block in section.blocks
+          if block.settings.content != blank
+            assign has_at_least_one_description = true
+            break
+          endif
+        endfor
+      -%}
+
+      <div class="v-stack {% if has_at_least_one_description %}gap-4{% else %}gap-8 sm:gap-10{% endif %}">
+        <div class="featured-collections-header">
+          <featured-collections-tabs role="tablist" class="featured-collections-header__tab-list {% if section.settings.tabs_alignment == 'center' %}justify-center{% endif %} scroll-area bleed">
+            <template shadowrootmode="open">
+              <slot part="tab-list" name="tab"></slot>
+            </template>
+
+            {%- for block in section.blocks -%}
+              {%- capture tab_title -%}
+                {%- if section.settings.tabs_icon == 'arrow' -%}
+                  {%- render 'icon' with 'big-arrow-right', stroke_width: 3, direction_aware: true -%}
+                {%- endif -%}
+
+                <span {% if section.blocks.size == 1 and section.settings.tabs_alignment == 'center' %}class="text-center"{% endif %}>{{- block.settings.title | default: block.settings.collection.title | default: 'Collection' -}}</span>
+              {%- endcapture -%}
+
+              {%- if section.blocks.size > 1-%}
+                <button class="{% if section.settings.tabs_icon != 'none' %}text-indent text-indent--{{ section.settings.tabs_icon }}{% endif %} h4 sm:h3" role="tab" slot="tab" aria-controls="collection-{{ block.id }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}" {{ block.shopify_attributes }}>
+                  {{- tab_title -}}
+                </button>
+              {%- else -%}
+                <div class="{% if section.settings.tabs_icon != 'none' %}text-indent text-indent--{{ section.settings.tabs_icon }}{% endif %} h4 sm:h3" role="tab" slot="tab" aria-selected="true" {{ block.shopify_attributes }}>
+                  {{- tab_title -}}
+                </div>
+              {%- endif -%}
+            {%- endfor -%}
+          </featured-collections-tabs>
+
+          {%- if section.settings.show_view_all_button and has_at_least_one_description == false and section.settings.tabs_alignment != 'center' -%}
+            {%- assign view_all_button = 'sections.featured_collections.view_all' | t -%}
+            {%- render 'button', content: view_all_button, href: section.blocks.first.settings.link, style: 'outline', class: 'md-max:hidden' -%}
+          {%- endif -%}
+        </div>
+
+        {%- liquid
+          assign product_list_class = ''
+  
+          if section.settings.stack_products_mobile == false and section.settings.stack_products_desktop == false
+            assign product_list_class = 'product-list--carousel scroll-area'
+          elsif section.settings.stack_products_mobile == false
+            assign product_list_class = 'sm-max:product-list--carousel scroll-area'
+          elsif section.settings.stack_products_desktop == false
+            assign product_list_class = 'sm:product-list--carousel scroll-area'
+          endif
+        -%}
+
+        <div class="featured-collections-products">
+          {%- for block in section.blocks -%}
+            <div id="collection-{{ block.id }}" data-url="{{ block.settings.link | escape }}" class="v-stack {% if section.settings.tabs_alignment == 'center' %}justify-items-center{% endif %} gap-8 sm:gap-12" {% unless forloop.first %}hidden{% endunless %}>
+              {%- liquid
+                assign show_content = false  
+
+                if section.settings.tabs_alignment == 'center' and block.settings.content != blank
+                  assign show_content = true
+                elsif section.settings.tabs_alignment == 'start' and has_at_least_one_description
+                  assign show_content = true
+                endif
+              -%}
+
+              {%- if show_content or section.settings.show_view_all_button -%}
+                {%- assign view_all_button = 'sections.featured_collections.view_all' | t -%}
+
+                {%- if section.settings.tabs_alignment == 'center' -%}
+                  <div class="prose prose-justify-center max-w-md">
+                    {{- block.settings.content -}}
+
+                    {%- if section.settings.show_view_all_button -%}
+                      {%- render 'button', content: view_all_button, href: block.settings.link, style: 'outline' -%}
+                    {%- endif -%}
+                  </div>
+                {%- else -%}
+                  <div class="h-stack wrap gap-6 justify-between">
+                    {%- assign button_class = 'md:hidden' -%}
+
+                    {%- if has_at_least_one_description -%}
+                      {%- assign button_class = '' -%}
+                    {%- endif -%}
+
+                    {%- if block.settings.content != blank -%}
+                      <div class="prose max-w-md">
+                        {{- block.settings.content -}}
+                      </div>
+                    {%- endif -%}
+
+                    {%- if section.settings.show_view_all_button -%}
+                      {%- render 'button', content: view_all_button, href: block.settings.link, style: 'outline', class: button_class -%}
+                    {%- endif -%}
+                  </div>
+                {%- endif -%}
+              {%- endif -%}
+
+              {%- assign product_list_id = 'product-list-' | append: block.id -%}
+
+              <div class="w-full {% unless section.settings.stack_products_desktop %}floating-controls-container{% endunless %}">
+                {%- unless section.settings.stack_products_desktop -%}
+                  <carousel-prev-button class="floating-controls__control" aria-controls="{{ product_list_id }}">
+                    <button class="circle-button circle-button--xl" disabled>
+                      <span class="sr-only">{{ 'general.accessibility.previous' | t }}</span>
+                      {%- render 'icon' with 'big-arrow-left', direction_aware: true, width: 14 -%}
+                    </button>
+                  </carousel-prev-button>
+                {%- endunless -%}
+
+                <product-list id="{{ product_list_id }}" class="product-list product-list--padded {% if section.settings.tabs_alignment == 'center' %}justify-center{% endif %} full-bleed {{ product_list_class }}">
+                  {%- capture sizes -%}(max-width: 699px) calc(100vw / {{ section.settings.products_per_row_mobile }} - 40px), (max-width: 999px) calc(100vw / {{ 3 | at_most: section.settings.products_per_row_desktop }} - 64px), calc((100vw - 96px) / {{ section.settings.products_per_row_desktop }}){%- endcapture -%}
+
+                  {%- liquid
+                    if block.settings.collection != blank
+                      paginate block.settings.collection.products by block.settings.products_count
+                        for product in block.settings.collection.products limit: block.settings.products_count
+                          render 'product-card', product: product, reveal: true, sizes: sizes, position: forloop.index, block: block
+                        endfor
+                      endpaginate
+                    else
+                      for i in (1..block.settings.products_count)
+                        render 'product-card-placeholder', loop_index: i
+                      endfor
+                    endif
+                  -%}
+                </product-list>
+
+                {%- unless section.settings.stack_products_desktop -%}
+                  <carousel-next-button class="floating-controls__control" aria-controls="{{ product_list_id }}">
+                    <button class="circle-button circle-button--xl">
+                      <span class="sr-only">{{ 'general.accessibility.next' | t }}</span>
+                      {%- render 'icon' with 'big-arrow-right', direction_aware: true, width: 14 -%}
+                    </button>
+                  </carousel-next-button>
+                {%- endunless -%}
+              </div>
+
+              {%- if section.settings.show_scrolling_bar and section.settings.stack_products_desktop == false or section.settings.stack_products_mobile == false -%}
+                {%- liquid
+                  assign progress_bar_class = ''
+
+                  if section.settings.stack_products_desktop == false and section.settings.stack_products_mobile
+                    assign progress_bar_class = 'sm-max:hidden'
+                  elsif section.settings.stack_products_mobile == false and section.settings.stack_products_desktop
+                    assign progress_bar_class = 'sm:hidden'
+                  endif
+                -%}
+
+                <progress-bar track-scroll-target="{{ product_list_id }}" class="progress-bar progress-bar--limit-width {{ progress_bar_class }}"></progress-bar>
+              {%- endif -%}
+            </div>
+          {%- endfor -%}
+        </div>
+      </div>
+    </div>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.featured_collections.name",
+  "class": "shopify-section--featured-collections",
+  "max_blocks": 4,
+  "tag": "section",
+  "disabled_on": {
+    "templates": ["password"],
+    "groups": ["header", "custom.overlay"]
+  },
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "checkbox",
+      "id": "stack_products_mobile",
+      "label": "t:global.product_list.stack_products_mobile",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "stack_products_desktop",
+      "label": "t:global.product_list.stack_products_desktop",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "products_per_row_mobile",
+      "label": "t:global.product_list.products_per_row_mobile",
+      "options": [
+        {
+          "value": "1",
+          "label": "1"
+        },
+        {
+          "value": "2",
+          "label": "2"
+        }
+      ],
+      "default": "2"
+    },
+    {
+      "type": "range",
+      "id": "products_per_row_desktop",
+      "min": 2,
+      "max": 5,
+      "label": "t:global.product_list.products_per_row_desktop",
+      "default": 4
+    },
+    {
+      "type": "select",
+      "id": "tabs_alignment",
+      "label": "t:sections.featured_collections.tabs_alignment",
+      "options": [
+        {
+          "value": "start",
+          "label": "t:global.position.left"
+        },
+        {
+          "value": "center",
+          "label": "t:global.position.center"
+        }
+      ],
+      "default": "start"
+    },
+    {
+      "type": "select",
+      "id": "tabs_icon",
+      "label": "t:sections.featured_collections.tabs_icon",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:sections.featured_collections.tabs_icon_options.none"
+        },
+        {
+          "value": "arrow",
+          "label": "t:sections.featured_collections.tabs_icon_options.arrow"
+        },
+        {
+          "value": "circle",
+          "label": "t:sections.featured_collections.tabs_icon_options.circle"
+        },
+        {
+          "value": "square",
+          "label": "t:sections.featured_collections.tabs_icon_options.square"
+        },
+        {
+          "value": "diamond",
+          "label": "t:sections.featured_collections.tabs_icon_options.diamond"
+        }
+      ],
+      "default": "arrow"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_view_all_button",
+      "label": "t:sections.featured_collections.show_view_all_button",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_scrolling_bar",
+      "label": "t:global.product_list.show_scrolling_bar",
+      "info": "t:global.product_list.show_scrolling_bar_info",
+      "default": true
+    }
+  ],
+  "blocks": [
+    {
+      "type": "collection",
+      "name": "t:sections.featured_collections.blocks.collection.name",
+      "settings": [
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "t:sections.featured_collections.blocks.collection.collection"
+        },
+        {
+          "type": "range",
+          "id": "products_count",
+          "min": 2,
+          "max": 50,
+          "label": "t:global.product_list.products_to_show",
+          "default": 8
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "t:global.text.title",
+          "default": "{{ block.settings.collection.title }}"
+        },
+        {
+          "type": "richtext",
+          "id": "content",
+          "label": "t:global.text.content",
+          "default": "<p>{{ block.settings.collection.description }}</p>"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "t:global.text.link_url",
+          "default": "{{ block.settings.collection.url }}"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.featured_collections.name",
+      "category": "t:global.categories.collections",
+      "blocks": [
+        {
+          "type": "collection"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

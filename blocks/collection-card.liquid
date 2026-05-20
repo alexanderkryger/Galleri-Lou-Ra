@@ -1,0 +1,188 @@
+{%- liquid
+  assign collection = block.settings.collection
+  assign color_scheme = block.settings.color_scheme
+
+  if section.settings.content_position == 'outside'
+    assign color_scheme = section.settings.color_scheme
+  endif
+-%}
+
+<a class="collection-list__item @container/content-box snap-center color-scheme color-scheme--{{ color_scheme.id }}" href="{{ collection.url | default: '#' }}" {{ block.shopify_attributes }}>
+  {%- capture image -%}
+    {%- liquid
+      assign collection_image = block.settings.image | default: collection.featured_image
+
+      if collection_image != blank
+        assign desktop_size = 100.0 | divided_by: section.settings.items_per_row | ceil
+
+        if section.settings.stack_on_mobile
+          assign sizes_attribute = '(max-width: 699px) 100vw, (max-width: 999px) 50vw, ' | append: desktop_size | append: 'vw'
+        else
+          assign sizes_attribute = '(max-width: 699px) 78vw, (max-width: 999px) 37vw, ' | append: desktop_size | append: 'vw'
+        endif
+
+        assign class_name = 'zoom-image group-hover:zoom'
+
+        if section.settings.content_position == 'outside'
+          assign class_name = class_name | append: ' min-h-' | append: section.settings.image_size
+        endif
+
+        echo collection_image | image_url: width: collection_image.width | image_tag: sizes: sizes_attribute, widths: '200,300,400,600,800,1000,1200,1400,1600,1800', class: class_name
+      else
+        echo 'collection-apparel-1' | placeholder_svg_tag: 'size-full zoom-image group-hover:zoom'
+      endif
+    -%}
+  {%- endcapture -%}
+
+  {%- capture content -%}
+    {%- if block.settings.title != blank or block.settings.button_text != blank -%}
+      <div class="prose prose-justify-center place-self-center prose--compact">
+        {%- render 'heading', content: block.settings.title, style: block.settings.heading_tag, instant: true, balance_text: true -%}
+        {%- render 'button', content: block.settings.button_text, style: block.settings.button_style -%}
+      </div>
+    {%- endif -%}
+  {%- endcapture -%}
+  
+  {%- if section.settings.content_position == 'inside' -%}
+    <div class="content-box min-h-{{ section.settings.image_size }} overflow-clip group">
+      <div class="content-box__background-media with-overlay" style="--overlay: {{ block.settings.overlay_color.rgb }} / {{ block.settings.overlay_opacity | divided_by: 100.0 }};">
+        {{- image -}}
+      </div>
+
+      {%- if content != blank -%}
+        {{- content -}}
+      {%- endif -%}
+    </div>
+  {%- else -%}
+    <div class="v-stack group gap-4 sm:gap-5">
+      <div class="content-box min-h-{{ section.settings.image_size }} overflow-clip">
+        <div class="content-box__background-media">
+          {{- image -}}
+        </div>
+      </div>
+
+      {{- content -}}
+    </div>
+  {%- endif -%}
+</a>
+
+{% schema %}
+{
+  "name": "t:blocks.collection_card.name",
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-3",
+      "visible_if": "{{ section.settings.content_position == 'inside' }}"
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "t:blocks.collection_card.collection"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:global.image.image",
+      "info": "t:blocks.collection_card.image_size_recommendation"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "label": "t:global.text.heading"
+    },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "label": "t:global.text.heading_size",
+      "options": [
+        {
+          "value": "h1",
+          "label": "XX-Large"
+        },
+        {
+          "value": "h2",
+          "label": "X-Large"
+        },
+        {
+          "value": "h3",
+          "label": "Large"
+        },
+        {
+          "value": "h4",
+          "label": "Medium"
+        },
+        {
+          "value": "h5",
+          "label": "Small"
+        },
+        {
+          "value": "h6",
+          "label": "X-Small"
+        },
+        {
+          "value": "h7",
+          "label": "XX-Small"
+        }
+      ],
+      "default": "h4"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "t:global.text.button_text"
+    },
+    {
+      "type": "select",
+      "id": "button_style",
+      "label": "t:global.text.button_style",
+      "options": [
+        {
+          "value": "outline",
+          "label": "t:global.text.button_style_options.outline"
+        },
+        {
+          "value": "solid",
+          "label": "t:global.text.button_style_options.solid"
+        },
+        {
+          "value": "link",
+          "label": "t:global.text.button_style_options.link"
+        }
+      ],
+      "default": "outline"
+    },
+    {
+      "type": "header",
+      "content": "t:global.colors.category"
+    },
+    {
+      "type": "color",
+      "id": "overlay_color",
+      "label": "t:global.colors.image_overlay_color",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "label": "t:global.colors.image_overlay_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 20
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:blocks.collection_card.name",
+      "settings": {
+        "image": "{{ closest.collection.image }}",
+        "title": "{{ closest.collection.title }}"
+      }
+    }
+  ]
+}
+{% endschema %}

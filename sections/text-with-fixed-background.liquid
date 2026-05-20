@@ -1,0 +1,347 @@
+<div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }} clip-inset">
+  <div class="text-with-fixed-background">
+    <div class="content-box min-h-fill">
+      <div class="content-box__background-media with-overlay" style="--overlay: {{ section.settings.overlay_color.rgb }} / {{ section.settings.overlay_opacity | divided_by: 100.0 }}">
+        {%- if section.settings.image != blank -%}
+          {{- section.settings.image | image_url: width: section.settings.image.width | image_tag: widths: '400,500,600,800,1000,1200,1400,1600,1800,2000,2200,2400,2600,2800,3000', class: 'image-background-fixed' -}}
+        {%- else -%}
+          {{- 'hero-apparel-3' | placeholder_svg_tag: 'image-background-fixed' -}}
+        {%- endif -%}
+      </div>
+
+      <div class="placement-grid">
+        {%- for block in section.blocks -%}
+          {%- liquid
+            # If the content is centered or right aligned on desktop, we use the same on mobile
+            assign text_alignment = block.settings.content_position | split: '-' | last | split: '-' | first
+            assign text_justification = block.settings.content_position | split: '-' | last | split: '-' | last
+          -%}
+
+          {%- case block.type -%}
+            {%- when 'title' -%}
+              {%- if block.settings.subheading != blank or block.settings.title != blank -%}
+                <div class="text-with-fixed-background__title-block {% if section.blocks.size > 1 %}align-self-start{% else %}align-self-{{ text_alignment }}{% endif %} justify-self-{{ text_justification }} {{ block.settings.content_position }}" {{ block.shopify_attributes }}>
+                  <div class="prose prose-justify-{{ text_justification }} md:prose-justify-{{ block.settings.content_position | split: '-' | last }}">
+                    {%- render 'subheading', content: block.settings.subheading -%}
+                    {%- render 'heading', 
+                      content: block.settings.title, 
+                      style: block.settings.heading_tag,
+                      highlight_effect: block.settings.highlight_effect,
+                      highlight_accent_color: block.settings.highlight_accent_color,
+                      highlight_text_color: block.settings.highlight_text_color,
+                      balance_text: true 
+                    -%}
+                  </div>
+                </div>
+              {%- endif -%}
+
+            {%- when 'content' -%}
+              {%- if block.settings.title != blank or block.settings.content != blank -%}
+                <div class="text-with-fixed-background__content-block place-self-end color-scheme color-scheme--{{ block.settings.color_scheme.id }} {{ block.settings.content_position }}" {{ block.shopify_attributes }}>
+                  {%- assign position = block.settings.content_position | split: '-' | last -%}
+
+                  <div class="prose {% if position == 'end' %}md:text-start{% endif %} md:prose-justify-{{ position }}">
+                    {%- render 'heading', content: block.settings.title, style: 'h6', indent: block.settings.indent_heading -%}
+                    {{- block.settings.content -}}
+                  </div>
+                </div>
+              {%- endif -%}
+          {%- endcase -%}
+        {%- endfor -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.text_with_fixed_background.name",
+  "class": "shopify-section--text-with-fixed-background",
+  "tag": "section",
+  "disabled_on": {
+    "groups": ["header", "custom.overlay"]
+  },
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-3"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:global.image.image",
+      "info": "t:sections.text_with_fixed_background.image_size_recommendation"
+    },
+    {
+      "type": "color",
+      "id": "overlay_color",
+      "label": "t:global.colors.image_overlay_color",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "label": "t:global.colors.image_overlay_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 20
+    }
+  ],
+  "blocks": [
+    {
+      "type": "title",
+      "name": "t:sections.text_with_fixed_background.blocks.title.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "select",
+          "id": "content_position",
+          "label": "t:global.position.content_position",
+          "info": "t:sections.text_with_fixed_background.content_position_info",
+          "options": [
+            {
+              "value": "md:place-self-start",
+              "label": "t:global.position.top_left"
+            },
+            {
+              "value": "md:place-self-start-center",
+              "label": "t:global.position.top_center"
+            },
+            {
+              "value": "md:place-self-start-end",
+              "label": "t:global.position.top_right"
+            },
+            {
+              "value": "md:place-self-center-start",
+              "label": "t:global.position.middle_left"
+            },
+            {
+              "value": "md:place-self-center",
+              "label": "t:global.position.middle_center"
+            },
+            {
+              "value": "md:place-self-center-end",
+              "label": "t:global.position.middle_right"
+            },
+            {
+              "value": "md:place-self-end-start",
+              "label": "t:global.position.bottom_left"
+            },
+            {
+              "value": "md:place-self-end-center",
+              "label": "t:global.position.bottom_center"
+            },
+            {
+              "value": "md:place-self-end",
+              "label": "t:global.position.bottom_right"
+            }
+          ],
+          "default": "md:place-self-start"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "subheading",
+          "label": "t:global.text.subheading",
+          "default": "About us"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "title",
+          "label": "t:global.text.heading", 
+          "default": "Share something about your business"
+        },
+        {
+          "type": "select",
+          "id": "heading_tag",
+          "label": "t:global.text.size",
+          "options": [
+            {
+              "value": "h1",
+              "label": "XX-Large"
+            },
+            {
+              "value": "h2",
+              "label": "X-Large"
+            },
+            {
+              "value": "h3",
+              "label": "Large"
+            },
+            {
+              "value": "h4",
+              "label": "Medium"
+            },
+            {
+              "value": "h5",
+              "label": "Small"
+            },
+            {
+              "value": "h6",
+              "label": "X-Small"
+            },
+            {
+              "value": "h7",
+              "label": "XX-Small"
+            }
+          ],
+          "default": "h2"
+        },
+        {
+          "type": "header",
+          "content": "t:global.heading_effect.category",
+          "info": "t:global.heading_effect.colors_info"
+        },
+        {
+          "type": "select",
+          "id": "highlight_effect",
+          "label": "t:global.heading_effect.effect",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:global.heading_effect.effect_options.none"
+            },
+            {
+              "value": "default",
+              "label": "t:global.heading_effect.effect_options.default"
+            },
+            {
+              "value": "italic",
+              "label": "t:global.heading_effect.effect_options.italic_font_override"
+            },
+            {
+              "value": "circle",
+              "label": "t:global.heading_effect.effect_options.circle"
+            },
+            {
+              "value": "circle_pencil",
+              "label": "t:global.heading_effect.effect_options.circle_pencil"
+            },
+            {
+              "value": "underline",
+              "label": "t:global.heading_effect.effect_options.underline"
+            },
+            {
+              "value": "underline_pencil",
+              "label": "t:global.heading_effect.effect_options.underline_pencil"
+            },
+            {
+              "value": "marker",
+              "label": "t:global.heading_effect.effect_options.marker"
+            },
+            {
+              "value": "tilted_marker",
+              "label": "t:global.heading_effect.effect_options.tilted_marker"
+            }
+          ],
+          "default": "default"
+        },
+        {
+          "type": "color",
+          "id": "highlight_accent_color",
+          "label": "t:global.heading_effect.accent_color"
+        },
+        {
+          "type": "color",
+          "id": "highlight_text_color",
+          "label": "t:global.heading_effect.text_color"
+        }
+      ]
+    },
+    {
+      "type": "content",
+      "name": "t:sections.text_with_fixed_background.blocks.content.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "color_scheme",
+          "id": "color_scheme",
+          "label": "t:global.colors.scheme",
+          "default": "scheme-1"
+        },
+        {
+          "type": "select",
+          "id": "content_position",
+          "label": "t:global.position.content_position",
+          "info": "t:sections.text_with_fixed_background.content_position_info",
+          "options": [
+            {
+              "value": "md:place-self-start",
+              "label": "t:global.position.top_left"
+            },
+            {
+              "value": "md:place-self-start-center",
+              "label": "t:global.position.top_center"
+            },
+            {
+              "value": "md:place-self-start-end",
+              "label": "t:global.position.top_right"
+            },
+            {
+              "value": "md:place-self-center-start",
+              "label": "t:global.position.middle_left"
+            },
+            {
+              "value": "md:place-self-center",
+              "label": "t:global.position.middle_center"
+            },
+            {
+              "value": "md:place-self-center-end",
+              "label": "t:global.position.middle_right"
+            },
+            {
+              "value": "md:place-self-end-start",
+              "label": "t:global.position.bottom_left"
+            },
+            {
+              "value": "md:place-self-end-center",
+              "label": "t:global.position.bottom_center"
+            },
+            {
+              "value": "md:place-self-end",
+              "label": "t:global.position.bottom_right"
+            }
+          ],
+          "default": "md:place-self-end"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "title",
+          "label": "t:global.text.heading", 
+          "default": "Share something about your business"
+        },
+        {
+          "type": "richtext",
+          "id": "content",
+          "label": "t:global.text.content", 
+          "default": "<p>Give extra information to your customers about your values or your products.</p>"
+        },
+        {
+          "type": "checkbox",
+          "id": "indent_heading",
+          "label": "t:sections.text_with_fixed_background.blocks.content.indent_heading", 
+          "default": false
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.text_with_fixed_background.name",
+      "category": "t:global.categories.banners",
+      "settings": {},
+      "blocks": [
+        {
+          "type": "title"
+        },
+        {
+          "type": "content"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

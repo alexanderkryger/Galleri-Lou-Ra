@@ -1,0 +1,181 @@
+{%- if section.settings.allow_transparent_header and section.settings.background_image != blank -%}
+  <style>
+    .header {
+      --header-show-transparent-logo: 0 !important;
+      --header-transparent-header-text-color: initial;
+    }
+  </style>
+{%- endif -%}
+
+<div class="color-scheme color-scheme--{{ section.settings.content_color_scheme.id }}" {% if section.settings.allow_transparent_header and section.settings.background_image != blank %}allow-transparent-header{% endif %}>
+  <div class="section-split min-h-fill">
+    {%- comment -%}
+    ------------------------------------------------------------------------------------
+    LEFT PART (IMAGE WITH ROTATING TITLE)
+    ------------------------------------------------------------------------------------
+    {%- endcomment -%}
+
+    <div class="section-split__column section-split__column--image section-split__column--flushed">
+      <div class="content-box h-full min-h-xs color-scheme color-scheme--{{ section.settings.image_color_scheme.id }}">
+        {%- if section.settings.background_image != blank -%}
+          <div class="content-box__background-media">
+            {{- section.settings.background_image | image_url: width: section.settings.background_image.width | image_tag: sizes: '(max-width: 699px) 100vw, 50vw', widths: '200,300,400,600,800,1000,1200,1400,1600,1800,2000' -}}
+          </div>
+        {%- endif -%}
+
+        <div class="column-span-full align-self-center">
+          <marquee-text speed="0.2" direction="start-to-end" class="scrolling-content">
+            <div class="scrolling-content__item" style="font-size: var(--text-h1)">
+              <h1 class="h1">{{ 'customer.register.title' | t }}</h1>
+            </div>
+          </marquee-text>
+        </div>
+      </div>
+    </div>
+
+    {%- comment -%}
+    ------------------------------------------------------------------------------------
+    RIGHT PART (FORM)
+    ------------------------------------------------------------------------------------
+    {%- endcomment -%}
+    <div class="section-split__column align-self-center">
+      <div class="account-forms">
+        {%- for block in section.blocks -%}
+          {%- case block.type -%}
+            {%- when '@app' -%}
+              {%- render block -%}
+        
+          {%- when 'liquid' -%}
+            {%- if block.settings.liquid != blank -%}
+              <div {{ block.shopify_attributes }}>
+                {{- block.settings.liquid -}}
+              </div>
+            {%- endif -%}
+        
+          {%- when 'fields' -%}
+            <div class="v-stack gap-8 sm:gap-10" {{ block.shopify_attributes }}>
+              <p class="text-center">{{ 'customer.register.instructions' | t }}</p>
+
+              {%- form 'create_customer', class: 'form' -%}
+                <div class="fieldset">
+                  {% liquid
+                    if form.errors
+                      assign form_errors = form.errors | default_errors
+                      render 'banner', status: 'error', content: form_errors
+                    endif
+        
+                    echo '<div class="fieldset-row">'
+
+                    if request.locale.iso_code == 'ja'
+                      assign last_name_label = 'customer.register.last_name' | t
+                      render 'input', name: 'customer[last_name]', label: last_name_label, autocomplete: 'family-name', required: true
+        
+                      assign first_name_label = 'customer.register.first_name' | t
+                      render 'input', name: 'customer[first_name]', label: first_name_label, autocomplete: 'given-name', required: true
+                    else
+                      assign first_name_label = 'customer.register.first_name' | t
+                      render 'input', name: 'customer[first_name]', label: first_name_label, autocomplete: 'given-name', required: true
+        
+                      assign last_name_label = 'customer.register.last_name' | t
+                      render 'input', name: 'customer[last_name]', label: last_name_label, autocomplete: 'family-name', required: true
+                    endif
+
+                    echo '</div>'
+        
+                    assign email_label = 'customer.register.email' | t
+                    render 'input', type: 'email', name: 'customer[email]', label: email_label, autocomplete: 'email', required: true
+        
+                    assign password_label = 'customer.register.password' | t
+                    render 'input', type: 'password', name: 'customer[password]', label: password_label, minlength: 5, autocomplete: 'new-password', required: true
+        
+                    if block.settings.show_marketing_consent
+                      assign consent_label = 'customer.register.accepts_marketing' | t
+                      render 'checkbox', name: 'customer[accepts_marketing]', label: consent_label
+                    endif
+                  %}
+                </div>
+        
+                <div class="v-stack gap-3">
+                  {%- assign submit_label = 'customer.register.submit' | t -%}
+                  {%- render 'button', content: submit_label, type: 'submit' -%}
+          
+                  {%- assign login_label = 'customer.register.login' | t -%}
+                  {%- render 'button', content: login_label, href: routes.account_login_url, style: 'outline' -%}
+                </div>
+              {%- endform -%}
+            </div>
+          {%- endcase -%}
+        {%- endfor -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.main_customers_register.name",
+  "class": "shopify-section--main-customers-register",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "image_color_scheme",
+      "label": "t:sections.main_customers_register.image_color_scheme",
+      "default": "scheme-4"
+    },
+    {
+      "type": "color_scheme",
+      "id": "content_color_scheme",
+      "label": "t:sections.main_customers_register.content_color_scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "checkbox",
+      "id": "allow_transparent_header",
+      "label": "t:global.section.allow_transparent_header",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "background_image",
+      "label": "t:global.image.background_image",
+      "info": "t:sections.main_customers_register.background_image_size_recommendation"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "@app"
+    },
+    {
+      "type": "fields",
+      "name": "t:sections.main_customers_register.blocks.fields.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "richtext",
+          "id": "content",
+          "label": "t:global.text.content",
+          "default": "<p>Create a new account to join our community and get access to exclusive offers, rewards and content.</p>"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_marketing_consent",
+          "label": "t:sections.main_customers_register.blocks.fields.show_marketing_consent",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "liquid",
+      "name": "t:sections.main_customers_register.blocks.liquid.name",
+      "settings": [
+        {
+          "type": "liquid",
+          "id": "liquid",
+          "label": "t:global.code.liquid"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

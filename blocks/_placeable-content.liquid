@@ -1,0 +1,111 @@
+{%- if block.blocks.size > 0 -%}
+  <div class="placeable-content place-self-{{ block.settings.position }}">
+    <div class="prose prose-justify-{{ block.settings.position | split: '-' | last }} max-w-{{ block.settings.max_width }}">
+      {%- content_for 'blocks' -%}
+    </div>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:blocks.placeable_content.name",
+  "tag": null,
+  "blocks": [
+    { "type": "@app" },
+    { "type": "icon" },
+    { "type": "subheading" },
+    { "type": "heading" },
+    { "type": "rich-text" },
+    { "type": "button-group" },
+    { "type": "button" },
+    { "type": "liquid" }
+  ],
+  "settings": [
+    {
+      "type": "select",
+      "id": "position",
+      "label": "t:global.position.position",
+      "options": [
+        {
+          "value": "start",
+          "label": "t:global.position.top_left"
+        },
+        {
+          "value": "start-center",
+          "label": "t:global.position.top_center"
+        },
+        {
+          "value": "start-end",
+          "label": "t:global.position.top_right"
+        },
+        {
+          "value": "center-start",
+          "label": "t:global.position.middle_left"
+        },
+        {
+          "value": "center",
+          "label": "t:global.position.middle_center"
+        },
+        {
+          "value": "center-end",
+          "label": "t:global.position.middle_right"
+        },
+        {
+          "value": "end-start",
+          "label": "t:global.position.bottom_left"
+        },
+        {
+          "value": "end-center",
+          "label": "t:global.position.bottom_center"
+        },
+        {
+          "value": "end",
+          "label": "t:global.position.bottom_right"
+        }
+      ],
+      "default": "start"
+    },
+    {
+      "type": "select",
+      "id": "max_width",
+      "label": "t:global.sizes.content_width",
+      "options": [
+        {
+          "value": "full",
+          "label": "t:global.sizes.full_width"
+        },
+        {
+          "value": "xs",
+          "label": "t:global.sizes.x_small"
+        },
+        {
+          "value": "sm",
+          "label": "t:global.sizes.small"
+        },
+        {
+          "value": "md",
+          "label": "t:global.sizes.medium"
+        },
+        {
+          "value": "lg",
+          "label": "t:global.sizes.large"
+        }
+      ],
+      "default": "sm"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:blocks.placeable_content.name",
+      "blocks": [
+        {
+          "type": "heading",
+          "settings": {
+            "text": "Heading"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

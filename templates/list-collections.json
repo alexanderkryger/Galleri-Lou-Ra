@@ -1,0 +1,1 @@
+{"sections":{"main":{"type":"main-list-collections","blocks":{"collection-card":{"type":"collection-card","static":true,"settings":{"color_scheme":"scheme-3","collection":"{{ closest.collection }}","image":"{{ closest.collection.image }}","title":"{{ closest.collection.title }}"}}},"settings":{}}},"order":["main"]}

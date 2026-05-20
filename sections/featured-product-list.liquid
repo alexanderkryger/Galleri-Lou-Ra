@@ -1,0 +1,257 @@
+<style>
+  #shopify-section-{{ section.id }} {
+    --product-list-column-count: {{ section.settings.products_per_row_mobile | times: 1 }};
+  }
+
+  @media screen and (min-width: 700px) {
+    #shopify-section-{{ section.id }} {
+      --product-list-column-count: 2;
+    }
+  }
+
+  @media screen and (min-width: 1000px) {
+    #shopify-section-{{ section.id }} {
+      --product-list-column-count: {{ section.settings.products_per_row_desktop }};
+    }
+  }
+</style>
+
+<div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+  <div class="container">
+    <div class="section-spacing section-spacing--tight">
+      <div {% unless section.settings.stack_products_desktop %}class="floating-controls-container"{% endunless %}>
+        {%- assign product_list_id = 'product-list-' | append: section.id -%}
+
+        {%- liquid
+          assign product_list_class = ''
+
+          if section.settings.stack_products_mobile == false and section.settings.stack_products_desktop == false
+            assign product_list_class = 'product-list--carousel scroll-area bleed md:unbleed'
+          elsif section.settings.stack_products_mobile == false
+            assign product_list_class = 'md-max:product-list--carousel scroll-area bleed md:unbleed'
+          elsif section.settings.stack_products_desktop == false
+            assign product_list_class = 'md:product-list--carousel scroll-area'
+          endif
+        -%}
+
+        {%- unless section.settings.stack_products_desktop -%}
+          <carousel-prev-button class="floating-controls__control floating-controls__control--offset" aria-controls="{{ product_list_id }}" style="--floating-control-offset: calc((100% / {{ section.settings.products_per_row_desktop }}) + 1.25rem)">
+            <button class="circle-button circle-button--xl">
+              <span class="sr-only">{{ 'general.accessibility.previous' | t }}</span>
+              {%- render 'icon' with 'big-arrow-left', direction_aware: true, width: 14 -%}
+            </button>
+          </carousel-prev-button>
+        {%- endunless -%}
+
+        <product-list id="{{ product_list_id }}" cell-selector=".product-card" class="product-list {{ product_list_class }}">
+          <div class="product-list__intro-block color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+            <div class="@container/content-box color-scheme color-scheme--{{ section.settings.intro_color_scheme.id }}">
+              <div class="content-box min-h-full">
+                {%- if section.settings.intro_image != blank -%}
+                  <div class="content-box__background-media with-overlay" style="--overlay: {{ section.settings.intro_image_overlay.rgba }}">
+                    {{- section.settings.intro_image | image_url: width: section.settings.intro_image.width | image_tag: sizes: '(max-width: 699px) 100vw, 25vw', widths: '200,300,400,600,800,1000,1200,1400,1600,1800', class: 'size-full' -}}
+                  </div>
+                {%- endif -%}
+
+                <div class="place-self-center">
+                  <div class="prose prose-justify-center">
+                    {%- if section.settings.intro_title != blank -%}
+                      <p class="{{ section.settings.intro_title_tag }}">{{ section.settings.intro_title }}</p>
+                    {%- endif -%}
+
+                    {{- section.settings.intro_content -}}
+
+                    {%- if section.settings.intro_button_text != blank -%}
+                      {%- render 'button', content: section.settings.intro_button_text, href: section.settings.intro_button_link, style: section.settings.intro_button_style -%}
+                    {%- endif -%}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {%- capture sizes -%}(max-width: 699px) calc(100vw / {{ section.settings.products_per_row_mobile }} - 40px), (max-width: 999px) calc(100vw / {{ 3 | at_most: section.settings.products_per_row_desktop }} - 64px), calc((100vw - 96px) / {{ section.settings.products_per_row_desktop }}){%- endcapture -%}
+
+          {%- liquid
+            for product in section.settings.product_list
+              render 'product-card', product: product, reveal: true, sizes: sizes, position: forloop.index
+            else
+              for i in (1..4)
+                render 'product-card-placeholder', loop_index: i
+              endfor
+            endfor
+          -%}
+        </product-list>
+
+        {%- unless section.settings.stack_products_desktop -%}
+          <carousel-next-button class="floating-controls__control floating-controls__control--offset" aria-controls="{{ product_list_id }}">
+            <button class="circle-button circle-button--xl">
+              <span class="sr-only">{{ 'general.accessibility.next' | t }}</span>
+              {%- render 'icon' with 'big-arrow-right', direction_aware: true, width: 14 -%}
+            </button>
+          </carousel-next-button>
+        {%- endunless -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.featured_product_list.name",
+  "class": "shopify-section--featured-product-list",
+  "tag": "section",
+  "disabled_on": {
+    "templates": ["password"],
+    "groups": ["header", "custom.overlay"]
+  },
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "product_list",
+      "id": "product_list",
+      "label": "t:sections.featured_product_list.product_list"
+    },
+    {
+      "type": "checkbox",
+      "id": "stack_products_mobile",
+      "label": "t:global.product_list.stack_products_mobile",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "stack_products_desktop",
+      "label": "t:global.product_list.stack_products_desktop",
+      "default": false
+    },
+    {
+      "type": "select",
+      "id": "products_per_row_mobile",
+      "label": "t:global.product_list.products_per_row_mobile",
+      "options": [
+        {
+          "value": "1",
+          "label": "1"
+        },
+        {
+          "value": "2",
+          "label": "2"
+        }
+      ],
+      "default": "1"
+    },
+    {
+      "type": "range",
+      "id": "products_per_row_desktop",
+      "min": 2,
+      "max": 4,
+      "label": "t:global.product_list.products_per_row_desktop",
+      "default": 4
+    },
+    {
+      "type": "header",
+      "content": "t:sections.featured_product_list.intro_block_category"
+    },
+    {
+      "type": "color_scheme",
+      "id": "intro_color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-2"
+    },
+    {
+      "type": "image_picker",
+      "id": "intro_image",
+      "label": "t:global.image.image",
+      "info": "t:sections.featured_product_list.intro_image_info"
+    },
+    {
+      "type": "color",
+      "id": "intro_image_overlay",
+      "label": "t:global.colors.overlay_color",
+      "alpha": true,
+      "default": "#00000020"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "intro_title",
+      "label": "t:global.text.heading",
+      "default": "The essentials"
+    },
+    {
+      "type": "select",
+      "id": "intro_title_tag",
+      "label": "t:global.text.heading_size",
+      "options": [
+        {
+          "value": "h3",
+          "label": "Large"
+        },
+        {
+          "value": "h4",
+          "label": "Medium"
+        },
+        {
+          "value": "h5",
+          "label": "Small"
+        },
+        {
+          "value": "h6",
+          "label": "X-Small"
+        },
+        {
+          "value": "h7",
+          "label": "XX-Small"
+        }
+      ],
+      "default": "h5"
+    },
+    {
+      "type": "richtext",
+      "id": "intro_content",
+      "label": "t:global.text.content",
+      "default": "<p>Share details of your store's product selection, or share a story that speaks to your customers.</p>"
+    },
+    {
+      "type": "text",
+      "id": "intro_button_text",
+      "label": "t:global.text.link"
+    },
+    {
+      "type": "url",
+      "id": "intro_button_link",
+      "label": "t:global.text.link_url"
+    },
+    {
+      "type": "select",
+      "id": "intro_button_style",
+      "label": "t:global.text.button_style",
+      "options": [
+        {
+          "value": "outline",
+          "label": "t:global.text.button_style_options.outline"
+        },
+        {
+          "value": "solid",
+          "label": "t:global.text.button_style_options.solid"
+        },
+        {
+          "value": "link",
+          "label": "t:global.text.button_style_options.link"
+        }
+      ],
+      "default": "outline"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.featured_product_list.name",
+      "category": "t:global.categories.products"
+    }
+  ]
+}
+{% endschema %}

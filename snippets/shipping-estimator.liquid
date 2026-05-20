@@ -1,0 +1,39 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+SHIPPING ESTIMATOR COMPONENT
+---------------------------------------------------------------------------------------------------------------------
+
+This component creates a shipping estimator block.
+
+********************************************
+Supported parameters
+********************************************
+
+None
+{%- endcomment -%}
+
+<shipping-estimator class="shipping-estimator v-stack gap-5">
+  <div class="form">
+    {%- liquid
+      assign country_label = 'cart.shipping_estimator.country' | t
+      assign province_label = 'cart.shipping_estimator.province' | t
+      assign zip_label = 'cart.shipping_estimator.zip' | t
+      assign estimate_button = 'cart.shipping_estimator.estimate' | t
+
+      assign default_country = customer.default_address.country | default: localization.country.name
+    -%}
+
+    <div class="shipping-estimator__fieldset">
+      <country-selector class="contents" country="{{ default_country | escape }}">
+        {%- render 'select', label: country_label, show_label_as_block: true, options: country_option_tags, name: 'address[country]' -%}
+        {%- render 'select', label: province_label, show_label_as_block: true, name: 'address[province]' -%}
+      </country-selector>
+
+      {%- render 'input', label: zip_label, show_label_as_block: true, name: 'address[zip]', autocomplete: 'off', autocapitalize: 'characters' -%}
+    </div>
+
+    {%- render 'button', type: 'button', content: estimate_button, class: 'justify-self-start' -%}
+  </div>
+
+  <div role="region" class="shipping-estimator__results" aria-live="polite" hidden><!-- Holder for results --></div>
+</shipping-estimator>

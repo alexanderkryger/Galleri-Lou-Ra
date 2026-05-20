@@ -1,0 +1,25 @@
+{%- render 'subheading', content: block.settings.text, block: block -%}
+
+{% schema %}
+{
+  "name": "t:blocks.subheading.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:blocks.subheading.info"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "text",
+      "label": "t:global.text.text",
+      "default": "Subheading"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:blocks.subheading.name"
+    }
+  ]
+}
+{% endschema %}

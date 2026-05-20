@@ -1,0 +1,70 @@
+{%- render 'button', 
+  content: block.settings.text, 
+  href: block.settings.url,
+  style: block.settings.style,
+  background: block.settings.background,
+  text_color: block.settings.text_color,
+  external: block.settings.open_in_new_tab,
+  block: block,
+-%}
+
+{% schema %}
+{
+  "name": "t:blocks.button.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "text",
+      "id": "text",
+      "label": "t:global.text.text",
+      "default": "Button"
+    },
+    {
+      "type": "url",
+      "id": "url",
+      "label": "t:global.text.link"
+    },
+    {
+      "type": "checkbox",
+      "id": "open_in_new_tab",
+      "label": "t:global.text.open_in_new_tab",
+      "default": false
+    },
+    {
+      "type": "select",
+      "id": "style",
+      "label": "t:global.text.style",
+      "options": [
+        {
+          "value": "outline",
+          "label": "t:global.text.button_style_options.outline"
+        },
+        {
+          "value": "solid",
+          "label": "t:global.text.button_style_options.solid"
+        },
+        {
+          "value": "link",
+          "label": "t:global.text.button_style_options.link"
+        }
+      ],
+      "default": "solid"
+    },
+    {
+      "type": "color",
+      "id": "background",
+      "label": "t:global.colors.background"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "t:global.text.text"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:blocks.button.name"
+    }
+  ]
+}
+{% endschema %}

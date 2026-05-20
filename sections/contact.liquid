@@ -1,0 +1,308 @@
+{%- liquid
+  if section.settings.image == blank and section.settings.layout == 'stacked'
+    assign text_alignment = 'center'
+  else
+    assign text_alignment = 'start'
+  endif
+-%}
+
+<div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+  {%- capture section_header -%}
+    <div class="v-stack justify-items-{{ text_alignment }} gap-6 sm:gap-8">
+      {%- if section.settings.subheading != blank or section.settings.title != blank or section.settings.content != blank -%}
+        
+        <div class="prose prose-justify-{{ text_alignment }}">
+          {%- render 'subheading', content: section.settings.subheading -%}
+          {%- render 'heading', content: section.settings.title, balance_text: true, style: section.settings.heading_size, html_tag: 'h2' -%}
+
+          <div class="max-w-sm">
+            {{- section.settings.content -}}
+          </div>
+        </div>
+      {%- endif -%}
+
+      {%- if section.settings.show_social_media -%}
+        {%- render 'social-media' -%}
+      {%- endif -%}
+    </div>
+  {%- endcapture -%}
+
+  {%- capture section_main_content -%}
+
+    {%- form 'contact', class: 'form' -%}
+      {%- if form.posted_successfully? -%}
+        {%- assign content = 'contact.form.success_message' | t -%}
+        {%- render 'banner', status: 'success', content: content, text_alignment: text_alignment -%}
+      {%- endif -%}
+
+      {%- if form.errors -%}
+        {%- capture content -%}{{ form.errors.translated_fields[form.errors.first] | capitalize }} {{ form.errors.messages[form.errors.first] }}{%- endcapture -%}
+        {%- render 'banner', status: 'error', content: content, text_alignment: text_alignment -%}
+      {%- endif -%}
+
+      <div class="fieldset">
+        <div class="fieldset-row">
+          {%- assign label  = 'contact.form.name' | t -%}
+          {%- render 'input', type: 'text', name: 'contact[name]', label: label, value: customer.name, required: true, autocomplete: 'name' -%}
+
+          {%- assign label  = 'contact.form.email' | t -%}
+          {%- render 'input', type: 'email', name: 'contact[email]', label: label, value: customer.email, required: true, autocomplete: 'email' -%}
+        </div>
+
+        {%- for block in section.blocks -%}
+          {%- assign field_title = block.settings.title -%}
+
+          {%- if block.type == 'product' -%}
+            {%- assign field_title = 'general.on_boarding.product_title' | t -%}
+          {%- elsif field_title == blank -%}
+            {%- capture field_title -%}Custom field {% increment custom_field %}{%- endcapture -%}
+          {%- endif -%}
+
+          {%- capture name -%}contact[{{ field_title | escape }}]{%- endcapture -%}
+
+          {%- liquid
+            if block.type == 'text'
+              if block.settings.use_long_text
+                render 'input', name: name, label: block.settings.title, required: block.settings.required, multiline: 5
+              else
+                render 'input', type: 'text', name: name, label: block.settings.title, required: block.settings.required
+              endif
+            elsif block.type == 'dropdown' and block.settings.values != blank
+              assign values = block.settings.values | split: ','
+              render 'select', option_values: values, show_empty_value: true, name: name, label: block.settings.title, required: true
+            elsif block.type == 'product' and request.page_type == 'product'
+              render 'input', type: 'hidden', name: name, value: product.title
+            endif
+          -%}
+        {%- endfor -%}
+
+        {%- assign label = 'contact.form.message' | t -%}
+        {%- render 'input', name: 'contact[body]', label: label, multiline: 5, required: true -%}
+      </div>
+
+      <div>
+        {%- assign button_content = 'contact.form.submit' | t -%}
+        {%- render 'button', content: button_content, type: 'submit' -%}
+      </div>
+    {%- endform -%}
+  {%- endcapture -%}
+
+  {%- if section.settings.image != blank -%}
+    <div class="section-split">
+      <div class="section-split__column section-split__column--image {% unless section.settings.add_image_spacing %}section-split__column--flushed{% endunless %}">
+        {{- section.settings.image | image_url: width: section.settings.image.width | image_tag: sizes: '(max-width: 699px) 100vw, 50vw', widths: '300,400,500,600,800,1000,1200,1400,1600,1800,2000', class: 'size-full' -}}
+      </div>
+
+      <div class="section-split__column">
+        <div class="section-stack">
+          {{- section_header -}}
+          {{- section_main_content -}}
+        </div>
+      </div>
+    </div>
+  {%- else -%}
+    {%- if section.settings.layout == 'split' -%}
+      <div class="section-split">
+        <div class="section-split__column">
+          {{- section_header -}}
+        </div>
+
+        <div class="section-split__column">
+          {{- section_main_content -}}
+        </div>
+      </div>
+    {%- else -%}
+      <div class="container section-spacing">
+        <div class="section-stack max-w-md mx-auto text-center">
+          {{- section_header -}}
+          {{- section_main_content -}}
+        </div>
+      </div>
+    {%- endif -%}
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.contact.name",
+  "class": "shopify-section--contact",
+  "tag": "section",
+  "disabled_on": {
+    "groups": ["header", "custom.overlay"]
+  },
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:global.image.image",
+      "info": "t:sections.contact.image_size_recommendation"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "t:global.layout.layout",
+      "options": [
+        {
+          "value": "split",
+          "label": "t:global.layout.layout_options.split"
+        },
+        {
+          "value": "stacked",
+          "label": "t:global.layout.layout_options.stacked"
+        }
+      ],
+      "default": "stacked",
+      "visible_if": "{{ section.settings.image == blank }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_image_spacing",
+      "label": "t:sections.contact.add_image_spacing",
+      "default": false,
+      "visible_if": "{{ section.settings.image != blank or section.settings.layout == 'split' }}"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "subheading",
+      "label": "t:global.text.subheading",
+      "default": "Contact Us"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "label": "t:global.text.heading",
+      "default": "We'd love to hear from you"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "label": "t:global.text.heading_size",
+      "options": [
+        {
+          "value": "display-xl",
+          "label": "Display XL"
+        },
+        {
+          "value": "display-l",
+          "label": "Display L"
+        },
+        {
+          "value": "display-m",
+          "label": "Display M"
+        },
+        {
+          "value": "h1",
+          "label": "XX-Large"
+        },
+        {
+          "value": "h2",
+          "label": "X-Large"
+        },
+        {
+          "value": "h3",
+          "label": "Large"
+        },
+        {
+          "value": "h4",
+          "label": "Medium"
+        },
+        {
+          "value": "h5",
+          "label": "Small"
+        },
+        {
+          "value": "h6",
+          "label": "X-Small"
+        },
+        {
+          "value": "h7",
+          "label": "XX-Small"
+        }
+      ],
+      "default": "h2"
+    },
+    {
+      "type": "richtext",
+      "id": "content",
+      "label": "t:global.text.content",
+      "default": "<p>If you have any questions, please fill in this contact form, and our team will reach you back as soon as possible.</p>"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_social_media",
+      "label": "t:sections.contact.show_social_media",
+      "info": "t:sections.contact.show_social_media_info",
+      "default": true
+    }
+  ],
+  "blocks": [
+    {
+      "type": "text",
+      "name": "t:sections.contact.blocks.text.name",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "t:sections.contact.blocks.text.name_label",
+          "default": "Custom field"
+        },
+        {
+          "type": "checkbox",
+          "id": "use_long_text",
+          "label": "t:sections.contact.blocks.text.use_long_text",
+          "default": false
+        },
+        {
+          "type": "checkbox",
+          "id": "required",
+          "label": "t:sections.contact.blocks.text.required",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "dropdown",
+      "name": "t:sections.contact.blocks.dropdown.name",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "t:sections.contact.blocks.dropdown.name_label",
+          "default": "Custom field"
+        },
+        {
+          "type": "text",
+          "id": "values",
+          "label": "t:sections.contact.blocks.dropdown.values",
+          "info": "t:sections.contact.blocks.dropdown.values_info",
+          "default": "value 1, value 2, value 3"
+        }
+      ]
+    },
+    {
+      "type": "product",
+      "name": "t:sections.contact.blocks.product.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "t:sections.contact.blocks.product.info"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.contact.name",
+      "category": "t:global.categories.call_to_action",
+      "settings": {}
+    }
+  ]
+}
+{% endschema %}

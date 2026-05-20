@@ -1,0 +1,24 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+SUBHEADING COMPONENT
+----------------------------------------------------------------------------------------------------------------------
+
+This snippet generate a subheading badge, with the specified icon defined in theme settings. The subheading badge
+is typically used in section header, or inside some sections.
+
+To use only the subheading typography setting without all the badge infrastructure, use the "subheading" class only.
+
+********************************************
+Supported variables
+********************************************
+
+* content: the text content to show
+* class: extra class to add
+* block: an optional block for which outputting the attribute
+{%- endcomment -%}
+
+{%- if content != blank -%}
+  <span class="subheading subheading-badge {% if settings.subheading_icon != 'none' %}subheading-badge--with-icon subheading-badge--icon-{{ settings.subheading_icon }}{% endif %} {{ class }}" {{ block.shopify_attributes }}>
+    {{- content -}}
+  </span>
+{%- endif -%}

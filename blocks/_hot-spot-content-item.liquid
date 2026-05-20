@@ -1,0 +1,143 @@
+{%- assign popover_id = 'block-popover-' | append: block.id -%}
+
+<div id="shopify-block-{{ block.id }}" class="hot-spot">
+  <style>
+    #shopify-block-{{ block.id }} {
+      --hot-spot-mobile-horizontal-position: {{ block.settings.mobile_horizontal_position }}%;
+      --hot-spot-mobile-vertical-position: {{ block.settings.mobile_vertical_position }}%;
+      --hot-spot-desktop-horizontal-position: {{ block.settings.desktop_horizontal_position }}%;
+      --hot-spot-desktop-vertical-position: {{ block.settings.desktop_vertical_position }}%;
+    }
+  </style>
+
+  <button class="hot-spot__dot hot-spot__dot--content" aria-expanded="false" aria-controls="{{ popover_id }}">
+    <span class="sr-only">{{ 'sections.hot_spots.show_hot_spot_details' | t }}</span>
+    {%- render 'icon' with 'hot-spot-cross' -%}
+  </button>
+
+  {%- liquid
+    assign anchor_position = 'left-top'
+
+    if block.settings.desktop_horizontal_position < 50
+      assign anchor_position = anchor_position | replace: 'left', 'right'
+    endif
+
+    if block.settings.desktop_vertical_position < 50
+      assign anchor_position = anchor_position | replace: 'top', 'bottom'
+    endif
+  -%}
+
+  <x-popover id="{{ popover_id }}" class="popover popover--hot-spot color-scheme color-scheme--{{ settings.default_color_scheme.id }}" anchor-position="{{ anchor_position }}" template="simple-popover-default-template" {{ block.shopify_attributes }}>
+    <div class="prose prose-justify-{{ block.settings.text_alignment }} prose--compact">
+      {%- liquid
+        if block.settings.image != blank
+          if block.settings.round_image
+            render 'media' with block.settings.image, sizes: '150px', widths: '150,300,450', class: 'rounded-full'
+          else
+            render 'media' with block.settings.image, sizes: '320px', widths: '320,640,960'
+          endif
+        endif
+
+        render 'heading', content: block.settings.title, style: 'h5', balance_text: true instant: true
+        echo block.settings.content
+      -%}
+    </div>
+  </x-popover>
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.hot_spots.blocks.content.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "text_alignment",
+      "id": "text_alignment",
+      "label": "t:global.text.alignment",
+      "default": "center"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.hot_spots.blocks.global.desktop_category"
+    },
+    {
+      "type": "range",
+      "id": "desktop_horizontal_position",
+      "label": "t:sections.hot_spots.blocks.global.desktop_horizontal_position",
+      "min": 5,
+      "max": 95,
+      "step": 1,
+      "unit": "%",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "desktop_vertical_position",
+      "label": "t:sections.hot_spots.blocks.global.desktop_vertical_position",
+      "min": 5,
+      "max": 95,
+      "step": 1,
+      "unit": "%",
+      "default": 50
+    },
+    {
+      "type": "header",
+      "content": "t:sections.hot_spots.blocks.global.mobile_category",
+      "info": "t:sections.hot_spots.blocks.global.mobile_category_info"
+    },
+    {
+      "type": "range",
+      "id": "mobile_horizontal_position",
+      "label": "t:sections.hot_spots.blocks.global.mobile_horizontal_position",
+      "min": 5,
+      "max": 95,
+      "step": 1,
+      "unit": "%",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "mobile_vertical_position",
+      "label": "t:sections.hot_spots.blocks.global.mobile_vertical_position",
+      "min": 5,
+      "max": 95,
+      "step": 1,
+      "unit": "%",
+      "default": 50
+    },
+    {
+      "type": "header",
+      "content": "t:sections.hot_spots.blocks.content.content_category"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:global.image.image"
+    },
+    {
+      "type": "checkbox",
+      "id": "round_image",
+      "label": "t:global.image.round_image",
+      "default": false,
+      "visible_if": "{{ block.settings.image != blank }}"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "label": "t:global.text.heading",
+      "default": "Heading"
+    },
+    {
+      "type": "richtext",
+      "id": "content",
+      "label": "t:global.text.content",
+      "default": "<p>Write some text about your products or your brand.</p>"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.hot_spots.blocks.content.name"
+    }
+  ]
+}
+{% endschema %}

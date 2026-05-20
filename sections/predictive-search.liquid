@@ -1,0 +1,129 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+PREDICTIVE SEARCH
+----------------------------------------------------------------------------------------------------------------------
+
+This section is rendered by the <predictive-search> component, that renders the content of the search. It is used, for
+instance, by the header search.
+
+This component uses the predictive search (if available) or fallback to standard search if nothing is visible.
+
+********************************************
+Supported variables
+********************************************
+
+Nothing
+{%- endcomment -%}
+
+{%- liquid
+  if predictive_search.performed
+    assign query_results = predictive_search.resources.queries
+    assign product_results = predictive_search.resources.products
+    assign article_results = predictive_search.resources.articles
+    assign page_results = predictive_search.resources.pages
+    assign collection_results = predictive_search.resources.collections
+  elsif search.performed
+    assign product_results = search.results | where: 'object_type', 'product'
+    assign article_results = search.results | where: 'object_type', 'article'
+    assign page_results = search.results | where: 'object_type', 'page'
+  endif
+
+  assign total_results = query_results.size | plus: product_results.size | plus: article_results.size | plus: page_results.size | plus: collection_results.size
+-%}
+
+{%- if total_results == 0 -%}
+  <div class="predictive-search__no-results prose prose-justify-center">
+    <p class="subheading">{{ 'search.general.title' | t }}</p>
+    <p class="h5">{{ 'search.general.no_results' | t: terms: search.terms }}</p>
+
+    {%- assign new_search_label = 'search.general.reset_search' | t -%}
+    {%- render 'button', type: 'reset', form: 'predictive-search-form', content: new_search_label, style: 'outline' -%}
+  </div>
+{%- else -%}
+  {%- if query_results.size > 0 -%}
+    <ul class="predictive-search__suggestions unstyled-list scroll-area bleed">
+      {%- for query in query_results -%}
+        <li>
+          <a href="{{ query.url }}" class="link-reversed">{{ query.styled_text }}</a>
+        </li>
+      {%- endfor -%}
+    </ul>
+  {%- endif -%}
+
+  <x-tabs class="search-tabs">
+    {%- if product_results.size > 0 -%}
+      <button type="button" class="link-reversed" slot="tab">{{ 'search.general.products' | t }}</button>
+
+      <div slot="tabpanel" {% cycle 'content_visibility': '', 'hidden', 'hidden', 'hidden', 'hidden' %}>
+        <div class="predictive-search__products">
+          {%- for product in product_results limit: 10 -%}
+            {%- render 'product-card', product: product, show_badges: false, show_rating: false, show_quick_buy: false, allow_highlight: false -%}
+          {%- endfor -%}
+        </div>
+      </div>
+    {%- endif -%}
+
+    {%- if collection_results.size > 0 -%}
+      <button type="button" class="link-reversed" slot="tab">{{ 'search.general.collections' | t }}</button>
+
+      <div slot="tabpanel" {% cycle 'content_visibility': '', 'hidden', 'hidden', 'hidden', 'hidden' %}>
+        <div class="predictive-search__collections">
+          {%- for collection in collection_results limit: 10 -%}
+            <a href="{{ collection.url }}" class="predictive-search__item-result group">
+              {%- if collection.featured_image != blank -%}
+                <div class="overflow-hidden shrink-0">
+                  {{- collection.featured_image | image_url: width: collection.featured_image.width | image_tag: sizes: '200px', widths: '200,300,400,600,800,1000,1200,1400,1600,1800', class: 'zoom-image group-hover:zoom' -}}
+                </div>
+              {%- endif -%}
+
+              <p class="h6 link-reversed">{{ collection.title }}</p>
+            </a>
+          {%- endfor -%}
+        </div>
+      </div>
+    {%- endif -%}
+
+    {%- if article_results.size > 0 -%}
+      <button type="button" class="link-reversed" slot="tab">{{ 'search.general.articles' | t }}</button>
+
+      <div slot="tabpanel" {% cycle 'content_visibility': '', 'hidden', 'hidden', 'hidden', 'hidden' %}>
+        <div class="predictive-search__articles">
+          {%- for article in article_results limit: 10 -%}
+            <a href="{{ article.url }}" class="predictive-search__item-result group">
+              {%- if article.image != blank -%}
+                <div class="overflow-hidden shrink-0">
+                  {{- article.image | image_url: width: article.image.width | image_tag: sizes: '200px', widths: '200,300,400,600,800,1000,1200,1400,1600,1800', class: 'zoom-image group-hover:zoom' -}}
+                </div>
+              {%- endif -%}
+
+              <p class="h6 link-reversed">{{ article.title }}</p>
+            </a>
+          {%- endfor -%}
+        </div>
+      </div>
+    {%- endif -%}
+
+    {%- if page_results.size > 0 -%}
+      <button type="button" class="link-reversed" slot="tab">{{ 'search.general.pages' | t }}</button>
+
+      <div slot="tabpanel" {% cycle 'content_visibility': '', 'hidden', 'hidden', 'hidden', 'hidden' %}>
+        <ul class="unstyled-list divide-y border-t border-b">
+          {%- for page in page_results limit: 10 -%}
+            <li>
+              <a href="{{ page.url }}" class="predictive-search-link">
+                <span class="h7">{{- page.title -}}</span>
+                {%- render 'icon' with 'big-arrow-right', width: 10, direction_aware: true -%}
+              </a>
+            </li>
+          {%- endfor -%}
+        </ul>
+      </div>
+    {%- endif -%}
+  </x-tabs>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.predictive_search.predictive_search"
+}
+{% endschema %}

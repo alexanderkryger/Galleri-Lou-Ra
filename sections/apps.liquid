@@ -1,0 +1,63 @@
+{%- if section.blocks.size > 0 -%}
+  <div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+    <div class="{% if section.settings.add_horizontal_spacing %}container{% endif %} {% if section.settings.add_vertical_spacing %}section-spacing{% endif %}">
+      {%- content_for 'block', type: '_section-header', id: 'section-header' -%}
+
+      {%- for block in section.blocks -%}
+        {%- render block -%}
+      {%- endfor -%}
+    </div>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.apps.name",
+  "class": "shopify-section--apps",
+  "tag": "section",
+  "disabled_on": {
+    "groups": ["custom.overlay"]
+  },
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_vertical_spacing",
+      "label": "t:global.spacing.add_vertical_spacing",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "add_horizontal_spacing",
+      "label": "t:global.spacing.add_horizontal_spacing",
+      "default": true
+    }
+  ],
+  "blocks": [
+    {
+      "type": "@app"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.apps.name",
+      "blocks": [
+        {
+          "type": "_section-header",
+          "id": "section-header",
+          "static": true,
+          "settings": {
+            "title": "",
+            "content": ""
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

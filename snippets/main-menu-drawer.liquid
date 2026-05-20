@@ -1,0 +1,244 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+MAIN MENU DRAWER
+----------------------------------------------------------------------------------------------------------------------
+
+This component is used to render the primary menu drawer. It is used in the header component. It is rendered for
+mobile, and for desktop on "drawer" mode.
+
+********************************************
+Supported variables
+********************************************
+
+* primary_menu
+* secondary_menu: show secondary links after the main links
+* show_nested_menu_indicator: if true, it will show an arrow for menu with nested links
+* show_country_selector: if set to true, the country selector will be displayed at the bottom
+* show_country_name: if set to true, the country name will be displayed along the currency
+* show_country_flag: if set to true, the country flag will be displayed along the currency
+* show_locale_selector: if set to true, the locale selector will be displayed at the bottom
+* color_scheme: the color scheme to use for the menu
+{%- endcomment -%}
+
+<header-menu-drawer id="menu-drawer" class="menu-drawer color-scheme color-scheme--{{ color_scheme.id }}">
+  <template>
+    <div part="overlay"></div>
+
+    <div part="content">
+      <slot></slot>
+    </div>
+  </template>
+
+  {%- comment -%}
+  This is the main panel being open when the drawer is initially open, and also contains social media and localization selectors
+  {%- endcomment -%}
+
+  <header-menu-drawer-panel id="menu-drawer-panel-main" data-main-panel class="menu-drawer__panel">
+    <div class="menu-drawer__panel-body">
+      {%- if primary_menu.links.size > 0 -%}
+        <ul class="v-stack gap-3 faded-linklist unstyled-list">
+          {%- for link in primary_menu.links -%}
+            {%- liquid
+              assign link_title_downcase = link.title | strip | downcase
+              assign mega_menu_block = ''
+        
+              for block in section.blocks
+                assign menu_item_downcase = block.settings.menu_item | strip | downcase
+        
+                if menu_item_downcase == link_title_downcase
+                  assign mega_menu_block = block
+                  break
+                endif
+              endfor
+            -%}
+
+            <li>
+              {%- if link.levels == 0 and mega_menu_block == '' -%}
+                <a href="{{ link.url }}" class="h4 w-full">{{ link.title }}</a>
+              {%- else -%}
+                <button type="button" class="h4 text-start w-full" data-panel-toggle aria-controls="menu-drawer-panel-{{ forloop.index }}">
+                  <div class="h-stack gap-3 sm:gap-5">
+                    {{- link.title -}}
+
+                    {%- if show_nested_menu_indicator -%}
+                      {%- render 'icon' with 'big-arrow-right', class: 'shrink-0 capped-icon' -%}
+                    {%- endif -%}
+                  </div>
+                </button>
+              {%- endif -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+
+      {%- if primary_menu.links.size > 0 and secondary_menu.links.size > 0 -%}
+        <hr class="menu-drawer__separator">
+      {%- endif -%}
+
+      {%- if secondary_menu.links.size > 0 -%}
+        <ul class="v-stack gap-3 unstyled-list">
+          {%- for link in secondary_menu.links -%}
+            <li>
+              <a href="{{ link.url }}" class="subheading link-reversed" style="font-size: 14px;">{{ link.title }}</a>
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+    </div>
+
+    {%- capture main_panel_footer -%}
+      {%- capture social_media -%}
+        {%- render 'social-media' -%}
+      {%- endcapture -%}
+
+      {%- if social_media != blank -%}
+        <div class="menu-drawer__footer-item">
+          {{- social_media -}}
+        </div>
+      {%- endif -%}
+
+      {%- if show_country_selector or show_locale_selector or shop.customer_accounts_enabled -%}
+        {%- comment -%}On desktop we show language, country and account link in the header directly, so we remove it from the drawer{%- endcomment -%}
+        <div class="menu-drawer__footer-item lg:hidden">
+          <div class="h-stack justify-between">
+            {%- if show_country_selector or show_locale_selector -%}
+              <div class="h-stack gap-5">
+                {%- liquid
+                  if show_country_selector
+                    render 'localization-selector', type: 'country', show_country_name: show_country_name, show_country_flag: show_country_flag, id_prefix: 'menu-drawer'
+                  endif
+
+                  if show_locale_selector
+                    render 'localization-selector', type: 'locale', id_prefix: 'menu-drawer' 
+                  endif
+                -%}
+              </div>
+            {%- endif -%}
+
+            {%- if shop.customer_accounts_enabled -%}
+              <a href="{{ routes.account_url }}" class="h-stack gap-2.5">
+                {%- render 'icon' with 'account', mobile_width: 16, width: section.settings.desktop_icon_size -%}
+                <span class="subheading">{{- 'header.general.account' | t -}}</span>
+              </a>
+            {%- endif -%}
+          </div>
+        </div>
+      {%- endif -%}
+    {%- endcapture -%}
+
+    {%- if main_panel_footer != blank -%}
+      <div class="menu-drawer__panel-footer">
+        {{- main_panel_footer -}}
+      </div>
+    {%- endif -%}
+  </header-menu-drawer-panel>
+
+  {%- comment -%}
+  Those are the secondary panels
+  {%- endcomment -%}
+
+  {%- for link in primary_menu.links -%}
+    {%- liquid
+      assign link_title_downcase = link.title | strip | downcase
+      assign mega_menu_block = ''
+
+      for block in section.blocks
+        assign menu_item_downcase = block.settings.menu_item | strip | downcase
+
+        if menu_item_downcase == link_title_downcase
+          assign mega_menu_block = block
+          break
+        endif
+      endfor
+    -%}
+
+    {%- if link.levels > 0 or mega_menu_block != '' -%}
+      <header-menu-drawer-panel id="menu-drawer-panel-{{ forloop.index }}" class="menu-drawer__panel color-scheme color-scheme--{{ color_scheme.id }}">
+        <div class="menu-drawer__panel-body">
+          <div class="v-stack gap-5.5">
+            <button type="button" class="back-button justify-self-start" data-panel-toggle aria-controls="menu-drawer-panel-main">
+              {%- render 'icon' with 'back-arrow', direction_aware: true -%}
+              <span class="subheading">{{- 'header.general.navigation_back' | t -}}</span>
+            </button>
+
+            <div class="v-stack gap-8">
+              {%- if link.levels > 0 -%}
+                {%- if link.levels == 1 -%}
+                  <ul class="v-stack gap-2.5 unstyled-list">
+                    {%- for sub_link in link.links -%}
+                      <li>
+                        <a href="{{ sub_link.url }}" class="link-reversed">{{ sub_link.title }}</a>
+                      </li>
+                    {%- endfor -%}
+                  </ul>
+                {%- else -%}
+                  <div class="v-stack gap-8">
+                    {%- for sub_link in link.links -%}
+                      <div class="v-stack justify-items-start gap-4">
+                        <a href="{{ sub_link.url }}" class="subheading text-subdued link-reversed" style="font-size: 45px; color:#000;"> {{ sub_link.title }}</a>
+
+{%- if sub_link.links.size > 0 -%}
+  <style>
+    .sub-sub-link-image {
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 6px;
+      border-radius: 10px;
+      width: 45px;
+      height: 45px;
+    }
+    @media screen and (min-width: 750px) {
+      .sub-sub-link-image {
+        width: 70px;
+        height: 70px;
+         margin-right: 20px;
+      }
+    }
+    .sub-sub-menu-link,
+    .sub-sub-menu-link:hover {
+      text-decoration: none;
+      background-image: none;
+    }
+
+    a.subheading.text-subdued.link-reversed,
+      a.sub-sub-menu-link:hover{
+  text-decoration: none;
+      background-image: none;
+    }
+  </style>
+  <ul class="v-stack gap-2.5 unstyled-list">
+    {%- for sub_sub_link in sub_link.links -%}
+      <li>
+        <a href="{{ sub_sub_link.url }}" class="link-reversed h4 text-start w-full sub-sub-menu-link">
+          {%- if sub_sub_link.object and sub_sub_link.object.metafields.custom.menu_image != blank -%}
+            <img
+              src="{{ sub_sub_link.object.metafields.custom.menu_image | image_url: width: 140 }}"
+              alt="{{ sub_sub_link.title }}"
+              width="70"
+              height="70"
+              loading="lazy"
+              class="sub-sub-link-image"
+            >
+          {%- endif -%}
+          {{ sub_sub_link.title }}
+        </a>
+      </li>
+    {%- endfor -%}
+  </ul>
+{%- endif -%}
+                      </div>
+                    {%- endfor -%}
+                  </div>
+                {%- endif -%}
+              {%- endif -%}
+
+              {%- if mega_menu_block != blank -%}
+                {%- render 'menu-promo', block: mega_menu_block, context: 'drawer' -%}
+              {%- endif -%}
+            </div>
+          </div>
+        </div>
+      </header-menu-drawer-panel>
+    {%- endif -%}
+  {%- endfor -%}
+</header-menu-drawer>

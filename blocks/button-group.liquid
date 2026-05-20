@@ -1,0 +1,25 @@
+{%- if block.blocks.size > 0 -%}
+  <div class="button-group" {{ block.shopify_attributes }}>
+    {%- content_for 'blocks' -%}
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:blocks.button_group.name",
+  "tag": null,
+  "blocks": [
+    { "type": "button" }
+  ],
+  "presets": [
+    {
+      "name": "t:blocks.button_group.name",
+      "blocks": [
+        {
+          "type": "button"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

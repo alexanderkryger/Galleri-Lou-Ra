@@ -1,0 +1,171 @@
+{%- if section.blocks.size > 0 -%}
+  {%- if section.settings.transition_type != 'fade' -%}
+    <style>
+      #shopify-section-{{ section.id }} {
+        --slideshow-background: {{ section.settings.background.rgb }};
+      }
+    </style>
+  {%- endif -%}
+
+  <slideshow-carousel id="slideshow-{{ section.id }}" allow-swipe cell-selector=".slideshow__slide" {% if section.settings.allow_transparent_header %}allow-transparent-header{% endif %} class="slideshow" transition="{{ section.settings.transition_type }}" {% if section.settings.autoplay %}autoplay="{{ section.settings.cycle_speed }}" {% if section.settings.pause_auto_rotate_on_hover %}pause-on-hover{% endif %}{% endif %} role="region">
+    {%- content_for 'blocks' -%}
+
+    {%- if section.blocks.size > 1 -%}
+      {%- content_for 'block', type: '_slideshow-controls', id: 'slideshow-controls' -%}
+    {%- endif -%}
+  </slideshow-carousel>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.slideshow.name",
+  "class": "shopify-section--slideshow",
+  "tag": "section",
+  "max_blocks": 5,
+  "disabled_on": {
+    "groups": ["header", "custom.overlay"]
+  },
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "allow_transparent_header",
+      "label": "t:global.section.allow_transparent_header",
+      "info": "t:global.section.allow_transparent_header_info",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "image_size",
+      "label": "t:global.image.size",
+      "options": [
+        {
+          "value": "auto",
+          "label": "t:global.sizes.original_image_ratio"
+        },
+        {
+          "value": "sm",
+          "label": "t:global.sizes.small"
+        },
+        {
+          "value": "md",
+          "label": "t:global.sizes.medium"
+        },
+        {
+          "value": "lg",
+          "label": "t:global.sizes.large"
+        },
+        {
+          "value": "fill",
+          "label": "t:global.sizes.fit_screen"
+        }
+      ],
+      "info": "t:global.image.ratio_avoid_cropping_info",
+      "default": "auto"
+    },
+    {
+      "type": "select",
+      "id": "transition_type",
+      "label": "t:sections.slideshow.transition_type",
+      "options": [
+        {
+          "value": "fade",
+          "label": "t:sections.slideshow.transition_type_options.fade"
+        },
+        {
+          "value": "vertical_reveal",
+          "label": "t:sections.slideshow.transition_type_options.vertical_reveal"
+        },
+        {
+          "value": "curtain",
+          "label": "t:sections.slideshow.transition_type_options.curtain"
+        },
+        {
+          "value": "distortion",
+          "label": "t:sections.slideshow.transition_type_options.distortion"
+        },
+        {
+          "value": "perspective",
+          "label": "t:sections.slideshow.transition_type_options.perspective"
+        },
+        {
+          "value": "scale_down",
+          "label": "t:sections.slideshow.transition_type_options.scale_down"
+        }
+      ],
+      "default": "curtain"
+    },
+    {
+      "type": "checkbox",
+      "id": "autoplay",
+      "label": "t:sections.slideshow.auto_rotate_between_slides",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "pause_auto_rotate_on_hover",
+      "label": "t:sections.slideshow.pause_auto_rotate_on_hover",
+      "default": false,
+      "visible_if": "{{ section.settings.autoplay }}"
+    },
+    {
+      "type": "range",
+      "id": "cycle_speed",
+      "min": 4,
+      "max": 20,
+      "step": 1,
+      "unit": "sec",
+      "label": "t:sections.slideshow.cycle_speed",
+      "default": 6,
+      "visible_if": "{{ section.settings.autoplay }}"
+    },
+    {
+      "type": "color",
+      "id": "background",
+      "label": "t:global.colors.background",
+      "info": "t:sections.slideshow.background_info",
+      "default": "#000000"
+    },
+  ],
+  "blocks": [
+    { "type": "_slideshow-image-slide" },
+    { "type": "_slideshow-video-slide" }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.slideshow.name",
+      "category": "t:global.categories.banners",
+      "blocks": [
+        {
+          "type": "_slideshow-controls",
+          "id": "slideshow-controls",
+          "static": true
+        },
+        {
+          "type": "_slideshow-image-slide",
+          "blocks": [
+            {
+              "type": "heading",
+              "settings": {
+                "text": "Slide 1",
+                "heading_size": "h1"
+              }
+            }
+          ]
+        },
+        {
+          "type": "_slideshow-image-slide",
+          "blocks": [
+            {
+              "type": "heading",
+              "settings": {
+                "text": "Slide 2",
+                "heading_size": "h1"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

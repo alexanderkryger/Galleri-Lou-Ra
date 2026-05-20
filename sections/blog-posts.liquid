@@ -1,0 +1,474 @@
+{%- if section.blocks.size > 0 -%}
+  {%- liquid
+    assign blog_posts_to_render = 0
+
+    for block in section.blocks
+      if block.type == 'blog'
+        assign clamped_count = block.settings.blog.articles_count | default: 3 | at_most: block.settings.posts_count
+        assign blog_posts_to_render = blog_posts_to_render | plus: clamped_count
+      else
+        if block.settings.article != blank
+          assign blog_posts_to_render = blog_posts_to_render | plus: 1
+        endif
+      endif
+    endfor
+  -%}
+
+  <style>
+    #shopify-section-{{ section.id }} {
+      {%- if section.settings.mobile_layout == 'grid' -%}
+        --blog-post-list-grid: auto / minmax(0, 1fr);
+      {%- else -%}
+        --blog-post-list-grid: auto / {% if blog_posts_to_render == 1 %}minmax(0, 1fr){% else %}auto-flow 73vw {% if section.settings.separator_style == 'border' %}1px{% endif %}{% endif %};
+      {%- endif -%}
+
+      --blog-post-list-gap: {% if section.settings.separator_style == 'none' and section.settings.mobile_layout != 'grid' %}0{% else %}1.6rem 1.5rem{% endif %};
+      --blog-post-card-padding-inline: {% if section.settings.separator_style == 'none' %}0 var(--container-gutter){% else %}0{% endif %};
+    }
+
+    @media screen and (min-width: 700px) {
+      #shopify-section-{{ section.id }} {
+        {%- if section.settings.mobile_layout == 'grid' -%}
+          --blog-post-list-grid: auto / minmax(0, 1fr);
+        {%- else -%}
+          --blog-post-list-grid: auto / {% if blog_posts_to_render == 1 %}minmax(0, 1fr){% else %}auto-flow 60vw {% if section.settings.separator_style == 'border' %}1px{% endif %}{% endif %};
+        {%- endif -%}
+      }
+    }
+
+    @media screen and (min-width: 1000px) {
+      #shopify-section-{{ section.id }} {
+        --blog-post-list-gap: {% if section.settings.separator_style == 'none' %}0{% else %}3rem var(--container-gutter){% endif %};
+
+        {%- if section.settings.desktop_layout == 'grid' -%}
+          --blog-post-list-grid: auto / repeat(2, minmax(0, 1fr));
+        {%- else -%}
+          {% if section.settings.separator_style == 'border' %}
+            --blog-post-list-grid: auto / {% if blog_posts_to_render <= 3 %}repeat({{ blog_posts_to_render | minus: 1 }}, minmax(0, 1fr) 1px) minmax(0, 1fr){% else %}auto-flow max(375px, 25vw) 1px{% endif %};
+          {% else %}
+            --blog-post-list-grid: auto / {% if blog_posts_to_render <= 3 or blog_posts_to_render <= 4 and section.settings.separator_style == 'none' %}repeat({{ blog_posts_to_render | at_least: 2 }}, minmax(0, 1fr)){% else %}auto-flow max(375px, 25vw){% endif %};
+          {% endif %}
+        {%- endif -%}
+      }
+    }
+  </style>
+
+  <div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+    <div class="container section-spacing">
+      <div class="section-stack">
+        {%- if section.settings.title != blank or section.settings.button_text != blank -%}
+          {%- if section.settings.scrolling_title -%}
+            <h2 class="{{ section.settings.heading_tag }}">
+              <marquee-text speed="0.3" direction="start-to-end" class="scrolling-content bleed">
+                <span class="scrolling-content__item" style="font-size: var(--text-{{ section.settings.heading_tag }})">
+                  <span class="scrolling-content__text">
+                    {%- render 'heading', content: section.settings.title, balance_text: true, style: section.settings.heading_tag, html_tag: 'span', instant: true -%}
+                  </span>
+
+                  {%- if section.settings.scrolling_title_separator != 'none' -%}
+                    <span class="shape shape--{{ section.settings.scrolling_title_separator }}" style="font-size: var(--text-{{ section.settings.heading_tag }})" aria-hidden="true"></span>
+                  {%- endif -%}
+                </span>
+              </marquee-text>
+            </h2>
+          {%- else -%}
+            <div class="section-header justify-between">
+              {%- render 'heading', content: section.settings.title, indent: section.settings.scrolling_title_separator, style: section.settings.heading_tag, html_tag: 'h2' -%}
+  
+              {%- if section.settings.button_text != blank -%}
+                {%- render 'button', content: section.settings.button_text, href: section.settings.button_link, style: section.settings.button_style, class: 'align-self-center sm-max:hidden' -%}
+              {%- endif -%}
+            </div>
+          {%- endif -%}
+        {%- endif -%}
+
+        {%- capture blog_posts_content -%}
+          {%- liquid
+            assign sizes = '(max-width: 699px) 73vw, (max-width: 999px) 60vw, 25vw'
+            assign show_horizontal_card = false
+            assign first_iteration = true
+
+            if section.settings.desktop_layout == 'grid'
+              assign show_horizontal_card = true
+            endif
+
+            for block in section.blocks
+              case block.type
+                when 'blog'
+                  for article in block.settings.blog.articles limit: block.settings.posts_count
+                    unless first_iteration or section.settings.separator_style != 'border'
+                      if section.settings.mobile_layout == 'carousel' and section.settings.desktop_layout == 'carousel'
+                        echo '<hr class="horizontal-separator">'
+                      elsif section.settings.mobile_layout == 'carousel' and section.settings.desktop_layout == 'grid'
+                        echo '<hr class="horizontal-separator md:hidden">'
+                      elsif section.settings.desktop_layout == 'carousel'
+                        echo '<hr class="horizontal-separator md-max:hidden">'
+                      endif
+                    endunless
+
+                    render 'blog-post-card', article: article, horizontal: show_horizontal_card, heading_size: section.settings.blog_post_card_heading_size, show_excerpt: section.settings.show_excerpt, show_date: section.settings.show_date, show_category: section.settings.show_category, sizes: sizes, position: forloop.index
+                    
+                    assign first_iteration = false
+                  else
+                    for i in (1..3)
+                      unless first_iteration or section.settings.separator_style != 'border'
+                        if section.settings.mobile_layout == 'carousel' and section.settings.desktop_layout == 'carousel'
+                          echo '<hr class="horizontal-separator">'
+                        elsif section.settings.mobile_layout == 'carousel' and section.settings.desktop_layout == 'grid'
+                          echo '<hr class="horizontal-separator md:hidden">'
+                        elsif section.settings.desktop_layout == 'carousel'
+                          echo '<hr class="horizontal-separator md-max:hidden">'
+                        endif
+                      endunless
+
+                      assign placeholder_image = 'blog-apparel-' | append: i
+                      render 'blog-post-card', placeholder_image: placeholder_image, horizontal: show_horizontal_card, heading_size: section.settings.blog_post_card_heading_size, show_excerpt: section.settings.show_excerpt, show_date: section.settings.show_date, show_category: section.settings.show_category, sizes: sizes
+
+                      assign first_iteration = false
+                    endfor
+                  endfor
+        
+                when 'article'
+                  if block.settings.article != blank
+                    unless first_iteration or section.settings.separator_style != 'border'
+                      if section.settings.mobile_layout == 'carousel' and section.settings.desktop_layout == 'carousel'
+                        echo '<hr class="horizontal-separator">'
+                      elsif section.settings.mobile_layout == 'carousel' and section.settings.desktop_layout == 'grid'
+                        echo '<hr class="horizontal-separator md:hidden">'
+                      elsif section.settings.desktop_layout == 'carousel'
+                        echo '<hr class="horizontal-separator md-max:hidden">'
+                      endif
+                    endunless
+
+                    render 'blog-post-card', article: block.settings.article, horizontal: show_horizontal_card, heading_size: section.settings.blog_post_card_heading_size, show_excerpt: section.settings.show_excerpt, show_date: section.settings.show_date, show_category: section.settings.show_category, sizes: sizes, block: block, position: forloop.index
+
+                    assign first_iteration = false
+                  endif
+              endcase
+            endfor
+          -%}
+        {%- endcapture -%}
+
+        {%- if section.settings.desktop_layout == 'carousel' -%}
+          <div class="floating-controls-container">
+            <carousel-prev-button class="floating-controls__control" aria-controls="blog-post-carousel-{{ section.id }}">
+              <button disabled class="circle-button circle-button--xl">
+                <span class="sr-only">{{ 'general.accessibility.previous' | t }}</span>
+                {%- render 'icon' with 'big-arrow-left', direction_aware: true, width: 14 -%}
+              </button>
+            </carousel-prev-button>
+
+            <blog-post-list cell-selector=".blog-post-card" id="blog-post-carousel-{{ section.id }}" allow-drag class="blog-post-list scroll-area bleed">
+              {{- blog_posts_content -}}
+            </blog-post-list>
+
+            <carousel-next-button class="floating-controls__control" aria-controls="blog-post-carousel-{{ section.id }}">
+              <button class="circle-button circle-button--xl">
+                <span class="sr-only">{{ 'general.accessibility.next' | t }}</span>
+                {%- render 'icon' with 'big-arrow-right', direction_aware: true, width: 14 -%}
+              </button>
+            </carousel-next-button>
+          </div>
+        {%- else -%}
+          <blog-post-list cell-selector=".blog-post-card" class="blog-post-list scroll-area {% if section.settings.mobile_layout == 'carousel' %}bleed md:unbleed{% endif %} {% if section.settings.separator_style == 'border' %}blog-post-list--with-horizontal-separator{% endif %}">
+            {{- blog_posts_content -}}
+          </blog-post-list>
+        {%- endif -%}
+
+        {%- liquid
+          if section.settings.scrolling_title
+            assign button_class = 'justify-self-center sm-max:w-full'
+          else
+            if section.settings.button_style == 'link'
+              assign button_class = 'justify-self-start sm:hidden'
+            else
+              assign button_class = 'sm:hidden sm-max:w-full'
+            endif
+          endif
+          
+          render 'button', content: section.settings.button_text, href: section.settings.button_link, style: section.settings.button_style, class: button_class
+        -%}
+      </div>
+    </div>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.blog_posts.name",
+  "class": "shopify-section--blog-posts",
+  "tag": "section",
+  "disabled_on": {
+    "groups": ["header", "custom.overlay"]
+  },
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "select",
+      "id": "mobile_layout",
+      "label": "t:global.layout.mobile_layout",
+      "options": [
+        {
+          "value": "grid",
+          "label": "t:global.layout.layout_options.grid"
+        },
+        {
+          "value": "carousel",
+          "label": "t:global.layout.layout_options.carousel"
+        }
+      ],
+      "default": "carousel"
+    },
+    {
+      "type": "select",
+      "id": "desktop_layout",
+      "label": "t:global.layout.desktop_layout",
+      "options": [
+        {
+          "value": "grid",
+          "label": "t:global.layout.layout_options.grid"
+        },
+        {
+          "value": "carousel",
+          "label": "t:global.layout.layout_options.carousel"
+        }
+      ],
+      "default": "carousel"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "label": "t:global.text.heading",
+      "default": "Blog posts"
+    },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "label": "t:global.text.heading_size",
+      "options": [
+        {
+          "value": "display-xl",
+          "label": "Display XL"
+        },
+        {
+          "value": "display-l",
+          "label": "Display L"
+        },
+        {
+          "value": "display-m",
+          "label": "Display M"
+        },
+        {
+          "value": "h1",
+          "label": "XX-Large"
+        },
+        {
+          "value": "h2",
+          "label": "X-Large"
+        },
+        {
+          "value": "h3",
+          "label": "Large"
+        },
+        {
+          "value": "h4",
+          "label": "Medium"
+        },
+        {
+          "value": "h5",
+          "label": "Small"
+        },
+        {
+          "value": "h6",
+          "label": "X-Small"
+        },
+        {
+          "value": "h7",
+          "label": "XX-Small"
+        }
+      ],
+      "default": "h3"
+    },
+    {
+      "type": "select",
+      "id": "scrolling_title_separator",
+      "label": "t:sections.blog_posts.scrolling_title_separator",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:sections.blog_posts.scrolling_title_separator_options.none"
+        },
+        {
+          "value": "circle",
+          "label": "t:sections.blog_posts.scrolling_title_separator_options.circle"
+        },
+        {
+          "value": "square",
+          "label": "t:sections.blog_posts.scrolling_title_separator_options.square"
+        },
+        {
+          "value": "diamond",
+          "label": "t:sections.blog_posts.scrolling_title_separator_options.diamond"
+        }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "checkbox",
+      "id": "scrolling_title",
+      "label": "t:sections.blog_posts.show_scrolling_title"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "t:global.text.button_link"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "t:global.text.button_text",
+      "default": "View all"
+    },
+    {
+      "type": "select",
+      "id": "button_style",
+      "label": "t:global.text.button_style",
+      "options": [
+        {
+          "value": "outline",
+          "label": "t:global.text.button_style_options.outline"
+        },
+        {
+          "value": "solid",
+          "label": "t:global.text.button_style_options.solid"
+        },
+        {
+          "value": "link",
+          "label": "t:global.text.button_style_options.link"
+        }
+      ],
+      "default": "outline"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.blog_posts.posts_category"
+    },
+    {
+      "type": "select",
+      "id": "blog_post_card_heading_size",
+      "label": "t:global.text.heading_size",
+      "options": [
+        {
+          "value": "h4",
+          "label": "Medium"
+        },
+        {
+          "value": "h5",
+          "label": "Small"
+        },
+        {
+          "value": "h6",
+          "label": "X-Small"
+        },
+        {
+          "value": "h7",
+          "label": "XX-Small"
+        }
+      ],
+      "default": "h5"
+    },
+    {
+      "type": "select",
+      "id": "separator_style",
+      "label": "t:sections.blog_posts.separator_style",
+      "info": "t:sections.blog_posts.separator_style_info",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:sections.blog_posts.separator_style_options.none"
+        },
+        {
+          "value": "space",
+          "label": "t:sections.blog_posts.separator_style_options.space"
+        },
+        {
+          "value": "border",
+          "label": "t:sections.blog_posts.separator_style_options.border"
+        }
+      ],
+      "default": "space"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_category",
+      "label": "t:global.blog.show_category",
+      "info": "t:global.blog.show_category_info",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_date",
+      "label": "t:global.blog.show_date",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_excerpt",
+      "label": "t:global.blog.show_excerpt",
+      "default": true
+    }
+  ],
+  "blocks": [
+    {
+      "type": "blog",
+      "name": "t:sections.blog_posts.blocks.blog.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "blog",
+          "id": "blog",
+          "label": "t:sections.blog_posts.blocks.blog.blog"
+        },
+        {
+          "type": "range",
+          "id": "posts_count",
+          "min": 1,
+          "max": 10,
+          "label": "t:sections.blog_posts.blocks.blog.posts_count",
+          "default": 3
+        }
+      ]
+    },
+    {
+      "type": "article",
+      "name": "t:sections.blog_posts.blocks.blog_post.name",
+      "settings": [
+        {
+          "type": "article",
+          "id": "article",
+          "label": "t:sections.blog_posts.blocks.blog_post.blog_post"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.blog_posts.name",
+      "category": "t:global.categories.content",
+      "blocks": [
+        {
+          "type": "blog",
+          "settings": {
+            "blog": "news"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

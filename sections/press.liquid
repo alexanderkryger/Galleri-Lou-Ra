@@ -1,0 +1,318 @@
+{%- if section.blocks.size > 0 -%}
+  <style>
+    #shopify-section-{{ section.id }} {
+      --section-enable-padding-collapsing: 0;
+      --overlay: {% if section.settings.overlay_color != 'rgba(0,0,0,0)' %}{{ section.settings.overlay_color.rgb }} / {{ section.settings.overlay_opacity | divided_by: 100.0 }}{% else %}0 0 0 / 0{% endif %};
+    }
+  </style>
+
+  <div class="relative color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+    {%- if section.settings.background_image != blank -%}
+      <div class="with-overlay">
+        {{- section.settings.background_image | image_url: width: section.settings.background_image.width | image_tag: sizes: '300,400,500,600,800,1000,1200,1400,1600,1800,2000,2200,2400,2600', class: 'image-background' -}}
+      </div>
+    {%- endif -%}
+
+    <div class="section-spacing section-spacing--loose isolate">
+      <div class="container">
+        <div class="max-w-xl mx-auto text-center">
+          <div class="section-stack section-stack--tight">
+            {%- render 'subheading', content: section.settings.title, class: 'justify-self-center' -%}
+            {%- assign carousel_id = 'press-carousel-' | append: section.id -%}
+
+            <div class="v-stack gap-8 sm:gap-12">
+              <press-carousel id="{{ carousel_id }}" class="press-carousel" allow-swipe {% if section.settings.autoplay %}autoplay="{{ section.settings.cycle_speed }}"{% endif %}>
+                {%- for block in section.blocks -%}
+                  <div class="press-carousel__item {% if forloop.first %}is-selected{% endif %}" {% if forloop.first %}reveal-on-scroll="true"{% endif %} {{ block.shopify_attributes }}>
+                    <blockquote class="press-carousel__quotation {% if section.settings.show_quotation_mark %}press-carousel__quotation--with-mark{% endif %} {{ section.settings.quotation_tag }}">
+                      {{- block.settings.content -}}
+                    </blockquote>
+
+                    {%- if section.blocks.size == 1 or section.settings.use_arrows_navigation and block.settings.author != blank or block.settings.image != blank -%}
+                      {%- if section.settings.item_style == 'logo' -%}
+                        {%- if block.settings.image != blank -%}
+                          {%- assign logo_sizes = block.settings.logo_width | append: 'px' -%}
+                          {%- capture logo_widths -%}{{ block.settings.logo_width }}, {{ block.settings.logo_width | times: 2 }}, {{ block.settings.logo_width | times: 3 }}{% endcapture %}
+                          {%- capture logo_style -%}--image-max-width: {{ block.settings.logo_width }}px{%- endcapture -%}
+
+                          {{- block.settings.image | image_url: width: block.settings.image.width | image_tag: loading: 'lazy', sizes: logo_sizes, widths: logo_widths, class: 'constrained-image', style: logo_style -}}
+                        {%- else -%}
+                          {{- 'image' | placeholder_svg_tag: 'press-carousel__placeholder-logo' -}}
+                        {%- endif -%}
+                      {%- elsif section.settings.item_style == 'avatar' -%}
+                        <div class="v-stack gap-3">
+                          {%- if block.settings.image != blank -%}
+                            {{- block.settings.image | image_url: width: block.settings.image.width | image_tag: loading: 'lazy', sizes: '64px', widths: '64,128,192', class: 'press-carousel__avatar' -}}
+                          {%- endif -%}
+
+                          {%- if block.settings.author != blank -%}
+                            <p class="subheading">{{ block.settings.author }}</p>
+                          {%- endif -%}
+                        </div>
+                      {%- endif -%}
+                    {%- endif -%}
+                  </div>
+                {%- endfor -%}
+              </press-carousel>
+
+              {%- if section.blocks.size > 1 -%}
+                {%- if section.settings.use_arrows_navigation -%}
+                  <div class="h-stack gap-3 justify-center">
+                    <carousel-prev-button aria-controls="{{ carousel_id }}">
+                      <button type="button" class="circle-button circle-button--lg">
+                        <span class="sr-only">{{ 'general.accessibility.previous' | t }}</span>
+                        {%- render 'icon' with 'big-arrow-left', width: 12, direction_aware: true -%}
+                      </button>
+                    </carousel-prev-button>
+
+                    <carousel-next-button aria-controls="{{ carousel_id }}">
+                      <button type="button" class="circle-button circle-button--lg">
+                        <span class="sr-only">{{ 'general.accessibility.next' | t }}</span>
+                        {%- render 'icon' with 'big-arrow-right', width: 12, direction_aware: true -%}
+                      </button>
+                    </carousel-next-button>
+                  </div>
+                {%- else -%}
+                  <carousel-navigation align-selected aria-controls="{{ carousel_id }}" class="h-stack {% if section.settings.item_style == 'avatar' %}align-start gap-6{% else %}gap-16 sm:gap-20{% endif %} justify-center scroll-area bleed">
+                    {%- for block in section.blocks -%}
+                      <button class="press-navigation__button" type="button" aria-current="{% if forloop.first %}true{% else %}false{% endif %}">
+                        <span class="sr-only">{{ 'general.accessibility.go_to_item' | t: index: forloop.index }}</span>
+
+                        {%- if section.settings.item_style == 'logo' -%}
+                          {%- if block.settings.image != blank -%}
+                            {%- assign logo_sizes = block.settings.logo_width | append: 'px' -%}
+                            {%- capture logo_widths -%}{{ block.settings.logo_width }}, {{ block.settings.logo_width | times: 2 }}, {{ block.settings.logo_width | times: 3 }}{% endcapture %}
+                            {%- capture logo_style -%}--image-max-width: {{ block.settings.logo_width }}px{%- endcapture -%}
+
+                            {{- block.settings.image | image_url: width: block.settings.image.width | image_tag: loading: 'lazy', sizes: logo_sizes, widths: logo_widths, class: 'constrained-image', style: logo_style -}}
+                          {%- else -%}
+                            {{- 'image' | placeholder_svg_tag: 'press-carousel__placeholder-logo' -}}
+                          {%- endif -%}
+                        {%- elsif section.settings.item_style == 'avatar' -%}
+                          <div class="v-stack gap-2">
+                            {%- if block.settings.image != blank -%}
+                              {{- block.settings.image | image_url: width: block.settings.image.width | image_tag: loading: 'lazy', sizes: '64px', widths: '64,128,192', class: 'press-carousel__avatar' -}}
+                            {%- endif -%}
+    
+                            {%- if block.settings.author != blank -%}
+                              <p class="subheading">{{ block.settings.author }}</p>
+                            {%- endif -%}
+                          </div>
+                        {%- endif -%}
+                      </button>
+                    {%- endfor -%}
+                  </carousel-navigation>
+                {%- endif -%}
+              {%- endif -%}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.press.name",
+  "class": "shopify-section--press",
+  "tag": "section",
+  "disabled_on": {
+    "groups": ["header", "custom.overlay"]
+  },
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "image_picker",
+      "id": "background_image",
+      "label": "t:global.image.background_image",
+      "info": "t:sections.press.image_size_recommendation"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "label": "t:global.text.subheading"
+    },
+    {
+      "type": "checkbox",
+      "id": "use_arrows_navigation",
+      "label": "t:sections.press.use_arrows_navigation",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_quotation_mark",
+      "label": "t:sections.press.show_quotation_mark",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "quotation_tag",
+      "label": "t:sections.press.quotation_tag",
+      "options": [
+        {
+          "value": "display-xl",
+          "label": "Display XL"
+        },
+        {
+          "value": "display-l",
+          "label": "Display L"
+        },
+        {
+          "value": "display-m",
+          "label": "Display M"
+        },
+        {
+          "value": "h1",
+          "label": "XX-Large"
+        },
+        {
+          "value": "h2",
+          "label": "X-Large"
+        },
+        {
+          "value": "h3",
+          "label": "Large"
+        },
+        {
+          "value": "h4",
+          "label": "Medium"
+        },
+        {
+          "value": "h5",
+          "label": "Small"
+        },
+        {
+          "value": "h6",
+          "label": "X-Small"
+        },
+        {
+          "value": "h7",
+          "label": "XX-Small"
+        }
+      ],
+      "default": "h3"
+    },
+    {
+      "type": "select",
+      "id": "item_style",
+      "label": "t:sections.press.item_style",
+      "options": [
+        {
+          "value": "logo",
+          "label": "t:sections.press.item_style_options.logo"
+        },
+        {
+          "value": "avatar",
+          "label": "t:sections.press.item_style_options.avatar"
+        }
+      ],
+      "default": "logo"
+    },
+    {
+      "type": "checkbox",
+      "id": "autoplay",
+      "label": "t:sections.press.auto_rotate_between_quotations",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "cycle_speed",
+      "min": 4,
+      "max": 20,
+      "step": 1,
+      "unit": "sec",
+      "label": "t:sections.press.cycle_speed",
+      "default": 6,
+      "visible_if": "{{ section.settings.autoplay }}"
+    },
+    {
+      "type": "color",
+      "id": "overlay_color",
+      "visible_if": "{{ section.settings.background_image != blank }}",
+      "label": "t:global.colors.image_overlay_color",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "visible_if": "{{ section.settings.background_image != blank }}",
+      "label": "t:global.colors.image_overlay_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 20
+    }
+  ],
+  "blocks": [
+    {
+      "type": "item",
+      "name": "t:sections.press.blocks.item.name",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:global.image.image",
+          "info": "t:sections.press.blocks.item.image_size_recommendation"
+        },
+        {
+          "type": "range",
+          "id": "logo_width",
+          "label": "t:sections.press.blocks.item.logo_width",
+          "min": 20,
+          "max": 200,
+          "step": 2,
+          "unit": "px",
+          "default": 80,
+          "visible_if": "{{ section.settings.item_style == 'logo' }}"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "author",
+          "label": "t:sections.press.blocks.item.author",
+          "visible_if": "{{ section.settings.item_style == 'avatar' }}"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "content",
+          "label": "t:global.text.content",
+          "info": "t:sections.press.blocks.item.content_info",
+          "default": "Share what your customers are saying about your products, customer service or shipping rates."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.press.name",
+      "category": "t:global.categories.trust_social",
+      "blocks": [
+        {
+          "type": "item",
+          "settings": {
+            "content": "Share what your customers are saying about your products, customer service or shipping rates."
+          }
+        },
+        {
+          "type": "item",
+          "settings": {
+            "content": "Share what your customers are saying about your products, customer service or shipping rates."
+          }
+        },
+        {
+          "type": "item",
+          "settings": {
+            "content": "Share what your customers are saying about your products, customer service or shipping rates."
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

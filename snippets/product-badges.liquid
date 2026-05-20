@@ -1,0 +1,84 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+PRODUCT BADGES COMPONENT
+----------------------------------------------------------------------------------------------------------------------
+
+This component is used in product listing and product page to render the badges of a given product
+
+********************************************
+Supported variables
+********************************************
+
+* product: the product to render the badges
+* variant: the specific variant to show the badge from
+* context: can be "product" or "card"
+* direction: can be "column" or "row". If none is passed, it defaults to "row"
+* alignment: can be "start", "center" or "end" (default to start)
+* vertical_text: if true, badges text are shown vertically
+* show_custom_badge: if set to true, the custom badge from metafield is shown
+* show_sold_out_badge: if set to true, the sold out badge is shown
+* show_discount_badge: if set to true, the discount badge is shown
+* class: an extra list of classes being applied to the badge list container
+{%- endcomment -%}
+
+{%- assign variant = variant | default: product.selected_or_first_available_variant -%}
+
+{%- capture badges -%}
+  {%- if show_custom_badge -%}
+    {%- for custom_badge in product.metafields.custom.badges.value -%}
+      <span class="badge badge--custom badge--{{ custom_badge | handle }} {% if vertical_text %}vertical-text{% endif %}">{{ custom_badge }}</span>
+    {%- endfor -%}
+  {%- endif -%}
+
+  {%- if show_sold_out_badge and variant.available == false -%}
+    <sold-out-badge {% if variant.available %}hidden{% endif %} {% if form_id != blank %}form="{{ form_id }}"{% endif %} class="badge badge--sold-out {% if vertical_text %}vertical-text{% endif %}">
+      {{- 'product.general.sold_out_badge' | t -}}
+    </sold-out-badge>
+  {%- endif -%}
+
+  {%- if show_discount_badge -%}
+    {%- liquid
+      assign show_on_sale_badge = false
+
+      if context == 'product'
+        if variant.compare_at_price > variant.price
+          assign show_on_sale_badge = true
+        endif
+      elsif context == 'card'
+        if product.compare_at_price > product.price
+          assign show_on_sale_badge = true
+        endif
+      endif
+    -%}
+
+    {%- if product.compare_at_price > product.price -%}
+      {%- if settings.product_card_discount_mode == 'percentage' -%}
+        {%- assign savings = variant.compare_at_price | minus: variant.price | times: 100.0 | divided_by: variant.compare_at_price | round | append: '%' -%}
+      {%- else -%}
+        {%- capture savings -%}{{ variant.compare_at_price | minus: variant.price | money }}{%- endcapture -%}
+      {%- endif -%}
+
+      {%- if show_on_sale_badge -%}
+        <on-sale-badge class="badge badge--on-sale {% if vertical_text %}vertical-text{% endif %}">
+          {%- liquid
+            if context == 'product'
+              echo 'product.general.discount_badge_html' | t: savings: savings
+            elsif context == 'card'
+              if product.compare_at_price_varies or variant.compare_at_price == blank
+                echo 'product.general.on_sale_badge' | t
+              else
+                echo 'product.general.discount_badge_html' | t: savings: savings
+              endif
+            endif
+          -%}
+        </on-sale-badge>
+      {%- endif -%}
+    {%- endif -%}
+  {%- endif -%}
+{%- endcapture -%}
+
+{%- if badges != blank -%}
+  <badge-list class="badge-list {% unless vertical_text %}badge-list--{{ direction | default: 'row' }}{% endunless %} {% if alignment %}{% if direction == 'column' %}align-{{ alignment }}{% else %}justify-{{ alignment }}{% endif %}{% endif %} {{ class }}">
+    {{- badges -}}
+  </badge-list>
+{%- endif -%}

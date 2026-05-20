@@ -1,0 +1,72 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+PRODUCT CROSS SELL COMPONENT
+----------------------------------------------------------------------------------------------------------------------
+
+This component is used in product pages for the complementary products section, as well as the cart drawer for the
+cross sell section.
+
+It is conceptually similar to the product cards, but in Stretch the cards are extremely complex and cover a lot of use
+cases, so trying to fit also the cross sell cards in the same component would make it too complex.
+
+********************************************
+Supported variables
+********************************************
+
+* product: the product to render
+* layout: the layout to use, can be "horizontal" or "vertical" (default to "vertical" if none is given)
+* show_quick_buy: if true, the quick buy button is shown
+* background: the background for the cross-sell component, only used for "horizontal" layout
+* text_color: the text color for the cross-sell component, only used for "horizontal" layout
+{%- endcomment -%}
+
+{%- liquid
+  case settings.product_card_style
+    when 'subheading'
+      assign title_class = 'subheading'
+
+    when 'body_text'
+      assign title_class = 'text-sm'
+
+    when 'heading'
+      assign title_class = 'heading'
+  endcase
+-%}
+
+<div class="product-cross-sell product-cross-sell--{{ layout | default: 'vertical' }} snap-start" style="{% render 'surface', background: background, text_color: text_color %}">
+  {%- if product.featured_media != blank -%}
+    <a href="{{ product.url }}">
+      {%- if layout == 'horizontal' -%}
+        {{- product.featured_media | image_url: width: product.featured_media.width | image_tag: sizes: '72px', widths: '72,144,216', class: 'constrained-image', style: '--image-max-width: 72px' -}}
+      {%- else -%}
+        {{- product.featured_media | image_url: width: product.featured_media.width | image_tag: sizes: '200px', widths: '200,400,600' -}}
+      {%- endif -%}
+    </a>
+  {%- endif -%}
+
+  <div class="v-stack {% if layout == 'horizontal' %}justify-items-start{% endif %} gap-2">
+    <div class="v-stack gap-0.5">
+      <a href="{{ product.url }}" class="{{ title_class }}">{{ product.title }}</a>
+      {% render 'price-list', product: product, context: 'card' %}
+    </div>
+
+    {%- if show_quick_buy and product.available -%}
+      {%- if product.variants.size == 1 and product.selling_plan_groups.size == 0 -%}
+        <product-form>
+          {%- form 'product', product -%}
+            <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+            <button type="submit" class="block link subheading subheading-xs">{{ 'product.general.add_to_cart_button' | t }}</button>
+          {%- endform -%}
+        </product-form>
+      {%- else -%}
+        {%- capture quick_buy_id -%}product-quick-buy-{{ section.id }}-{{ product.id }}{%- endcapture -%}
+
+        <button type="button" aria-controls="{{ quick_buy_id }}" class="link subheading subheading-xs">{{ 'product.general.choose_options' | t }}</button>
+
+        <quick-buy-modal id="{{ quick_buy_id }}" product-url="{{ product.url }}" class="modal modal--quick-buy color-scheme color-scheme--{{ settings.default_color_scheme.id }}">
+          {%- comment -%}The content will be dynamically filled in JS{%- endcomment -%}
+        </quick-buy-modal>
+      {%- endif -%}
+    {%- endif -%}
+  </div>
+</div>

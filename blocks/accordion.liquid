@@ -1,0 +1,66 @@
+{%- liquid
+  assign title = block.settings.page.title | default: block.settings.title
+
+  capture content
+    content_for 'blocks'
+  endcapture
+  
+  render 'accordion', title: title, content: content, open: block.settings.open_by_default, custom_icon: block.settings.custom_icon, uppercase_title: block.settings.uppercase_title, prose_content: true, block: block
+-%}
+
+{% schema %}
+{
+  "name": "t:blocks.accordion.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "open_by_default",
+      "label": "t:blocks.accordion.open_by_default",
+      "default": false
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "t:global.text.title",
+      "default": "Accordion title"
+    },
+    {
+      "type": "checkbox",
+      "id": "uppercase_title",
+      "label": "t:blocks.accordion.uppercase_title",
+      "default": false
+    },
+    {
+      "type": "image_picker",
+      "id": "custom_icon",
+      "label": "t:global.icons.icon",
+      "info": "t:global.icons.custom_icon_info"
+    }
+  ],
+  "blocks": [
+    { "type": "@app" },
+    { "type": "icon" },
+    { "type": "subheading" },
+    { "type": "heading"} ,
+    { "type": "rich-text" },
+    { "type": "button" },
+    { "type": "button-group" },
+    { "type": "liquid" },
+    { "type": "page-content" }
+  ],
+  "presets": [
+    {
+      "name": "t:blocks.accordion.name",
+      "blocks": [
+        {
+          "type": "rich-text",
+          "settings": {
+            "text": "<p>Write content about your brand or products.</p>"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

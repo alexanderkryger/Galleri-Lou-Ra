@@ -1,0 +1,72 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+QUANTITY SELECTOR
+----------------------------------------------------------------------------------------------------------------------
+
+This component renders a quantity selector that can be used either on product page (by passing a "variant") or on a
+cart page (by passing a "line_item"). It also automatically checks for inventory in the case of cart page.
+
+********************************************
+Supported variables
+********************************************
+
+* variant: when the quantity selector is used in product page context
+* line_item: when the quantity selector is used in cart page context
+* form: an optional form ID to submit to
+* quick_order: when set to true, the variant will be used in context of quick order. Specifically, this will
+               use a quantity of zero if nothing is in the cart yet.
+{%- endcomment -%}
+
+<quantity-selector class="quantity-selector {% if line_item != blank %}quantity-selector--line-item{% endif %}" {% if quick_order %}allow-reset-to-zero{% endif %}>
+  {%- liquid
+    assign max_quantity = ''
+    assign variant = line_item.variant | default: variant
+
+    if variant.quantity_rule.max != nil
+      assign max_quantity = max_quantity | default: 999999 | at_most: variant.quantity_rule.max
+    endif
+
+    if line_item != blank
+      assign quantity_value = line_item.quantity
+    else
+      if quick_order
+        assign quantity_value = cart | item_count_for_variant: variant.id
+      else
+        assign quantity_value = variant.quantity_rule.min | default: 1
+      endif
+    endif
+  -%}
+
+  {%- if line_item == blank -%}
+    {%- comment -%}For quick order, we want to always allow to press minus to go back to zero{%- endcomment -%}
+    <button type="button" tabindex="-1" class="quantity-selector__button" {% if quantity_value == 0 or quick_order != true and quantity_value <= variant.quantity_rule.min %}disabled{% endif %}>
+      <span class="sr-only">{{ 'product.quantity.decrease_quantity' | t }}</span>
+      {%- render 'icon' with 'quantity-minus' -%}
+    </button>
+  {%- else -%}
+    <a href="{{ routes.cart_change_url }}?id={{ line_item.key }}&quantity={{ line_item.quantity | minus: line_item.variant.quantity_rule.increment }}" class="quantity-selector__button">
+      <span class="sr-only">{{ 'product.quantity.decrease_quantity' | t }}</span>
+      {%- render 'icon' with 'quantity-minus' -%}
+    </a>
+  {%- endif -%}
+
+  <quantity-input class="contents">
+    <input class="quantity-selector__input subheading" type="number" value="{{ quantity_value }}" name="{% if line_item != blank %}updates[]{% else %}quantity{% endif %}" inputmode="numeric" step="{{ variant.quantity_rule.increment }}" min="{{ variant.quantity_rule.min }}" {% if max_quantity != blank %}max="{{ max_quantity }}"{% endif %} {% if form %}form="{{ form }}"{% endif %} {% if line_item != blank %}data-line-key="{{ line_item.key }}"{% endif %} aria-label="{{ 'product.quantity.change_quantity' | t | escape }}">
+
+    {%- if show_spinner -%}
+      {%- render 'icon' with 'spinner', class: 'visibility-hidden' -%}
+    {%- endif -%}
+  </quantity-input>
+
+  {%- if line_item == blank or max_quantity != blank and line_item.quantity >= max_quantity -%}
+    <button type="button" tabindex="-1" class="quantity-selector__button" {% if line_item != blank or max_quantity == quantity_value %}disabled data-tooltip="{{ 'product.quantity.cannot_add_more' | t | escape }}"{% endif %}>
+      <span class="sr-only">{{ 'product.quantity.increase_quantity' | t }}</span>
+      {%- render 'icon' with 'quantity-plus' -%}
+    </button>
+  {%- else -%}
+    <a href="{{ routes.cart_change_url }}?id={{ line_item.key }}&quantity={{ line_item.quantity | plus: line_item.variant.quantity_rule.increment }}" class="quantity-selector__button">
+      <span class="sr-only">{{ 'product.quantity.increase_quantity' | t }}</span>
+      {%- render 'icon' with 'quantity-plus' -%}
+    </a>
+  {%- endif -%}
+</quantity-selector>

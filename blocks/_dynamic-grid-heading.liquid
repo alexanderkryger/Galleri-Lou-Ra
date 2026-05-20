@@ -1,0 +1,206 @@
+{%- if block.settings.text != blank -%}
+  <style>
+    #shopify-block-{{ block.id }} {
+      font-size: clamp(10px, {{ block.settings.font_size_mobile }}vw, 80px);
+      line-height: {{ block.settings.font_size_line_height }};
+    }
+
+    @media screen and (min-width: 1000px) {
+      #shopify-block-{{ block.id }} {
+        font-size: clamp(10px, {{ block.settings.font_size_desktop }}vw, 140px);
+      }
+    }
+  </style>
+
+  {%- render 'heading', 
+    content: block.settings.text, 
+    html_tag: block.settings.html_tag,
+    highlight_effect: block.settings.highlight_effect, 
+    highlight_accent_color: block.settings.highlight_accent_color, 
+    highlight_text_color: block.settings.highlight_text_color, 
+    show_vertically: block.settings.show_text_vertically,
+    indent: block.settings.indent,
+    block: block
+  -%}
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:blocks.heading.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "inline_richtext",
+      "id": "text",
+      "label": "t:global.text.text",
+      "default": "Heading"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_text_vertically",
+      "label": "t:sections.dynamic_grid.blocks.heading.show_text_vertically",
+      "default": false
+    },
+    {
+      "type": "range",
+      "min": 1,
+      "max": 15,
+      "step": 0.5,
+      "unit": "vw",
+      "id": "font_size_desktop",
+      "label": "t:sections.dynamic_grid.blocks.heading.font_size_desktop",
+      "info": "t:sections.dynamic_grid.blocks.heading.font_size_desktop_info",
+      "default": 5
+    },
+    {
+      "type": "range",
+      "min": 1,
+      "max": 15,
+      "step": 0.5,
+      "unit": "vw",
+      "id": "font_size_mobile",
+      "label": "t:sections.dynamic_grid.blocks.heading.font_size_mobile",
+      "info": "t:sections.dynamic_grid.blocks.heading.font_size_mobile_info",
+      "default": 10
+    },
+    {
+      "type": "range",
+      "min": 0.6,
+      "max": 1.4,
+      "step": 0.1,
+      "id": "font_size_line_height",
+      "label": "t:sections.dynamic_grid.blocks.heading.line_height",
+      "default": 1
+    },
+    {
+      "type": "select",
+      "id": "html_tag",
+      "label": "HTML tag",
+      "info": "Maintain a logical hierarchy with hX tags (e.g., don’t use h3 before h1). Use paragraph tag if unsure.",
+      "options": [
+        {
+          "value": "p",
+          "label": "Paragraph"
+        },
+        {
+          "value": "h1",
+          "label": "H1"
+        },
+        {
+          "value": "h2",
+          "label": "H2"
+        },
+        {
+          "value": "h3",
+          "label": "H3"
+        },
+        {
+          "value": "h4",
+          "label": "H4"
+        },
+        {
+          "value": "h5",
+          "label": "H5"
+        },
+        {
+          "value": "h6",
+          "label": "H6"
+        }
+      ],
+      "default": "p"
+    },
+    {
+      "type": "select",
+      "id": "indent",
+      "label": "t:global.heading_effect.indent",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:global.heading_effect.indent_options.none"
+        },
+        {
+          "value": "empty_space",
+          "label": "t:global.heading_effect.indent_options.empty_space"
+        },
+        {
+          "value": "circle",
+          "label": "t:global.heading_effect.indent_options.circle"
+        },
+        {
+          "value": "square",
+          "label": "t:global.heading_effect.indent_options.square"
+        },
+        {
+          "value": "diamond",
+          "label": "t:global.heading_effect.indent_options.diamond"
+        }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "header",
+      "content": "t:global.heading_effect.category",
+      "info": "t:global.heading_effect.colors_info"
+    },
+    {
+      "type": "select",
+      "id": "highlight_effect",
+      "label": "t:global.heading_effect.effect",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:global.heading_effect.effect_options.none"
+        },
+        {
+          "value": "default",
+          "label": "t:global.heading_effect.effect_options.default"
+        },
+        {
+          "value": "italic",
+          "label": "t:global.heading_effect.effect_options.italic_font_override"
+        },
+        {
+          "value": "circle",
+          "label": "t:global.heading_effect.effect_options.circle"
+        },
+        {
+          "value": "circle_pencil",
+          "label": "t:global.heading_effect.effect_options.circle_pencil"
+        },
+        {
+          "value": "underline",
+          "label": "t:global.heading_effect.effect_options.underline"
+        },
+        {
+          "value": "underline_pencil",
+          "label": "t:global.heading_effect.effect_options.underline_pencil"
+        },
+        {
+          "value": "marker",
+          "label": "t:global.heading_effect.effect_options.marker"
+        },
+        {
+          "value": "tilted_marker",
+          "label": "t:global.heading_effect.effect_options.tilted_marker"
+        }
+      ],
+      "default": "default"
+    },
+    {
+      "type": "color",
+      "id": "highlight_accent_color",
+      "label": "t:global.heading_effect.accent_color"
+    },
+    {
+      "type": "color",
+      "id": "highlight_text_color",
+      "label": "t:global.heading_effect.text_color"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:blocks.heading.name"
+    }
+  ]
+}
+{% endschema %}

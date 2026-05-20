@@ -1,0 +1,128 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+MENU PROMO BLOCK COMPONENT
+----------------------------------------------------------------------------------------------------------------------
+
+Render the promo block part of the menu. The promo block is used in several places, such as the inline navigation
+or drawer, hence it is abstracted in its own snippet.
+
+********************************************
+Supported variables
+********************************************
+
+* context: the context where the menu promo is rendered (used to differentiate ID)
+* block: the mega-menu block used to render the content
+{%- endcomment -%}
+
+{%- assign rendered_promo_blocks = 0 -%}
+
+{%- capture promo_blocks -%}
+  {%- assign promo_heading_tag = block.settings['promo_heading_tag'] -%}
+  {%- assign content_alignment = block.settings.promo_text_alignment | replace: 'left', 'start' | replace: 'right', 'end' -%}
+
+  {%- for i in (1..6) -%}
+    {% liquid
+      assign promo_product_setting = 'promo_' | append: i | append: '_product'
+      assign promo_image_setting = 'promo_' | append: i | append: '_image'
+      assign promo_heading_setting = 'promo_' | append: i | append: '_heading'
+      assign promo_text_setting = 'promo_' | append: i | append: '_text'
+      assign promo_link_setting = 'promo_' | append: i | append: '_link'
+
+      assign promo_product = block.settings[promo_product_setting]
+      assign promo_image = block.settings[promo_image_setting] | default: promo_product.featured_media
+      assign promo_heading = promo_product.title | default: block.settings[promo_heading_setting]
+      assign promo_text = block.settings[promo_text_setting]
+      assign promo_link = promo_product.url | default: block.settings[promo_link_setting]
+    %}
+
+    {%- capture text_content -%}
+      {%- if promo_heading != blank or promo_text != blank -%}
+        <div class="v-stack text-{{ content_alignment }} {% if promo_heading_tag == 'subheading' %}gap-1{% else %}gap-2{% endif %}">
+          {%- if promo_heading != blank -%}
+            <p class="{{ promo_heading_tag }}">{{ promo_heading }}</p>
+          {% endif %}
+
+          {%- if promo_product != blank -%}
+            {%- render 'price-list', product: promo_product, context: 'card' -%}
+          {%- elsif promo_text != blank -%}
+            <p>{{ promo_text }}</p>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+    {%- endcapture -%}
+
+    {%- if promo_image != blank or text_content != blank -%}
+      {%- assign rendered_promo_blocks = rendered_promo_blocks | plus: 1 -%}
+      
+      {%- capture block_content -%}
+        {%- if block.settings.stretch_promo_blocks -%}
+          <div class="content-box overflow-hidden h-full" style="{% render 'surface', text_color: block.settings.promo_text_color %}">
+            {%- if promo_image != blank -%}
+              <div class="content-box__background-media with-overlay">
+                {{- promo_image | image_url: width: promo_image.width | image_tag: loading: 'lazy', sizes: '420px', widths: '420,840,1260', class: 'zoom-image group-hover:zoom' -}}
+              </div>
+            {%- endif -%}
+
+            {%- if text_content != blank -%}
+              <div class="{% if block.settings.promo_text_alignment == 'left' %}place-self-end-start text-start{% elsif block.settings.promo_text_alignment == 'center' %}place-self-center text-center{% else %}place-self-end text-end{% endif %}">
+                {{- text_content -}}
+              </div>
+            {%- endif -%}
+          </div>
+        {%- else -%}
+          <div class="v-stack justify-items-{{ content_alignment }} {% if promo_heading_tag == 'subheading' %}gap-3{% else %}gap-4{% endif %}">
+            {%- if promo_image != blank -%}
+              <div class="overflow-hidden">
+                {{- promo_image | image_url: width: promo_image.width | image_tag: loading: 'lazy', sizes: '305px', widths: '305,610,915', class: 'zoom-image group-hover:zoom' -}}
+              </div>
+            {%- endif -%}
+
+            {{- text_content -}}
+          </div>
+        {%- endif -%}
+      {%- endcapture -%}
+
+      {% if promo_link != blank %}
+        <a href="{{ promo_link }}" class="menu-promo__item {% if block.settings.stretch_promo_blocks %}@container/content-box{% endif %} group">
+          {{- block_content -}}
+        </a>
+      {%- else -%}
+        <div class="menu-promo__item {% if block.settings.stretch_promo_blocks %}@container/content-box{% endif %}">
+          {{- block_content -}}
+        </div>
+      {%- endif -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endcapture -%}
+
+{%- if rendered_promo_blocks > 0 -%}
+  {%- assign promo_block_list_id = 'promo-block-list-' | append: block.id | append: context -%}
+  {%- assign mega_menu_carousel_id = promo_block_list_id | append: '-carousel' -%}
+
+  <style>
+    #{{ promo_block_list_id }} {
+      --menu-promo-block-column-gap: {{ block.settings.promo_column_gap }};
+      --menu-promo-blocks-count: {{ rendered_promo_blocks }};
+    }
+  </style>
+
+  <div id="{{ promo_block_list_id }}" class="menu-promo {% unless block.settings.stretch_promo_blocks %}menu-promo--with-spacing{% else %}menu-promo--without-spacing{% endunless %} floating-controls-container">
+    <carousel-prev-button class="floating-controls__control floating-controls__control--offset" aria-controls="{{ mega_menu_carousel_id }}">
+      <button disabled class="circle-button circle-button--xl">
+        <span class="sr-only">{{ 'general.accessibility.previous' | t }}</span>
+        {%- render 'icon' with 'big-arrow-left', direction_aware: true, width: 14 -%}
+      </button>
+    </carousel-prev-button>
+
+    <scroll-carousel id="{{ mega_menu_carousel_id }}" class="menu-promo__carousel scroll-area">
+      {{- promo_blocks -}}
+    </scroll-carousel>
+  
+    <carousel-next-button class="floating-controls__control floating-controls__control--offset" aria-controls="{{ mega_menu_carousel_id }}">
+      <button class="circle-button circle-button--xl">
+        <span class="sr-only">{{ 'general.accessibility.next' | t }}</span>
+        {%- render 'icon' with 'big-arrow-right', direction_aware: true, width: 14 -%}
+      </button>
+    </carousel-next-button>
+  </div>
+{%- endif -%}

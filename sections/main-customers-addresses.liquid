@@ -1,0 +1,95 @@
+<div class="color-scheme color-scheme--{{ settings.default_color_scheme.id }}">
+  <div class="container">
+    <div class="customer-account">
+      <nav class="customer-account__nav">
+        <ul class="unstyled-list">
+          <li><a href="{{ routes.account_url }}" class="subheading link-reversed" aria-current="false">{{ 'customer.account.orders' | t }}</a></li>
+          <li><a href="{{ routes.account_addresses_url }}" class="subheading link-reversed" aria-current="true">{{ 'customer.account.addresses' | t }}</a></li>
+          <li><a href="{{ routes.account_logout_url }}" class="subheading link-faded" aria-current="false" data-no-instant>{{ 'customer.account.logout' | t }}</a></li>
+        </ul>
+      </nav>
+
+      <div class="customer-account__inner">
+        <div class="customer-account__content">
+          {%- paginate customer.addresses by 16 -%}
+            {%- if customer.addresses_count == 0 -%}
+              <div class="prose prose-justify-center">
+                <p class="subheading">{{ 'customer.addresses.no_addresses' | t }}</p>
+  
+                {%- assign button_content = 'customer.addresses.add_address' | t -%}
+                {%- render 'button', content: button_content, aria_controls: 'customer-address-new' -%}
+              </div>
+            {%- else -%}
+              <div class="v-stack gap-6 sm:gap-10">
+                <h1 class="h3 text-center">{{ 'customer.account.addresses' | t }}</h1>
+
+                <div class="v-stack gap-8 sm:gap-16">
+                  <div class="v-stack gap-5 sm:gap-8">
+                    <div class="address-list">
+                      {%- for address in customer.addresses -%}
+                        <div class="address">
+                          <div class="h-stack gap-2.5">
+                            {%- render 'icon' with 'address-shipping', width: 18 -%}
+
+                            {%- if address == customer.default_address -%}
+                              <p class="h7">{{ 'customer.addresses.default_address' | t }}</p>
+                            {%- else -%}
+                              <p class="h7">{{ 'customer.addresses.address_title' | t: position: forloop.index }}</p>
+                            {%- endif -%}
+                          </div>
+
+                          <div class="v-stack gap-4">
+                            {{- address | format_address -}}
+
+                            <div class="h-stack gap-5 align-baseline">
+                              <button type="button" aria-controls="customer-address-{{ address.id }}" class="subheading link">{{ 'customer.addresses.edit' | t }}</button>
+
+                              <form method="post" action="{{ address.url }}">
+                                <input type="hidden" name="_method" value="delete">
+                                
+                                <confirm-button data-message="{{ 'customer.addresses.delete_confirm' | t | escape }}">
+                                  <button type="submit" class="subheading link">{{ 'customer.addresses.delete' | t }}</button>
+                                </confirm-button>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
+                      {%- endfor -%}
+                    </div>
+
+                    <div class="justify-self-center">
+                      {%- assign new_address_label = 'customer.addresses.add_address' | t -%}
+                      {%- render 'button', content: new_address_label, aria_controls: 'customer-address-new' -%}
+                    </div>
+                  </div>
+
+                  {%- render 'pagination', paginate: paginate -%}
+                </div>
+              </div>
+            {%- endif -%}
+
+            {%- comment -%}
+            --------------------------------------------------------------------------------------------------------------------
+            GENERATE THE FORMS
+            --------------------------------------------------------------------------------------------------------------------
+            {%- endcomment -%}
+
+            {%- render 'address-form', address: customer.new_address -%}
+
+            {%- for address in customer.addresses -%}
+              {%- render 'address-form', address: address -%}
+            {%- endfor -%}
+          {%- endpaginate -%}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.main_customers_addresses.name",
+  "class": "shopify-section--main-customers-addresses",
+  "tag": "section"
+}
+{% endschema %}

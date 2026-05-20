@@ -1,0 +1,358 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+PRODUCT GALLERY COMPONENT
+----------------------------------------------------------------------------------------------------------------------
+
+This component is used to show the product gallery (used in product page and featured product section)
+
+********************************************
+Supported variables
+********************************************
+
+* product: the product to render (if empty, renders placeholder content)
+* product_form_id: the product form id
+* desktop_layout: the layout on desktop (can be "grid", "grid_half", "grid_half_highlight_first" or "carousel")
+* desktop_carousel_controls: when desktop layout is set to "carousel", the controls to show (can be "dots", "lines", "numbers", "thumbnails_bottom" or "thumbnails_left")
+* mobile_controls: the controls to show on mobile (can be "lines", "numbers", "dots", "thumbnails" or "none")
+* enable_media_autoplay: if set to true videos are autoplayed when switched to
+* enable_video_looping: if set to true videos automatically loop when finished
+* enable_image_zoom: if set to true the gallery allow zoom
+* max_image_zoom_level: the maximum zoom level allowed (if enabled)
+* class: extra class applied on the container
+{%- endcomment -%}
+
+<style>
+    @media screen and (max-width: 999px) {
+      #shopify-section-{{ section.id }} {
+        {%- if mobile_controls == 'none' -%}
+          --product-gallery-carousel-grid: auto / auto-flow min(28rem, 75vw);
+          --product-gallery-carousel-gap: 0.125rem;
+          --product-gallery-carousel-scroll-snap-type: none;
+        {%- else -%}
+          --product-gallery-gap: {% if mobile_controls != 'thumbnails' %}0rem{% else %}0.5rem{% endif %};
+        {%- endif -%}
+      }
+    }
+
+  @media screen and (min-width: 1000px) {
+    #shopify-section-{{ section.id }} {
+      {%- if desktop_layout == 'grid' -%}
+        --product-gallery-carousel-grid: auto-flow dense / minmax(0, 1fr);
+        --product-gallery-carousel-scroll-snap-type: none;
+      {%- elsif desktop_layout == 'grid_half' or desktop_layout == 'grid_half_highlight_first' -%}
+        --product-gallery-carousel-grid: auto-flow dense / repeat(2, minmax(0, 1fr));
+        --product-gallery-carousel-scroll-snap-type: none;
+      {%- elsif desktop_layout == 'carousel' -%}
+        --product-gallery-gap: {% if desktop_carousel_controls != 'thumbnails_under' %}0rem{% else %}0.5rem{% endif %};
+      {%- endif -%}
+    }
+
+    {%- if desktop_layout == 'grid_half_highlight_first' -%}
+      #shopify-section-{{ section.id }} .product-gallery__media:nth-child(1 of :not([hidden])) {
+        grid-column: span 2;
+      }
+    {%- endif -%}
+  }
+</style>
+
+{%- comment -%}
+IMPLEMENTATION NOTE: Shopify does not natively offer a way to create a set of images per variant. This is often
+pretty limited when you have a lot of colors and would like to only see the images specific to a given color. To
+goes around that, Impact offers a hack using alt tags whose usage is described here: https://support.maestrooo.com/article/187-product-creating-variant-image-set
+The implementation is rather complex and inefficient due to a lot of string parsings, but it is, unfortunately, the
+only way to do it on Shopify right now.
+{%- endcomment -%}
+{% liquid
+  assign default_media = product.selected_or_first_available_variant.featured_media | default: product.featured_media
+  assign product_gallery_carousel_id = 'product-gallery-carousel-' | append: product.id | append: '-' | append: section.id
+  assign filtered_indexes = null | sort
+
+  if product.variants.size > 1
+    for media in product.media
+      if media.alt contains '#' and media.alt != product.title
+        assign alt_parts = media.alt | split: '#'
+        assign media_group_parts = alt_parts.last | split: '_'
+        assign option = product.options_by_name[media_group_parts.first]
+        assign option_value = option.selected_value | downcase
+        assign downcase_group_value = media_group_parts.last | strip | downcase
+
+        if option_value != downcase_group_value and media != default_media
+          assign media_position = media.position | sort
+          assign filtered_indexes = filtered_indexes | concat: media_position
+        endif
+      endif
+    endfor
+  endif
+%}
+
+<product-gallery id="product-gallery-{{ product_gallery_carousel_id }}" class="product-gallery {{ class }}" form="{{ product_form_id }}" filtered-indexes="{{ filtered_indexes | json }}" {% if enable_media_autoplay %}autoplay-media{% endif %} {% if enable_image_zoom %}allow-zoom="{{ max_image_zoom_level }}" zoom-color-scheme-id="{{ settings.default_color_scheme.id }}"{% endif %}>
+  <div class="product-gallery__image-list">
+    {%- comment -%}
+    ----------------------------------------------------------------------------------------------------------------------
+    CAROUSEL
+    ----------------------------------------------------------------------------------------------------------------------
+    {%- endcomment -%}
+
+    <div class="relative">
+      <scroll-carousel adaptive-height id="{{ product_gallery_carousel_id }}" class="product-gallery__carousel scroll-area bleed md:unbleed" role="region">
+        {%- if product != blank -%}
+          {%- assign image_index = 0 -%}
+          {%- for media in product.media -%}
+             {%- unless media.alt == 'hide' -%}
+            {%- capture sizes -%}(max-width: 699px) 100vw, 50vw{%- endcapture -%}
+
+            <div class="product-gallery__media snap-center {% if media == default_media %}is-initial{% endif %} {% if enable_image_zoom and section.settings.desktop_media_layout contains 'grid' and media.media_type == 'image' %}relative{% endif %}" data-media-type="{{ media.media_type }}" data-media-id="{{ media.id }}" role="group" aria-label="{{ 'general.accessibility.item_nth_of_count' | t: index: media.position, count: product.media.size }}" {% if filtered_indexes contains media.position %}hidden{% endif %}>
+              {%- if default_media == media -%}
+                {%- assign preload = true -%}
+              {%- else -%}
+                {%- assign preload = false -%}
+              {%- endif -%}
+
+              {%- comment -%}
+              NOTE: for the product gallery, the autoplay does not work in a similar way. It is always false at the product level,
+              and the product-gallery component itself will autoplay (if needed)
+              {%- endcomment -%}
+              {%- render 'media', product: product, media: media, sizes: sizes, preload: preload, controls: true, playsinline: true, muted: enable_media_autoplay, loop: enable_video_looping, group: 'product' -%}
+
+              {%- if enable_image_zoom and section.settings.desktop_media_layout contains 'grid' and media.media_type == 'image' -%}
+                <open-lightbox-button aria-controls="{{ product_gallery_carousel_id}}" class="block sm-max:hidden" image-index="{{ image_index }}">
+                  <button class="product-zoom-button">
+                    {%- render 'icon' with 'zoom-plus', width: 16 -%}
+                    <span class="product-zoom-button__label">{{ 'product.gallery.zoom' | t }}</span>
+                  </button>
+                </open-lightbox-button>
+
+                {%- unless filtered_indexes contains media.position -%}
+                  {%- assign image_index = image_index | plus: 1 -%}
+                {%- endunless -%}
+              {%- endif -%}
+            </div>
+      {%- endunless -%}
+          {%- endfor -%}
+        {%- else -%}
+          {%- for i in (1..3) -%}
+            {%- capture placeholder_name -%}product-apparel-{{ i }}{%- endcapture -%}
+
+            <div class="product-gallery__media snap-center {% if forloop.first %}is-initial{% endif %}" data-media-type="{{ media.media_type }}" data-media-id="{{ media.id }}" role="group" aria-label="{{ 'general.accessibility.item_nth_of_count' | t: index: forloop.index, count: 3 }}">
+              {{- placeholder_name | placeholder_svg_tag: 'placeholder' -}}
+            </div>
+          {%- endfor -%}
+        {%- endif -%}
+      </scroll-carousel>
+
+      {%- if desktop_layout == 'carousel' and product.media.size > 1 -%}
+        <custom-cursor class="product-gallery__cursor custom-cursor" {% if default_media.media_type != 'image' %}hidden{% endif %}>
+          <div class="circle-button circle-button--xl">
+            {%- render 'icon' with 'big-arrow-right', width: 12 -%}
+          </div>
+        </custom-cursor>
+      {%- endif -%}
+
+      {%- if enable_image_zoom -%}
+        <open-lightbox-button aria-controls="{{ product_gallery_carousel_id}}" {% if section.settings.desktop_media_layout contains 'grid' %}class="sm:hidden"{% endif %}>
+          <button class="product-zoom-button">
+            {%- render 'icon' with 'zoom-plus', width: 16 -%}
+            <span class="product-zoom-button__label">{{ 'product.gallery.zoom' | t }}</span>
+          </button>
+        </open-lightbox-button>
+      {%- endif -%}
+    </div>
+
+    {%- comment -%}
+  ----------------------------------------------------------------------------------------------------------------------
+  CONTROLS
+  ----------------------------------------------------------------------------------------------------------------------
+  {%- endcomment -%}
+
+    {%- if product.media.size > 1 or product == blank -%}
+      {%- comment -%}
+      IMPLEMENTATION NOTE: we allow merchants to control independently the desktop and mobile controls. To handle that, we
+        render each type of controls, and then add the correct one based on the settings
+      {%- endcomment -%}
+
+      {%- comment -%}THUMBNAILS{%- endcomment -%}
+      {%- capture thumbnails_controls -%}
+        <div class="product-gallery__thumbnail-list">
+          <carousel-navigation align-selected aria-controls="{{ product_gallery_carousel_id }}" class="scroll-marker-group scroll-marker-group--thumbnails scroll-area bleed md:unbleed">
+            {%- if product != blank -%}
+              {%- for media in product.media -%}
+                <button type="button" class="scroll-marker" {% if filtered_indexes contains media.position %}hidden{% endif %} aria-current="{% if media == default_media %}true{% else %}false{% endif %}" aria-label="{{ 'general.accessibility.go_to_item' | t: index: forloop.index | escape }}">
+                  {{- media | image_url: width: media.preview_image.width | image_tag: loading: 'lazy', sizes: '56px', widths: '56,112,168', class: 'object-contain' -}}
+
+                  {%- unless media.media_type == 'image' -%}
+                    <div class="product-gallery__media-badge">
+                      {%- if media.media_type == 'model' -%}
+                        {%- render 'icon' with 'media-model-badge', width: 12 -%}
+                      {%- else -%}
+                        {%- render 'icon' with 'media-video-badge', width: 12 -%}
+                      {%- endif -%}
+                    </div>
+                  {% endunless %}
+                </button>
+              {%- endfor -%}
+            {%- else -%}
+              {%- for i in (1..3) -%}
+                {%- capture placeholder_name -%}product-apparel-{% cycle '1', '2', '3', '4', '5' %}{%- endcapture -%}
+
+                <button type="button" class="scroll-marker" aria-current="{% if forloop.first %}true{% else %}false{% endif %}" aria-label="{{ 'general.accessibility.go_to_item' | t: index: forloop.index | escape }}">
+                  {{- placeholder_name | placeholder_svg_tag: 'block object-contain h-full w-full' -}}
+                </button>
+              {%- endfor -%}
+            {%- endif -%}
+          </carousel-navigation>
+        </div>
+      {%- endcapture -%}
+
+      {%- comment -%}LINES{%- endcomment -%}
+
+      {%- capture lines_controls -%}
+        <carousel-navigation class="scroll-marker-group scroll-marker-group--lines align-self-center" aria-controls="{{ product_gallery_carousel_id }}">
+          {%- if product != blank -%}
+            {%- for media in product.media -%}
+              <button type="button" class="scroll-marker tap-area tap-area--sm" {% if filtered_indexes contains media.position %}hidden{% endif %} aria-current="{% if media == default_media %}true{% else %}false{% endif %}">
+                <span class="sr-only">{{ 'general.accessibility.go_to_item' | t: index: media.position }}</span>
+              </button>
+            {%- endfor -%}
+          {%- else -%}
+            {%- for i in (1..3) -%}
+              <button type="button" class="scroll-marker tap-area tap-area--sm" aria-current="{% if forloop.first %}true{% else %}false{% endif %}">
+                <span class="sr-only">{{ 'general.accessibility.go_to_item' | t: index: forloop.index }}</span>
+              </button>
+            {%- endfor -%}
+          {%- endif -%}
+        </carousel-navigation>
+      {%- endcapture -%}
+
+      {%- comment -%}DOTS{%- endcomment -%}
+
+      {%- capture dots_controls -%}
+        <carousel-navigation class="scroll-marker-group scroll-marker-group--dots align-self-center" aria-controls="{{ product_gallery_carousel_id }}">
+          {%- if product != blank -%}
+            {%- for media in product.media -%}
+              <button type="button" class="scroll-marker tap-area tap-area--sm" {% if filtered_indexes contains media.position %}hidden{% endif %} aria-current="{% if media == default_media %}true{% else %}false{% endif %}">
+                <span class="sr-only">{{ 'general.accessibility.go_to_item' | t: index: media.position }}</span>
+              </button>
+            {%- endfor -%}
+          {%- else -%}
+            {%- for i in (1..3) -%}
+              <button type="button" class="scroll-marker tap-area tap-area--sm" aria-current="{% if forloop.first %}true{% else %}false{% endif %}">
+                <span class="sr-only">{{ 'general.accessibility.go_to_item' | t: index: forloop.index }}</span>
+              </button>
+            {%- endfor -%}
+          {%- endif -%}
+        </carousel-navigation>
+      {%- endcapture -%}
+
+      {%- capture numbers_controls -%}
+        <carousel-navigation class="scroll-marker-group scroll-marker-group--counter align-self-center" aria-controls="{{ product_gallery_carousel_id }}">
+          {%- if product != blank -%}
+            {%- liquid
+              assign media_count = product.media.size
+              assign default_media_index = 0
+
+              for media in product.media
+                if filtered_indexes contains media.position
+                  assign media_count = media_count | minus: 1
+                endif
+              endfor
+
+              for media in product.media
+                unless filtered_indexes contains media.position
+                  assign default_media_index = default_media_index | plus: 1
+
+                  if media == default_media
+                    break
+                  endif
+                endunless
+              endfor
+            -%}
+
+            <carousel-prev-button class="tap-area" aria-controls="{{ product_gallery_carousel_id }}">
+              <button type="button">
+                {%- render 'icon' with 'arrow-left', width: 9, direction_aware: true -%}
+              </button>
+            </carousel-prev-button>
+
+            <carousel-page-indicator class="h-stack gap-2" aria-controls="{{ product_gallery_carousel_id }}">
+              <span current-slide-index>{{ default_media_index }}</span>
+              <span class="text-subdued">/</span>
+              <span page-size class="text-subdued">{{ media_count }}</span>
+            </carousel-page-indicator>
+
+            <carousel-next-button type="button" class="tap-area" aria-controls="{{ product_gallery_carousel_id }}">
+              <button type="button">
+                {%- render 'icon' with 'arrow-right', width: 9, direction_aware: true -%}
+              </button>
+            </carousel-next-button>
+          {%- else -%}
+            <div class="h-stack gap-3">
+              <span current-slide-index>1</span>
+              <span class="text-subdued">/</span>
+              <span page-size class="text-subdued">3</span>
+            </div>
+          {%- endif -%}
+        </carousel-navigation>
+      {%- endcapture -%}
+
+      {%- if desktop_layout == 'carousel' -%}
+        <div class="{% if desktop_carousel_controls != 'thumbnails_under' %}product-gallery__controls-floating{% endif %} hidden md:contents">
+          {%- liquid
+            case desktop_carousel_controls
+              when 'dots'
+                echo dots_controls
+
+              when 'lines'
+                echo lines_controls
+
+              when 'thumbnails_under' or 'thumbnails_over'
+                echo thumbnails_controls
+
+              when 'numbers'
+                echo numbers_controls
+            endcase
+          -%}
+        </div>
+      {%- endif -%}
+
+      {%- if mobile_controls != 'none' -%}
+        <div class="{% if mobile_controls != 'thumbnails' %}product-gallery__controls-floating{% endif %} contents md:hidden">
+          {%- liquid
+            case mobile_controls
+              when 'dots'
+                echo dots_controls
+
+              when 'lines'
+                echo lines_controls
+
+              when 'thumbnails'
+                echo thumbnails_controls
+
+              when 'numbers'
+                echo numbers_controls
+            endcase
+          -%}
+        </div>
+      {%- endif -%}
+    {%- endif -%}
+  </div>
+
+  {%- comment -%}
+  ----------------------------------------------------------------------------------------------------------------------
+  VIEW IN YOUR SPACE
+  ----------------------------------------------------------------------------------------------------------------------
+  {%- endcomment -%}
+  {%- assign first_3d_model = product.media | where: 'media_type', 'model' | first -%}
+
+  {%- if first_3d_model -%}
+    <link rel="stylesheet" href="https://cdn.shopify.com/shopifycloud/model-viewer-ui/assets/v1.0/model-viewer-ui.css" media="print" onload="this.media='all'; this.onload = null">
+
+    <div class="view-in-space-button md:hidden">
+      <button class="button w-full" data-shopify-xr data-shopify-model3d-id="{{ first_3d_model.id }}" data-shopify-model3d-default-id="{{ first_3d_model.id }}" data-shopify-title="{{ product.title | escape }}" data-shopify-xr-hidden>
+        <span class="text-with-icon justify-center">
+          {%- render 'icon' with 'media-view-in-space' -%}
+          {{- 'product.general.view_in_space' | t -}}
+        </span>
+      </button>
+    </div>
+  {%- endif -%}
+</product-gallery>

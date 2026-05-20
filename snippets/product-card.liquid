@@ -1,0 +1,370 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+PRODUCT CARD COMPONENT
+----------------------------------------------------------------------------------------------------------------------
+
+This component is used in collection and featured collection to render a single product as a card.
+
+A card can be highlighted (takes bigger space in listing) by creating a metafield definition with the key
+"highlight_card" and namespace "custom". It must be a boolean metafield.
+
+NOTE TO DEVELOPERS OR AGENCIES: this code is quite complex due to the extremely large number of possible combinations
+that the design team wanted to achieve. There are hundreds of possible permutations, and we tried to handle them
+using the least amount of code possible. We however had to do some deep nesting of div to be able to handle most of
+the conditions. If you have to modify extensively this code, we would eventually recommend to first simplify the structure
+based on your desired layout (and remove most of the settings associated), and then do your customizations on top of it.
+
+********************************************
+Supported variables
+********************************************
+
+* product: the product to render
+* reveal: if set to true, the card will be revealed on scroll through animation
+* position: the position of the card in the list. If specified, the theme will eagerly load the first 3 cards images
+* color_scheme: the color scheme to use (if none is set, it defaults to the default card scheme)
+* section_color_scheme: the color scheme of the section, which is used to calculate if the card blends or not with the section
+* allow_highlight: if set to true, this card is allowed to be highlighted (shown bigger) if the "custom.highlight_card" metafield is set
+* show_badges: show or not the badges (default to true if nothing is set).
+* show_rating: show or not the rating. If nothing is set, the theme uses the default product card setting
+* show_vendor: show or not the vendor. If nothing is set, the theme uses the default product card setting
+* show_quick_buy: show or not the quick buy (which open a modal if the product contains more than 1 choice)
+* show_secondary_image: show or not the secondary media on hover. If nothing is set, the theme uses the default product card setting
+* show_swatches: show or not the swatches. The swatch type is inferred from setting, and will default to true if nothing is set.
+* force_no_border: if set to true, no border will be added around cards, even if the global setting ask to
+* sizes: the value of the sizes attribute (because it depends of the context, it should be calculated outside)
+* prefix_id: an optional prefix being used to prefix all the inputs. This is useful when we have to output multiple
+             product card on the same page, to avoid any ID conflicts.
+{%- endcomment -%}
+
+{%- liquid
+  assign color_scheme = color_scheme | default: settings.product_card_color_scheme
+  assign section_color_scheme = section_color_scheme | default: section.settings.color_scheme | default: settings.default_color_scheme
+  assign show_badges = show_badges | default: true, allow_false: true
+  assign show_rating = show_rating | default: settings.product_card_show_rating, allow_false: true
+  assign show_vendor = show_vendor | default: settings.product_card_show_vendor, allow_false: true
+  assign show_quick_buy = show_quick_buy | default: settings.product_card_show_quick_buy, allow_false: true
+  assign show_secondary_image = show_secondary_image | default: settings.product_card_show_secondary_image, allow_false: true
+  assign show_swatches = show_swatches | default: settings.product_card_show_color_swatches, allow_false: true
+
+  if allow_highlight and product.metafields.custom.highlight_card.value
+    assign highlight_card = true
+    assign sizes = '(max-width: 699px) 100vw, 50vw'
+  endif
+
+  assign show_badges_along_info = false
+  assign show_swatches_along_info = false
+
+  if settings.product_card_info_position == 'inside'
+    assign product_card_info_self_placement = 'place-self-' | append: settings.product_card_info_vertical_alignment | append: '-' | append: settings.product_card_info_horizontal_alignment | replace: 'start-start', 'start' | replace: 'end-end', 'end'
+
+    if product_card_info_self_placement == settings.product_card_badges_placement
+      assign show_badges_along_info = true
+    endif
+
+    if product_card_info_self_placement == settings.product_card_swatches_placement
+      assign show_swatches_along_info = true
+    endif
+  endif
+
+  assign product_card_classes = 'product-card'
+
+  if highlight_card
+    assign product_card_classes = product_card_classes | append: ' product-card--highlight'
+  endif
+
+  if settings.product_listing_spacing == 'none' and force_no_border != true
+    assign product_card_classes = product_card_classes | append: ' product-card--bordered'
+  endif
+
+  if settings.product_card_info_position == 'outside'
+    assign product_card_classes = product_card_classes | append: ' product-card--info-outside'
+  else
+    assign product_card_classes = product_card_classes | append: ' product-card--info-inside'
+  endif
+
+  # In this condition, we try to detect if the color scheme of the card has the same background as the section. If yes, we have to
+  # remove some padding in the info. We do not try to handle every possible conditions (especially with gradients), as this would
+  # make this code extremely complex for a very limited use case
+  if settings.product_listing_spacing != 'none' and color_scheme == section_color_scheme and section_color_scheme.settings.background_gradient == blank or color_scheme.settings.background == section_color_scheme.settings.background or color_scheme.settings.background == 'rgba(0,0,0,0)'
+    assign product_card_classes = product_card_classes | append: ' product-card--blends'
+  endif
+
+  case settings.product_card_style
+    when 'subheading'
+      assign vendor_class = 'subheading text-subdued'
+      assign title_class = 'subheading'
+
+    when 'body_text'
+      assign vendor_class = 'text-sm text-subdued'
+      assign title_class = 'text-sm'
+
+    when 'heading'
+      assign vendor_class = 'heading text-subdued'
+      assign title_class = 'heading'
+  endcase
+
+  assign show_product_size_selector = false
+
+  if settings.product_card_show_product_size_selector and product.options.size == 1
+    assign size_label_list = 'general.label.size' | t | split: ','
+
+    for size_label in size_label_list
+      assign size_label_stripped = size_label | strip
+      assign size_option = product.options_by_name[size_label_stripped]
+
+      if size_option != blank
+        assign show_product_size_selector = true
+        break
+      endif
+    endfor
+  endif
+
+  if show_badges
+    assign badges_alignment = settings.product_card_badges_placement | split: '-' | last
+
+    if settings.product_card_show_badges_vertically
+      assign badges_alignment = settings.product_card_badges_placement | remove: 'place-self-' | split: '-' | first
+    endif
+  endif
+-%}
+
+<product-card class="{{ product_card_classes }} color-scheme color-scheme--{{ color_scheme.id }}" {% if reveal and settings.stagger_products %}reveal-on-scroll="true"{% endif %} handle="{{ product.handle | escape }}">
+  {%- comment -%}
+  --------------------------------------------------------------------------------------------------------------------
+  PRODUCT MEDIA
+  --------------------------------------------------------------------------------------------------------------------
+  {%- endcomment -%}
+
+  <div class="product-card__figure">
+    {%- if show_badges and show_badges_along_info != true -%}
+      {%- render 'product-badges', 
+        product: product,
+        context: 'card',
+        show_custom_badge: true,
+        show_sold_out_badge: settings.product_card_show_sold_out_badge,
+        show_discount_badge: settings.product_card_show_discount,
+        direction: 'column', 
+        vertical_text: settings.product_card_show_badges_vertically,
+        class: settings.product_card_badges_placement,
+        alignment: badges_alignment
+      -%}
+    {%- endif -%}
+
+    <a href="{{ product.url }}" class="product-card__media">
+      {%- if product.media.size > 0 -%}
+        {%- liquid
+          assign sizes = sizes | default: '100vw'
+          assign main_media_loading_strategy = nil
+
+          if section.index > 3 or position > 3
+            assign main_media_loading_strategy = 'lazy'
+          endif
+
+          if main_media_loading_strategy == 'lazy'
+            assign sizes = sizes | prepend: 'auto, '
+          endif
+        -%}
+
+        {%- capture main_image_classes -%}product-card__image product-card__image--primary {% if settings.product_card_image_aspect_ratio contains 'crop' %}size-full object-cover{% endif %} aspect-{{ settings.product_card_image_aspect_ratio | split: '_' | first }}{%- endcapture -%}
+        {{- product.featured_media | image_url: width: product.featured_media.width | image_tag: loading: main_media_loading_strategy, sizes: sizes, widths: '200,300,400,500,600,700,800,900,1000,1200,1400,1600,1800', class: main_image_classes -}}
+
+        {%- liquid
+          if show_secondary_image and product.media.size > 1
+            assign next_media = product.media[product.featured_media.position] | default: product.media[1]
+
+            if next_media != blank
+              echo next_media | image_url: width: next_media.width | image_tag: class: 'product-card__image product-card__image--secondary', loading: 'lazy', fetchpriority: 'low', sizes: sizes, widths: '200,300,400,500,600,700,800,900,1000,1200,1400,1600,1800', draggable: 'false', aria-hidden: true
+            endif
+          endif
+        -%}
+      {%- else -%}
+        {{- 'image' | placeholder_svg_tag -}}
+      {%- endif -%}
+    </a>
+
+    {%- if show_quick_buy and product.available -%}
+      <div class="product-card__quick-buy {% if settings.product_card_info_position == 'inside' and settings.product_card_info_vertical_alignment == 'end' %}product-card__quick-buy--top-mobile{% endif %} {% if show_product_size_selector %}no-touch:hidden{% endif %}">
+        {%- if product.variants.size == 1 and product.selling_plan_groups.size == 0 -%}
+          <product-form>
+            {%- form 'product', product -%}
+              <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+
+              {%- assign button_label = 'product.general.add_to_cart_button' | t -%}
+              {%- render 'button', content: button_label, type: 'submit', stretch: true, background: settings.default_color_scheme.settings.background, text_color: settings.default_color_scheme.settings.text_color, class: 'touch:hidden' -%}
+
+              <button type="submit" class="block tap-area no-touch:hidden">
+                <span class="sr-only">{{ button_label }}</span>
+
+                <button-content>
+                  {%- render 'icon' with 'cart' -%}
+                </button-content>
+              </button>
+            {%- endform -%}
+          </product-form>
+        {%- else -%}
+          {%- capture quick_buy_id -%}product-quick-buy-{{ prefix_id }}-{{ block.id }}-{{ section.id }}-{{ product.id }}{%- endcapture -%}
+
+          {%- if show_product_size_selector == false -%}
+            {%- assign button_label = 'product.general.choose_options' | t -%}
+            {%- render 'button', content: button_label, aria_controls: quick_buy_id, stretch: true, background: settings.default_color_scheme.settings.background, text_color: settings.default_color_scheme.settings.text_color, class: 'touch:hidden' -%}
+          {%- endif -%}
+
+          <button type="button" aria-controls="{{ quick_buy_id }}" class="block tap-area no-touch:hidden">
+            <span class="sr-only">{{ button_label }}</span>
+
+            <button-content>
+              {%- render 'icon' with 'cart' -%}
+            </button-content>
+          </button>
+
+          <quick-buy-modal id="{{ quick_buy_id }}" product-url="{{ product.url }}" class="modal modal--quick-buy color-scheme color-scheme--{{ settings.default_color_scheme.id }}">
+            {%- comment -%}The content will be dynamically filled in JS{%- endcomment -%}
+          </quick-buy-modal>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {%- if show_product_size_selector -%}
+      <div class="product-card__floating-size-selector touch:hidden">
+        {%- for variant in product.variants -%}
+          <product-form>
+            {%- form 'product', product -%}
+              <input type="hidden" name="quantity" value="1">
+              <input type="hidden" name="id" value="{{ variant.id }}">
+
+              {%- assign class_list = 'floating-size-selector__button' -%}
+              {%- assign disabled = false -%}
+
+              {%- unless variant.available -%}
+                {%- assign class_list = class_list | append: ' is-disabled' -%}
+                {%- assign disabled = true -%}
+              {%- endunless -%}
+
+              {%- render 'button', type: 'submit', content: variant.title, size: 'sm', background: settings.default_color_scheme.settings.background, text_color: settings.default_color_scheme.settings.text_color, stretch: true, disabled: disabled, class: class_list -%}
+            {%- endform -%}
+          </product-form>
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+  </div>
+
+  {%- comment -%}
+  --------------------------------------------------------------------------------------------------------------------
+  PRODUCT INFO
+  --------------------------------------------------------------------------------------------------------------------
+  {%- endcomment -%}
+
+  {%- capture swatches -%}
+    {%- if show_swatches -%}
+      {%- assign color_label_list = 'general.label.color' | t | replace: ', ', ',' | downcase | split: ',' -%}
+
+      {%- for color_label in color_label_list -%}
+        {%- if product.options_by_name[color_label] != blank -%}
+          {%- assign product_option = product.options_by_name[color_label] -%}
+
+          <div class="product-card__swatch-list {% if settings.product_card_swatches_position == 'inside' %}{{ settings.product_card_swatches_placement }}{% endif %}">
+            <fieldset class="h-stack gap-1.5 sm:gap-2">
+              <legend class="sr-only">{{ product_option.name }}</legend>
+
+              {%- capture param_name -%}swatch-{{ quick_buy_context }}-{{ prefix_id }}-{{ block.id }}-{{ section.id }}-{{ product.id }}-{{ product_option.position }}{%- endcapture -%}
+
+              {%- liquid
+                assign limit = 4
+
+                for option_value in product_option.values limit: limit
+                  render 'option-value', type: 'swatch', param_name: param_name, option_value: option_value, option_position: product_option.position, force_unselected: true, output_variant_media: true, size: 'sm', show_tight: settings.product_card_show_tight_swatches
+                endfor
+  
+                if product_option.values.size > limit
+                  assign remaining_values = product_option.values.size | minus: limit
+
+                  if settings.product_card_show_tight_swatches
+                    echo '<span class="color-swatch__view-more subheading">+' | append: remaining_values | append: '</span>'
+                  else
+                    echo '<span class="color-swatch__view-more subheading text-subdued">+' | append: remaining_values | append: '</span>'
+                  endif
+                endif
+              -%}
+            </fieldset>
+          </div>
+
+          {%- break -%}
+        {%- endif -%}
+      {%- endfor -%}
+    {%- endif -%}
+  {%- endcapture -%}
+
+  {%- liquid
+    case settings.product_card_info_horizontal_alignment
+      when 'start'
+        assign info_alignment_class = 'v-stack gap-2.5 justify-items-start text-start'
+
+      when 'center'
+        assign info_alignment_class = 'v-stack gap-2.5 justify-items-center text-center'
+
+      when 'end'
+        assign info_alignment_class = 'v-stack gap-2.5 justify-items-end text-end'
+
+      when 'split'
+        assign info_alignment_class = 'h-stack gap-2.5 align-start justify-between wrap'
+    endcase
+  -%}
+
+  <div class="product-card__info {% if settings.product_card_info_position == 'inside' %}align-self-{{ settings.product_card_info_vertical_alignment }}{% endif %} {% if settings.product_listing_spacing == 'medium' or settings.product_listing_spacing == 'large' %}product-card__info--flush{% endif %}">
+    <div class="{{ info_alignment_class }}">
+      <div class="{% if settings.product_card_info_horizontal_alignment == 'split' %}contents{% else %}v-stack gap-0.5{% endif %}">
+        <div class="v-stack gap-2.5">
+          {%- if show_badges and show_badges_along_info -%}
+            {%- render 'product-badges',
+              product: product,
+              context: 'card',
+              show_custom_badge: true,
+              show_sold_out_badge: settings.product_card_show_sold_out_badge,
+              show_discount_badge: settings.product_card_show_discount,
+              direction: 'column',
+              vertical_text: settings.product_card_show_badges_vertically,
+              class: settings.product_card_badges_placement,
+              alignment: badges_alignment
+            -%}
+          {%- endif -%}
+
+          <div class="v-stack gap-1">
+            <div class="v-stack gap-0.5">
+              {%- if show_vendor and product.vendor != blank -%}
+                {%- render 'vendor' with product.vendor, class: vendor_class -%}
+              {%- endif -%}
+
+              <a href="{{ product.url }}" class="product-title {{ title_class }} {% if settings.product_card_title_max_lines > 0 %}line-clamp{% else %}{% if show_vendor == false %}trim-start{% endif %}{% endif %}" {% if settings.product_card_title_max_lines > 0 %}style="--line-clamp-count: {{ settings.product_card_title_max_lines }}"{% endif %}>
+                {{- product.title -}}
+              </a>
+            </div>
+
+            {%- if show_rating and settings.product_card_info_horizontal_alignment == 'split' -%}
+              {%- render 'product-rating', product: product, show_empty: settings.product_card_show_rating_if_empty, display_mode: settings.product_card_rating_mode -%}
+            {%- endif -%}
+          </div>
+        </div>
+
+        {%- if settings.product_card_info_horizontal_alignment == 'split' -%}
+          {%- render 'price-list', product: product, context: 'card' -%}
+        {%- else -%}
+          <div class="v-stack gap-1">
+            {%- render 'price-list', product: product, context: 'card' -%}
+
+            {%- if show_rating -%}
+              {%- render 'product-rating', product: product, show_empty: settings.product_card_show_rating_if_empty, display_mode: settings.product_card_rating_mode -%}
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+      </div>
+
+      {%- if swatches != blank and settings.product_card_swatches_position == 'outside' or show_swatches_along_info -%}
+        {{- swatches -}}
+      {%- endif -%}
+    </div>
+  </div>
+
+  {%- if swatches != blank and settings.product_card_swatches_position == 'inside' and show_swatches_along_info == false -%}
+    {{- swatches -}}
+  {%- endif -%}
+</product-card>

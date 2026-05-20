@@ -1,0 +1,645 @@
+{%- comment -%}
+The quick order list is a specialized section allowing customers to add a lot of variants quickly. It is mostly
+used in B2B context.
+{%- endcomment -%}
+
+{%- if product.variants_count > 1 -%}
+  <script type="module">
+    import {debounce, extractSectionId, fetchCart} from 'theme';
+    import {animate, animateSequence} from 'vendor';
+
+    export class QuickOrderList extends HTMLElement {
+      #abortController;
+      #sectionId;
+
+      constructor() {
+        super();
+
+        this.#sectionId ??= extractSectionId(this);
+
+        this.addEventListener('quick-order-list:update', this.#onUpdate.bind(this));
+        this.addEventListener('change', this.#onQuantityChange.bind(this));
+      }
+
+      connectedCallback () {
+        this.#abortController = new AbortController();
+
+        document.addEventListener('cart:prepare-bundled-sections', this.#onBundleSection.bind(this), {signal: this.#abortController?.signal});
+        document.addEventListener('cart:change', this.#onCartChange.bind(this), {signal: this.#abortController?.signal});
+      }
+
+      /**
+       * Whenever the quantity changes, we have to abort any pending request to ensure that the table is not re-rendered, which
+       * would hurt the user experience. This has to be done here and not in the #onUpdate method, because the #onUpdate is debounced,
+       * which could cause race conditions
+       */
+      async #onQuantityChange() {
+        this.#abortController?.abort();
+      }
+
+      /**
+       * Callback that perform the Ajax request to update the cart
+       */
+      async #onUpdate(event) {
+        // We emit an event "cart:prepare-bundled-sections", which allows components who wish to add their own sections to be re-rendered
+        let sectionsToBundle = new Set();
+        sectionsToBundle.add(this.#sectionId);
+        document.documentElement.dispatchEvent(new CustomEvent('cart:prepare-bundled-sections', {bubbles: true, detail: {sections: sectionsToBundle}}));
+
+        this.#abortController = new AbortController();
+
+        const quantityActions = event.target.closest('.quick-order-list__quantity-actions');
+
+        let animateSpinner;
+
+        if (quantityActions) {
+          quantityActions.querySelector('.quantity-selector')?.setAttribute('aria-busy', 'true');
+
+          animateSpinner = animate(quantityActions.querySelector('.icon-spinner'), {rotate: ['0deg', '360deg']}, {duration: 1, ease: 'linear', repeat: Infinity, at: '<'});
+
+          animateSequence([
+            [quantityActions.querySelector('.quantity-selector__input'), {opacity: [1, 0], transform: ['translateY(0px)', 'translateY(-4px)']}, {duration: 0.2, ease: 'ease-in-out'}],
+            [quantityActions.querySelector('.icon-spinner'), {opacity: [0, 1], visibility: ['hidden', 'visible']}, {duration: 0.2, ease: 'ease-in-out'}]
+          ])
+        }
+
+        event.detail.data['sections'] = [...sectionsToBundle].join(',');
+        event.detail.data['sections_url'] = `${window.location.pathname}?page=${event.target.getAttribute('current-page')}`;
+
+        try {
+          const response = await fetch(`${window.Shopify.routes.root}cart/${event.detail.action}.js`, {
+            method: 'POST',
+            signal: this.#abortController.signal,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(event.detail.data)
+          });
+
+          if (quantityActions) {
+            quantityActions.querySelector('.quantity-selector')?.removeAttribute('aria-busy');
+
+            animateSequence([
+              [quantityActions.querySelector('.icon-spinner'), {opacity: [1, 0], visibility: ['visible', 'hidden']}, {duration: 0.2, ease: 'ease-in-out'}],
+              [quantityActions.querySelector('.quantity-selector__input'), {opacity: [0, 1], transform: ['translateY(-4px)', 'translateY(0px)']}, {duration: 0.2, ease: 'ease-in-out'}],
+            ])
+
+            animateSpinner.stop();
+          }
+
+          if (response.ok) {
+            setTimeout(() => {
+              this.#onQuantityUpdated(response); // We give 250ms so that we finish the animation
+            }, 250);
+          } else {
+            const { message } = await response.json();
+            document.dispatchEvent(new CustomEvent('toast:show', {detail: {message, tone: 'error'}}));
+
+            // On some stores, when an error is triggered, Shopify will still add some items. For instance, if a product has an
+            // inventory of 2, but the customer try to add 3, Shopify will return an error but still add 2 items to the cart. This
+            // behavior is completely inconsistent (and does not follow the documented behavior), but it seems some stores are on
+            // a different backend version. This trick ensures that the cart is synced when this happens.
+            document.dispatchEvent(new CustomEvent('cart:refresh'));
+            quantityActions?.querySelector('quick-order-list-remove-variant')?.classList.remove('visibility-hidden');
+
+            (await fetchCart)['items']?.forEach((item) => {
+              if (item.variant_id === parseInt(event.target.getAttribute('variant-id'))) {
+                event.target.querySelector('.quantity-selector__input').value = item.quantity;
+              }
+            });
+          }
+        } catch (error) {
+          // When the request is aborted, we don't want to display any error
+        }
+      }
+
+      /**
+       * Callback called when the quantity of one line has been successfully updated. When this happens, we can re-render the whole section
+       */
+      async #onQuantityUpdated(response) {
+        const cartContent = await response.json(),
+          sectionId = this.#sectionId;
+
+        // We emit the event "cart:change" to notify other system that the cart has changed
+
+        document.documentElement.dispatchEvent(new CustomEvent('cart:change', {
+          bubbles: true,
+          detail: {
+            baseEvent: 'quick-order-list:add',
+            cart: cartContent
+          }
+        }));
+
+        // Finally, we have to re-render the whole section
+        this.closest('.shopify-section').outerHTML = cartContent['sections'][sectionId];
+      }
+
+      #onBundleSection(event) {
+        event.detail.sections.add(this.#sectionId);
+      }
+
+      #onCartChange (event) {
+        const html = (new DOMParser()).parseFromString(event.detail.cart['sections'][this.#sectionId], 'text/html');
+        this.innerHTML = html.querySelector('.quick-order-list').innerHTML;
+      }
+    }
+
+    /**
+     * Custom element specialized to update a single line in the quick order list
+     */
+    export class QuickOrderListQuantitySelector extends HTMLElement {
+      constructor() {
+        super();
+        this.addEventListener('change', debounce(this.#onQuantityChange.bind(this), 300));
+      }
+
+      #onQuantityChange(event) {
+        const itemData = {
+          id: this.getAttribute('variant-id'),
+          quantity: parseInt(event.target.value)
+        }
+
+        this.dispatchEvent(new CustomEvent('quick-order-list:update', {
+          bubbles: true,
+          detail: {
+            data: (this.getAttribute('data-action') === 'add') ? {items: [itemData]} : itemData,
+            action: this.getAttribute('data-action')
+          }
+        }));
+      }
+    }
+
+    /**
+     * Custom element specialized to remove a single variant from the quick order list
+     */
+    export class QuickOrderListRemoveVariant extends HTMLElement {
+      constructor() {
+        super();
+        this.addEventListener('click', this.#onClick);
+      }
+
+      #onClick() {
+        this.dispatchEvent(new CustomEvent('quick-order-list:update', {
+          bubbles: true,
+          detail: {
+            data: {
+              updates: {[this.getAttribute('variant-id')]: 0}
+            },
+            action: 'update'
+          }
+        }));
+      }
+    }
+
+    /**
+     * Custom element specialized to remove all the products from the quick order list
+     */
+    export class QuickOrderListRemoveAll extends HTMLElement {
+      constructor() {
+        super();
+        this.addEventListener('click', this.#onClick);
+      }
+
+      #onClick() {
+        const updates = JSON.parse(this.getAttribute('variant-ids')).reduce((acc, variantId) => {
+          acc[variantId] = 0;
+          return acc;
+        }, {});
+
+        this.dispatchEvent(new CustomEvent('quick-order-list:update', {
+          bubbles: true,
+          detail: {
+            data: {
+              updates
+            },
+            action: 'update'
+          }
+        }));
+      }
+    }
+
+    if (!window.customElements.get('quick-order-list')) {
+      window.customElements.define('quick-order-list', QuickOrderList);
+    }
+
+    if (!window.customElements.get('quick-order-list-quantity-selector')) {
+      window.customElements.define('quick-order-list-quantity-selector', QuickOrderListQuantitySelector);
+    }
+
+    if (!window.customElements.get('quick-order-list-remove-variant')) {
+      window.customElements.define('quick-order-list-remove-variant', QuickOrderListRemoveVariant);
+    }
+
+    if (!window.customElements.get('quick-order-list-remove-all')) {
+      window.customElements.define('quick-order-list-remove-all', QuickOrderListRemoveAll);
+    }
+  </script>
+
+  {%- if request.design_mode or section.settings.show_only_to_b2b_customers == false or customer.b2b? -%}
+    {%- if section.settings.hide_on_mobile -%}
+      <style>
+        @media screen and (max-width: 699px) {
+          #shopify-section-{{ section.id }} {
+            display: none;
+          }
+        }
+      </style>
+    {%- endif -%}
+
+    <div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+      <div class="container section-spacing">
+        <div class="section-stack">
+          {%- content_for "block", type: "_section-header", id: "section-header" -%}
+
+          <quick-order-list id="quick-order-list--{{ section.id }}" class="quick-order-list">
+            <table class="quick-order-list__table">
+              <thead class="quick-order-list__table-head">
+                <tr>
+                  <th class="text-start subheading">{{ 'sections.quick_order_list.variants' | t }}</th>
+                  <th class="sm-max:hidden subheading">{{ 'sections.quick_order_list.quantity' | t }}</th>
+                  <th class="sm-max:hidden subheading">{{ 'sections.quick_order_list.price' | t }}</th>
+                  <th class="text-end subheading">{{ 'sections.quick_order_list.total' | t }}</th>
+                </tr>
+              </thead>
+
+              {%- paginate product.variants by 50 -%}
+                {%- assign current_page = paginate.current_page -%}
+                
+                <tbody class="quick-order-list__table-body border-y">
+                  {%- for variant in product.variants -%}
+                    {%- liquid
+                      assign line_items_for_variant = cart | line_items_for: variant
+                      assign cart_contains_variant = false
+                      assign show_popover = false
+
+                      if variant.quantity_price_breaks.size > 1 or variant.quantity_rule.max != nil or variant.quantity_rule.increment > 1
+                        assign show_popover = true
+                        assign popover_id = 'quick-order-list-popover-' | append: section.id | append: '-' | append: variant.id
+                      endif
+
+                      if line_items_for_variant.size > 0
+                        assign cart_contains_variant = true
+                      endif
+                    -%}
+
+                    {%- capture volume_pricing -%}
+                      {%- liquid
+                        if variant.quantity_price_breaks.size <= 1
+                          assign price = variant.price | money
+                        else
+                          assign price_breaks_array = variant.quantity_price_breaks | sort: 'quantity' | reverse
+                          assign cart_quantity = cart | item_count_for_variant: variant.id
+
+                          for price_break in price_breaks_array
+                            if cart_quantity >= price_break.minimum_quantity
+                              assign price = price_break.price | money
+                              break
+                            else
+                              assign price = variant.price | money
+                            endif
+                          endfor
+                        endif
+
+                        echo 'product.volume_pricing.price_at_each' | t: price: price
+                      -%}
+                    {%- endcapture -%}
+
+                    {%- capture quantity_rules_content -%}
+                      {%- liquid
+                        assign quantity_rules = ''
+
+                        if variant.quantity_rule.min > 1
+                          assign rule = 'sections.quick_order_list.minimum_of' | t: min: variant.quantity_rule.min
+                          assign quantity_rules = quantity_rules | append: ' / ' | append: rule
+                        endif
+
+                        if variant.quantity_rule.max != nil
+                          assign rule = 'sections.quick_order_list.maximum_of' | t: max: variant.quantity_rule.max
+                          assign quantity_rules = quantity_rules | append: ' / ' | append: rule
+                        endif
+
+                        if variant.quantity_rule.increment > 1
+                          assign rule = 'sections.quick_order_list.increment_of' | t: step: variant.quantity_rule.increment
+                          assign quantity_rules = quantity_rules | append: ' / ' | append: rule
+                        endif
+
+                        echo quantity_rules
+                      -%}
+                    {%- endcapture -%}
+
+                    <tr>
+                      {%- comment -%}
+                        This first cell displays the product information, including the title, an optional image, and an optional SKU.
+                        On mobile devices, it also includes the quantity selector and price information.
+                      {%- endcomment -%}
+                      <th scope="row">
+                        <div class="h-stack gap-5 align-start sm:align-center text-start">
+                          {%- liquid
+                            assign image_to_use = variant.featured_media | default: product.featured_media
+
+                            if section.settings.show_image and image_to_use != blank
+                              echo image_to_use | image_url: width: image_to_use.width | image_tag: loading: 'lazy', sizes: '64px', widths: '64,128', class: 'quick-order-list__variant-image constrained-image shrink-0', style: '--image-max-width: 64px'
+                            endif
+                          -%}
+
+                          <div class="v-stack gap-2">
+                            <div class="v-stack">
+                              <p class="subheading">{{ variant.title }}</p>
+
+                              {%- if section.settings.show_sku and variant.sku != blank -%}
+                                <span class="subheading text-subdued">{{ variant.sku }}</span>
+                              {%- endif -%}
+                            </div>
+
+                            <p class="sm:hidden">{{ volume_pricing }}</p>
+
+                            <div class="sm:hidden">
+                              {%- if variant.available -%}
+                                <div class="quick-order-list__quantity-actions">
+                                  <div class="v-stack gap-4">
+                                    <div class="h-stack gap-4">
+                                      <quick-order-list-quantity-selector class="quick-order-list__quantity-selector" variant-id="{{ variant.id }}" data-action="{% if cart_contains_variant %}change{% else %}add{% endif %}" current-page="{{ current_page }}">
+                                        {%- render 'quantity-selector', variant: variant, quick_order: true, show_spinner: true -%}
+                                      </quick-order-list-quantity-selector>
+
+                                      <quick-order-list-remove-variant variant-id="{{ variant.id }}" {% unless cart_contains_variant %}class="visibility-hidden"{% endunless %} current-page="{{ current_page }}">
+                                        <button type="button" class="link text-subdued subheading">{{ 'sections.quick_order_list.remove' | t }}</button>
+                                      </quick-order-list-remove-variant>
+                                    </div>
+
+                                    {%- if show_popover -%}
+                                      <button aria-controls="{{ popover_id }}-sm-max" class="text-with-icon subheading-xs sm:hidden">
+                                        {%- render 'icon' with 'picto-info', width: 11 -%}
+                                        {{- 'sections.quick_order_list.volume_pricing_available' | t -}}
+                                      </button>
+
+                                      <x-popover id="{{ popover_id }}-sm-max" class="popover popover--quantity-breaks color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+                                        {%- if quantity_rules_content != blank -%}
+                                          <p slot="header">{{ quantity_rules_content | remove_first: ' / ' }}</p>
+                                        {%- endif -%}
+
+                                        <div class="v-stack gap-3 text-start">
+                                          <ul class="quantity-breaks-list unstyled-list border-t divide-y">
+                                            {%- for quantity_break in variant.quantity_price_breaks -%}
+                                              <li class="quantity-breaks-list__item h-stack justify-between">
+                                                {%- assign price = quantity_break.price | money -%}
+
+                                                <span class="text-sm">{{ quantity_break.minimum_quantity }}+</span>
+                                                <span class="text-sm">{{ 'product.volume_pricing.price_at_each' | t: price: price }}</span>
+                                              </li>
+                                            {%- endfor -%}
+                                          </ul>
+                                        </div>
+                                      </x-popover>
+                                    {%- endif -%}
+                                  </div>
+                                </div>
+                              {%- else -%}
+                                <p class="text-subdued">{{ 'product.general.sold_out_button' | t }}</p>
+                              {%- endif -%}
+                            </div>
+                          </div>
+                        </div>
+                      </th>
+
+                      {%- comment -%}
+                        This cell displays the quantity selector, or 'Sold Out' if the variant is unavailable.
+                        It is hidden on mobile devices.
+                      {%- endcomment -%}
+                      <td class="text-center sm-max:hidden">
+                        {%- if variant.available -%}
+                          <div class="quick-order-list__quantity-actions">
+                            <div class="h-stack justify-end h-full">
+                              {%- if show_popover -%}
+                                <div class="relative h-full h-stack">
+                                  <button aria-controls="{{ popover_id }}-sm" class="align-self-center" type="button">
+                                    {%- render 'icon' with 'picto-info', width: 12 -%}
+                                  </button>
+
+                                  <x-popover id="{{ popover_id }}-sm" class="popover popover--quantity-breaks color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+                                    {%- if quantity_rules_content != blank -%}
+                                      <p slot="header"
+                                         class="md:hidden">{{ quantity_rules_content | remove_first: ' / ' }}</p>
+                                    {%- endif -%}
+
+                                    <div class="v-stack gap-3 text-start">
+                                      <ul class="quantity-breaks-list unstyled-list divide-y">
+                                        <li class="quantity-breaks-list__item quantity-breaks-list__item--rules md-max:hidden">
+                                          <span>{{ quantity_rules_content | remove_first: ' / ' }}</span>
+                                        </li>
+
+                                        {%- for quantity_break in variant.quantity_price_breaks -%}
+                                          <li class="quantity-breaks-list__item h-stack justify-between">
+                                            {%- assign price = quantity_break.price | money -%}
+
+                                            <span class="text-sm">{{ quantity_break.minimum_quantity }}+</span>
+                                            <span class="text-sm">{{ 'product.volume_pricing.price_at_each' | t: price: price }}</span>
+                                          </li>
+                                        {%- endfor -%}
+                                      </ul>
+                                    </div>
+                                  </x-popover>
+                                </div>
+                              {%- endif -%}
+                            </div>
+
+                            <quick-order-list-quantity-selector class="quick-order-list__quantity-selector" variant-id="{{ variant.id }}" data-action="{% if cart_contains_variant %}change{% else %}add{% endif %}" current-page="{{ current_page }}">
+                              {%- render 'quantity-selector', variant: variant, quick_order: true, show_spinner: true -%}
+                            </quick-order-list-quantity-selector>
+
+                            <quick-order-list-remove-variant class="quick-order-list__remove-variant {% unless cart_contains_variant %}visibility-hidden{% endunless %}" variant-id="{{ variant.id }}" current-page="{{ current_page }}">
+                              <button type="button" class="link text-subdued subheading">{{ 'sections.quick_order_list.remove' | t }}</button>
+                            </quick-order-list-remove-variant>
+                          </div>
+                        {%- else -%}
+                          <p class="text-subdued">{{ 'product.general.sold_out_button' | t }}</p>
+                        {%- endif -%}
+                      </td>
+
+                      {%- comment -%}
+                        This cell displays price informations.
+                        It is hidden on mobile devices.
+                      {%- endcomment -%}
+                      <td class="text-center sm-max:hidden">
+                        {{- volume_pricing -}}
+                      </td>
+
+                      {%- comment -%}
+                        This cell displays the subtotal price of the variants added to the cart.
+                      {%- endcomment -%}
+                      <td class="text-end">
+                        {{- line_items_for_variant | sum: 'original_line_price' | default: 0 | money -}}
+                      </td>
+                    </tr>
+                  {%- endfor -%}
+
+                  {%- if paginate.pages > 1 -%}
+                    <tr class="quick-order-list__table-paginate-row">
+                      <td colspan="4" class="border-t">
+                        <nav class="pagination" role="navigation" aria-label="{{ 'general.accessibility.pagination' | t }}">
+                          {%- liquid
+                            assign previous_page = paginate.current_page | minus: 1
+                            assign next_page = paginate.current_page | plus: 1
+                          -%}
+
+                          {%- if paginate.previous -%}
+                            <facet-link disable-cache ignore-url-search>
+                              <a class="circle-button circle-button--lg" rel="prev" aria-label="{{ 'general.accessibility.go_to_page' | t: index: previous_page }}" href="{{ paginate.previous.url }}#quick-order-list--{{ section.id }}">
+                                {%- render 'icon' with 'big-arrow-left', mobile_width: 10, width: 13, direction_aware: true -%}
+                              </a>
+                            </facet-link>
+                          {%- else -%}
+                            <button class="circle-button circle-button--lg" disabled>
+                              {%- render 'icon' with 'big-arrow-left', mobile_width: 10, width: 13, direction_aware: true -%}
+                            </button>
+                          {%- endif -%}
+
+                          {%- if paginate.next -%}
+                            <facet-link disable-cache ignore-url-search>
+                              <a class="circle-button circle-button--lg" rel="next" aria-label="{{ 'general.accessibility.go_to_page' | t: index: next_page }}" href="{{ paginate.next.url }}#quick-order-list--{{ section.id }}" {% unless paginate.next %}disabled{% endunless %}>
+                                {%- render 'icon' with 'big-arrow-right', mobile_width: 10, width: 13, direction_aware: true -%}
+                              </a>
+                            </facet-link>
+                          {%- else -%}
+                            <button class="circle-button circle-button--lg" disabled>
+                              {%- render 'icon' with 'big-arrow-right', mobile_width: 10, width: 13, direction_aware: true -%}
+                            </button>
+                          {%- endif -%}
+                        </nav>
+                      </td>
+                    </tr>
+                  {%- endif -%}
+                </tbody>
+              {%- endpaginate -%}
+
+              <tfoot class="quick-order-list__table-foot">
+                {%- liquid
+                  assign total_item_count = 0
+                  assign total_price = 0
+
+                  for variant in product.variants
+                    assign variant_item_count = cart | line_items_for: variant | sum: 'quantity'
+                    assign variant_item_total_price = cart | line_items_for: variant | sum: 'original_line_price'
+
+                    assign total_item_count = total_item_count | plus: variant_item_count
+                    assign total_price = total_price | plus: variant_item_total_price
+                  endfor
+                -%}
+
+
+                <tr>
+                  <td>
+                    <div class="h-stack gap-5">
+                      {%- assign view_cart_button = 'sections.quick_order_list.view_cart' | t -%}
+                      {%- render 'button', content: view_cart_button, href: routes.cart_url, style: 'outline' -%}
+
+                      <quick-order-list-remove-all class="subheading text-subdued sm-max:hidden {% unless total_item_count > 0 %}visibility-hidden{% endunless %}" variant-ids="{{ cart | line_items_for: product | map: 'variant_id' | escape }}" current-page="{{ current_page }}">
+                        <button type="button" class="link">{{ 'sections.quick_order_list.remove_all' | t }}</button>
+                      </quick-order-list-remove-all>
+                    </div>
+                  </td>
+
+                  <td class="text-center sm-max:hidden">{{ 'sections.quick_order_list.item_count' | t: count: total_item_count }}</td>
+
+                  <td colspan="2" class="sm:text-end">
+                    <div class="v-stack gap-0.5">
+                      <div class="h-stack justify-between sm:hidden">
+                        {{ 'sections.quick_order_list.item_count' | t: count: total_item_count }}
+
+                        {%- if total_item_count > 0 -%}
+                          <quick-order-list-remove-all class="subheading text-subdued sm-max:hidden" variant-ids="{{ cart | line_items_for: product | map: 'variant_id' }}" current-page="{{ current_page }}">
+                            <button type="button" class="link">{{ 'sections.quick_order_list.remove_all' | t }}</button>
+                          </quick-order-list-remove-all>
+                        {%- endif -%}
+                      </div>
+
+                      <div>
+                        {{ 'sections.quick_order_list.product_subtotal' | t }}: {{ total_price | money }}
+
+                        {%- if cart.taxes_included and shop.shipping_policy.body != blank -%}
+                          <p class="text-subdued subheading-xs">{{ 'cart.general.taxes_included_and_shipping_policy_html' | t: link: shop.shipping_policy.url }}</p>
+                        {%- elsif cart.taxes_included -%}
+                          <p class="text-subdued subheading-xs">{{ 'cart.general.taxes_included_but_shipping_at_checkout' | t }}</p>
+                        {%- elsif shop.shipping_policy.body != blank -%}
+                          <p class="text-subdued subheading-xs">{{ 'cart.general.taxes_and_shipping_policy_at_checkout_html' | t: link: shop.shipping_policy.url }}</p>
+                        {%- else -%}
+                          <p class="text-subdued subheading-xs">{{ 'cart.general.taxes_and_shipping_at_checkout' | t }}</p>
+                        {%- endif -%}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </quick-order-list>
+        </div>
+      </div>
+    </div>
+  {%- endif -%}
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.quick_order_list.name",
+  "class": "shopify-section--quick-order-list",
+  "tag": "section",
+  "limit": 1,
+  "enabled_on": {
+    "templates": ["product"]
+  },
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.quick_order_list.description"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_only_to_b2b_customers",
+      "label": "t:sections.quick_order_list.show_only_to_b2b_customers"
+    },
+    {
+      "type": "checkbox",
+      "id": "hide_on_mobile",
+      "label": "t:sections.quick_order_list.hide_on_mobile"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.quick_order_list.table_list_category"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_image",
+      "label": "t:sections.quick_order_list.show_image",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_sku",
+      "label": "t:sections.quick_order_list.show_sku",
+      "default": true
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.quick_order_list.name",
+      "category": "t:global.categories.products",
+      "blocks": [
+        {
+          "type": "_section-header",
+          "static": true,
+          "id": "section-header",
+          "settings": {
+            "subheading": "Buy more pay less",
+            "title": "Buy in bulk and save",
+            "content": ""
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

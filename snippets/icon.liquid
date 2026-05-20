@@ -1,0 +1,1000 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+ICON
+----------------------------------------------------------------------------------------------------------------------
+
+Render a specific icon. This snippet supports two types of icons: icons that are shipped as part of the theme, and
+icons that are made of a custom image.
+
+To use the theme icon, you need to call the snippet using the icon name (as per the supported list) using the "with"
+attribute. Example:
+
+{%- render 'icon' with 'facebook' -%}
+
+To render an icon made of an image, you need to explicitly pass the image, and the width (and optional mobile width):
+
+{%- render 'icon', image: image, width: 32, mobile_width: 24 -%}
+
+********************************************
+Supported variables
+********************************************
+
+* with attribute: the name of the icon to render (eg: {%- render 'icon' with 'cart' -%}
+* image: an image drop that will be used to render the icon
+* class: an optional class to add to the SVG icon
+* offset: if set to true, the icon will be offsetted based on its height on the vertical axis to be aligned with neighboring element
+* direction_aware: if set to true, the icon will be rotated 180deg in RTL context
+* width: an optional width to render the icon (the height will scale accordingly)
+* mobile_width: an optional width to render the icon on mobile.
+* stroke_width: override the stroke width (only applicable for picto icons)
+{%- endcomment -%}
+
+{%- capture class -%}{{ class }} icon {% if icon != blank %}icon-{{ icon | handle }}{% endif %} {% if offset %}offset-icon{% endif %} {% if direction_aware %}icon--direction-aware{% endif %}{%- endcapture -%}
+
+{%- if image != blank -%}
+  {%- capture sizes_attribute -%}{% if mobile_width %}(max-width: 699px) {{ mobile_width }}px,{% endif %} {{ width }}px{%- endcapture -%}
+  {%- capture widths -%}{{ width }}, {{ width | times: 2 }}, {{ width | times: 3 }}{%- endcapture -%}
+  {%- capture style -%}--icon-max-width: {{ width }}px; --icon-mobile-max-width: {{ mobile_width | default: width }}px{%- endcapture -%}
+
+  {{- image | image_url: width: image.width | image_tag: loading: 'lazy', sizes: sizes_attribute, widths: widths, class: class, style: style -}}
+{%- else -%}
+  {%- liquid
+    assign mobile_width = mobile_width | default: width
+
+    if width != mobile_width
+      assign style = '--icon-mobile-max-width: ' | append: mobile_width | append: 'px; --icon-max-width: ' | append: width | append: 'px'
+    endif
+  -%}
+
+  {%- case icon -%}
+    {%- comment -%} UI {%- endcomment -%}
+
+    {%- when 'arrow-left' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 10 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 10 10">
+        <path stroke="currentColor" stroke-width="1.5" d="M6 1 2 5m0 0 4 4M2 5h8"/>
+      </svg>
+
+    {%- when 'arrow-right' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 10 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 10 10">
+        <path stroke="currentColor" stroke-width="1.5" d="m4 1 4 4m0 0L4 9m4-4H0"/>
+      </svg>
+
+    {%- when 'big-arrow-left' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 36 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 36 36">
+        <path fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: 2 }}" d="M35 18H3M19.5 34.5 3 18 19.5 1.5"/>
+      </svg>
+
+    {%- when 'big-arrow-right' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 36 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 36 36">
+        <path fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: 2 }}" d="M1 18h32M16.5 1.5 33 18 16.5 34.5"/>
+      </svg>
+
+    {%- when 'chevron-down' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 10 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 10 9">
+        <path fill="none" stroke="currentColor" stroke-width="1.5" d="m1 2.5 4 4 4-4" />
+      </svg>
+
+    {%- when 'chevron-right' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 9 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 9 10">
+        <path fill="none" stroke="currentColor" stroke-width="1.5" d="m2.5 9 4-4-4-4"/>
+      </svg>
+
+    {%- when 'success-checkmark' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 14 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 14 12">
+        <path fill="none" stroke="currentColor" d="m1 6 4 4 8-8"/>
+      </svg>
+
+    {%- when 'error-cross' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 12 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 12 12">
+        <path fill="none" stroke="currentColor" d="m2 2 8 8m0-8-8 8"/>
+      </svg>
+
+    {%- when 'close' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 10 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" fill="none" viewBox="0 0 10 10">
+        <path stroke="currentColor" d="m1 1 8 8m0-8L1 9" />
+      </svg>
+
+    {%- when 'back-arrow' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 10 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" fill="none" viewBox="0 0 10 11">
+        <path stroke="currentColor" d="M5.5 1 1 5.5m0 0L5.5 10M1 5.5h9" />
+      </svg>
+
+    {%- when 'accordion-small-arrow' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 11 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" fill="none" viewBox="0 0 11 7">
+        <path stroke="currentColor" stroke-width="1.5" d="M10 1 5.5 5.5 1 1" />
+      </svg>
+
+    {%- when 'accordion-arrow' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 14 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" fill="none" viewBox="0 0 14 14">
+        <path fill="none" stroke="currentColor" stroke-width="1.5" d="m13 6-6 6m0 0L1 6m6 6V0"/>
+      </svg>
+
+    {%- when 'play-triangle' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 12 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" fill="none" viewBox="0 0 12 17">
+        <path fill="#ffffff" d="M1.783 15.889A1 1 0 0 1 .2 15.076V1.148A1 1 0 0 1 1.783.335l9.71 6.964a1 1 0 0 1 0 1.626l-9.71 6.964Z"/>
+      </svg>
+
+    {%- when 'star-rating' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 13 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 13 13">
+        <path fill="{{ fill_color | default: settings.product_rating_color }}" d="m6.5 0 1.607 4.623 4.893.1-3.9 2.956 1.417 4.685L6.5 9.568l-4.017 2.796L3.9 7.679 0 4.723l4.893-.1L6.5 0Z"/>
+      </svg>
+
+    {%- when 'star-rating-half' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 13 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 13 13">
+        <path fill="{{ fill_color | default: settings.product_rating_color }}" d="M6.5 0v9.568l-4.017 2.796L3.9 7.679 0 4.723l4.893-.1L6.5 0Z"/>
+        <path fill="{{ fill_color | default: settings.product_rating_color }}" fill-opacity=".2" d="m6.5 0 1.607 4.623 4.893.1-3.9 2.956 1.417 4.685L6.5 9.568V0Z"/>
+      </svg>
+
+    {%- when 'star-rating-empty' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 13 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 13 13">
+        <path fill="{{ fill_color | default: settings.product_rating_color }}" fill-opacity="0.4" d="m6.5 0 1.607 4.623 4.893.1-3.9 2.956 1.417 4.685L6.5 9.568l-4.017 2.796L3.9 7.679 0 4.723l4.893-.1L6.5 0Z"/>
+      </svg>
+
+    {%- when 'facet-delete' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 9 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 9 9">
+        <path stroke="currentColor" d="m1 1 7 7m0-7L1 8"/>
+      </svg>
+
+    {%- when 'envelope' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 28 }}" fill="none" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 48 48">
+        <path stroke="currentColor" stroke-width="2" d="M4.285 7.714h40v32h-40v-32Z"/>
+        <path stroke="currentColor" stroke-width="2" d="m4.285 13.714 20 12 20-12"/>
+      </svg>
+
+    {%- when 'plane' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 28 }}" fill="none" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 48 48">
+        <path stroke="currentColor" stroke-width="2" d="M19.393 27.107 3.483 15.439 42.729 3.772 31.061 43.017l-11.668-15.91Zm0 0 8.486-8.486"/>
+      </svg>
+
+    {%- when 'inbox' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 28 }}" fill="none" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 48 48">
+        <path stroke="currentColor" stroke-width="2" d="m10.5 23.5 13.5 8 13.5-8m-27 0-6-4v24h39v-24l-6 4m-27 0v-19h27v19m-6-10h-15"/>
+      </svg>
+
+    {%- when 'lock' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 22 }}" fill="none" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 22 27">
+        <path stroke="currentColor" stroke-width="{{ settings.icon_stroke_width }}" d="M21 12.25H1V26h20V12.25ZM4.75 12.25v-5a6.25 6.25 0 0 1 12.5 0v5M11 17.25V21"/>
+      </svg>
+
+    {%- when 'discount' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ width | default: 13 }}" class="{{ class | strip }}" viewBox="0 0 13 13" fill="none">
+        <path d="M9.94238 3.05795L11.6146 1.38574" stroke="currentColor" stroke-width="1.5"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M10.4424 7.16699L10.2959 7.3125L5.00098 12.6084L4.64648 12.9619L0.0380859 8.35254L5.83301 2.55762H10.4424V7.16699ZM7.16699 5.13477L7.87402 5.8418L8.62402 5.0918L7.91699 4.38477L7.16699 5.13477Z" fill="currentColor"/>
+      </svg>
+
+    {%- when 'gift' -%}
+      <svg aria-hidden="true" focusable="false" fill="none" width="{{ width | default: 16 }}" class="{{ class | strip }}" viewBox="0 0 16 16">
+        <path stroke-width="{{ settings.icon_stroke_width }}" stroke="currentColor" d="M2.5 8V5.5h11V8h-11ZM3.5 14.5V8h9v6.5h-9ZM8 5.5v8.75M8 4a1.875 1.875 0 0 0-3.75 0M11.813 4a1.875 1.875 0 1 0-3.75 0"/>
+      </svg>
+
+    {%- when 'address-shipping' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 18 }}" fill="none" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 18 18">
+        <path stroke-width="{{ settings.icon_stroke_width }}" stroke="currentColor" d="M2.75 1.188h14.063v15.624H2.75V1.188ZM.406 4.313h4.688M.406 9h4.688M.406 13.688h4.688" />
+        <path stroke-width="{{ settings.icon_stroke_width }}" stroke="currentColor" d="M7.438 4.313h6.25v3.125h-6.25V4.313Z" />
+      </svg>
+
+    {%- when 'address-billing' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 18 }}" fill="none" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 18 19">
+        <path stroke-width="{{ settings.icon_stroke_width }}" stroke="currentColor" stroke-linecap="square" d="m12.02 9.02-3.998 5.336-2.668-1.998"/>
+        <path stroke-width="{{ settings.icon_stroke_width }}" stroke="currentColor" d="M3.235.833.51 4.881v.579h16.354V4.88L14.137.833H3.235ZM8.688.833V5.46M.51 17.916V5.46h16.355v12.456H.509.51Z"/>
+      </svg>
+
+    {%- when 'slideshow-play' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 10 }}" fill="none" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 10 12">
+        <path fill="currentColor" stroke="currentColor" stroke-width="1.5" d="M1 9.938V1.5l7.031 4.219L1 9.937Z"/>
+      </svg>
+
+    {%- when 'slideshow-pause' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 9 }}" fill="none" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 9 11">
+        <path stroke="currentColor" stroke-linecap="square" stroke-linejoin="round" stroke-width="2" d="M1.5 1.5v8M7.5 1.5v8"/>
+      </svg>
+
+    {%- when 'search' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 16 }}" fill="none" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 16 16">
+        <path stroke-width="{{ settings.icon_stroke_width }}" stroke="currentColor" d="M1.333 7.333a6 6 0 1 0 12 0 6 6 0 0 0-12 0ZM11.575 11.576l3.09 3.09" />
+      </svg>
+
+    {%- when 'cart' -%}
+      {%- case settings.cart_icon -%}
+        {%- when 'shopping_bag' -%}
+          <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 16 }}" fill="none" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 16 16">
+            <path stroke-width="{{ settings.icon_stroke_width }}" stroke="currentColor" d="m3 14.5-2-7h14l-2 7H3ZM3.333 7.333 6 2M12.667 7.333 10 2" />
+          </svg>
+
+        {%- when 'shopping_cart' -%}
+          <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 16 }}" fill="none" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 16 16">
+            <path stroke-width="{{ settings.icon_stroke_width }}" stroke="currentColor" d="M0 2.5h2.5l2 9h8l2-6H3.167" />
+            <circle stroke-width="{{ settings.icon_stroke_width }}" cx="6" cy="14" r="1" fill="currentColor"/>
+            <circle stroke-width="{{ settings.icon_stroke_width }}" cx="11" cy="14" r="1" fill="currentColor" />
+          </svg>
+
+        {%- when 'tote_bag' -%}
+          <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 16 }}" fill="none" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 16 16">
+            <path stroke-width="{{ settings.icon_stroke_width }}" stroke="currentColor" d="m1.5 14.5 1-12h11l1 12h-13Z"/>
+            <path stroke-width="{{ settings.icon_stroke_width }}" stroke="currentColor" d="M5.5 5c.238.833 1.071 2.5 2.5 2.5s2.262-1.667 2.5-2.5"/>
+          </svg>
+      {%- endcase -%}
+
+    {%- when 'account' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 16 }}" fill="none" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 16 16">
+        <path stroke-width="{{ settings.icon_stroke_width }}" stroke="currentColor" d="M15.418 15A8.003 8.003 0 0 0 .581 15" />
+        <circle stroke-width="{{ settings.icon_stroke_width }}" cx="8" cy="4.5" r="3" stroke="currentColor" />
+      </svg>
+
+    {%- when 'bell' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 16 }}" fill="none" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 16 16">
+        <path stroke-width="{{ settings.icon_stroke_width }}" stroke="currentColor" d="M3.333 7v3.333L2 12.5h12l-1.333-2.167V7A4.665 4.665 0 0 0 4.7 3.7 4.667 4.667 0 0 0 3.333 7ZM6.5 15.5h3" />
+      </svg>
+
+    {%- when 'hot-spot-cross' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 12 }}" fill="none" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 12 12">
+        <path stroke="currentColor" d="M6 .343V6m0 0v5.657M6 6h5.657M6 6H.343"/>
+      </svg>
+
+    {%- when 'quantity-minus' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 8 }}" fill="none" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 8 2">
+        <path d="M0 1H8" stroke="currentColor" stroke-width="1.5"/>
+      </svg>        
+
+    {%- when 'quantity-plus' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 8 }}" fill="none" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 8 8">
+        <path d="M0 4H8" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M4 0V8" stroke="currentColor" stroke-width="1.5"/>
+      </svg>
+
+    {%- when 'spinner' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 14 }}" fill="none" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 14 14">
+        <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5" opacity=".2" />
+        <path stroke="currentColor" stroke-width="1.5" d="M11.638 3.194a6 6 0 1 0-.395 8.049" />
+      </svg>
+
+    {%- when 'share' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 20 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 20 20">
+        <path fill="currentColor" d="M10.75 12.75a.75.75 0 0 1-1.5 0V6.06L8.03 7.28a.75.75 0 0 1-1.06-1.06l2.5-2.5a.75.75 0 0 1 1.06 0l2.5 2.5a.75.75 0 0 1-1.06 1.06l-1.22-1.22v6.69Z"/>
+        <path fill="currentColor" d="M16.5 10.25A2.25 2.25 0 0 0 14.25 8h-.07a.75.75 0 0 0 0 1.5h.07a.75.75 0 0 1 .75.75v4a.75.75 0 0 1-.75.75h-8.5a.75.75 0 0 1-.75-.75v-4a.75.75 0 0 1 .75-.75h.07a.75.75 0 0 0 0-1.5h-.07a2.25 2.25 0 0 0-2.25 2.25v4a2.25 2.25 0 0 0 2.25 2.25h8.5a2.25 2.25 0 0 0 2.25-2.25v-4Z"/>
+      </svg>
+
+    {%- when 'product-card-1x1' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 16 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 16 16">
+        <path fill="currentColor" d="M0 0h16v16H0z"></path>
+      </svg>
+
+    {%- when 'product-card-2x2' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 16 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 16 16">
+        <path fill="currentColor" d="M0 0h7v7H0zM0 9h7v7H0zM9 0h7v7H9zM9 9h7v7H9z"/>
+      </svg>
+
+    {%- when 'product-card-3x3' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 16 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 16 16">
+        <path fill="currentColor" d="M6 0h4v8H6zM6 9h4v7H6zM11 0h4v8h-4zM11 9h4v7h-4zM1 0h4v8H1zM1 9h4v7H1z"/>
+      </svg>
+
+    {%- when 'product-card-4x4' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 16 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 16 16">
+        <path fill="currentColor" d="M1 1h2v2H1zM1 9h2v2H1zM1 5h2v2H1zM1 13h2v2H1zM5 1h2v2H5zM5 9h2v2H5zM5 5h2v2H5zM5 13h2v2H5zM9 1h2v2H9zM9 9h2v2H9zM9 5h2v2H9zM9 13h2v2H9zM13 1h2v2h-2zM13 9h2v2h-2zM13 5h2v2h-2zM13 13h2v2h-2z"/>
+      </svg>
+
+    {% when 'filters' %}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 16 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 16 10">
+        <path stroke="currentColor" stroke-linecap="square" stroke-width="1.5" d="M4 5h8M1 1h14M7 9h2"/>
+      </svg>
+
+    {%- when 'remove-bin' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 16 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 16 17">
+        <path stroke="currentColor" fill="none" d="M2 4.5h12M3.5 4.5h9v10h-9v-10ZM6.5 7v5M9.5 7v5M5.5 4.5a2.5 2.5 0 1 1 5 0" />
+      </svg>
+
+    {%- when 'order-note' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 13 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 13 12">
+        <path stroke-width="{{ settings.icon_stroke_width }}" stroke="currentColor" fill="none" d="M7.691 1.547h-5.41v8.906l1.875-1.172h6.563V4.845" />
+        <path stroke-width="{{ settings.icon_stroke_width }}" stroke="currentColor" fill="none" d="M11.187 2.667 7.665 6.19H6.31V4.836l3.523-3.524 1.354 1.355Z" />
+      </svg>
+
+    {%- when 'shipping-estimator' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 12 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 12 12">
+        <path stroke-width="{{ settings.icon_stroke_width }}" stroke="currentColor" fill="none" d="M11.5 3.5v8H.5v-8m11 0-2-3H6m5.5 3H6m-5.5 0 2-3H6m-5.5 3H6m0 0v-3"/>
+      </svg>
+
+    {%- when 'zoom-plus' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 15 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} part="icon" viewBox="0 0 15 15">
+        <path d="M7 0L7 7H0V8H7V15H8V8L15 8V7L8 7L8 0H7Z" fill="currentColor"/>
+      </svg>
+
+    {%- when 'loader' -%}
+      <svg aria-hidden="true" fill="none" focusable="false" width="{{ width | default: 12 }}" class="{{ class | strip }}" viewBox="0 0 64 64">
+        <path fill="currentColor" opacity=".4" d="M23.8589104 1.05290547C40.92335108-3.43614731 58.45816642 6.79494359 62.94709453 23.8589104c4.48905278 17.06444068-5.74156424 34.59913135-22.80600493 39.08818413S5.54195825 57.2055303 1.05290547 40.1410896C-3.43602265 23.0771228 6.7944697 5.54195825 23.8589104 1.05290547zM38.6146353 57.1445143c13.8647142-3.64731754 22.17719655-17.89443541 18.529879-31.75914961-3.64743965-13.86517841-17.8944354-22.17719655-31.7591496-18.529879S3.20804604 24.7494569 6.8554857 38.6146353c3.64731753 13.8647142 17.8944354 22.17719655 31.7591496 18.529879z"></path>
+        <path fill="currentColor" d="M1.05290547 40.1410896l5.80258022-1.5264543c3.64731754 13.8647142 17.89443541 22.17719655 31.75914961 18.529879l1.5264543 5.80258023C23.07664892 67.43614731 5.54195825 57.2055303 1.05290547 40.1410896z"></path>
+      </svg>
+
+    {%- comment -%} SOCIAL MEDIA {%- endcomment -%}
+
+    {%- when 'facebook' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path fill="currentColor" fill-rule="evenodd" d="M2 12c0 4.95 3.6 9.05 8.35 9.9l.059-.048-.009-.002V14.8H7.9V12h2.5V9.8c0-2.5 1.6-3.9 3.9-3.9.7 0 1.5.1 2.2.2v2.55h-1.3c-1.2 0-1.5.6-1.5 1.4V12h2.65l-.45 2.8h-2.2v7.05l-.09.016.04.034C18.4 21.05 22 16.95 22 12c0-5.5-4.5-10-10-10S2 6.5 2 12Z" clip-rule="evenodd"/>
+      </svg>
+
+    {%- when 'instagram' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2.4c-2.607 0-2.934.011-3.958.058-1.022.046-1.72.209-2.33.446a4.705 4.705 0 0 0-1.7 1.107 4.706 4.706 0 0 0-1.108 1.7c-.237.611-.4 1.31-.446 2.331C2.41 9.066 2.4 9.392 2.4 12c0 2.607.011 2.934.058 3.958.046 1.022.209 1.72.446 2.33a4.706 4.706 0 0 0 1.107 1.7c.534.535 1.07.863 1.7 1.108.611.237 1.309.4 2.33.446 1.025.047 1.352.058 3.959.058s2.934-.011 3.958-.058c1.022-.046 1.72-.209 2.33-.446a4.706 4.706 0 0 0 1.7-1.107 4.706 4.706 0 0 0 1.108-1.7c.237-.611.4-1.31.446-2.33.047-1.025.058-1.352.058-3.959s-.011-2.934-.058-3.958c-.047-1.022-.209-1.72-.446-2.33a4.706 4.706 0 0 0-1.107-1.7 4.705 4.705 0 0 0-1.7-1.108c-.611-.237-1.31-.4-2.331-.446C14.934 2.41 14.608 2.4 12 2.4Zm0 1.73c2.563 0 2.867.01 3.88.056.935.042 1.443.199 1.782.33.448.174.768.382 1.104.718.336.336.544.656.718 1.104.131.338.287.847.33 1.783.046 1.012.056 1.316.056 3.879 0 2.563-.01 2.867-.056 3.88-.043.935-.199 1.444-.33 1.782a2.974 2.974 0 0 1-.719 1.104 2.974 2.974 0 0 1-1.103.718c-.339.131-.847.288-1.783.33-1.012.046-1.316.056-3.88.056-2.563 0-2.866-.01-3.878-.056-.936-.042-1.445-.199-1.783-.33a2.974 2.974 0 0 1-1.104-.718 2.974 2.974 0 0 1-.718-1.104c-.131-.338-.288-.847-.33-1.783-.047-1.012-.056-1.316-.056-3.879 0-2.563.01-2.867.056-3.88.042-.935.199-1.443.33-1.782.174-.448.382-.768.718-1.104a2.974 2.974 0 0 1 1.104-.718c.338-.131.847-.288 1.783-.33C9.133 4.14 9.437 4.13 12 4.13Zm0 11.07a3.2 3.2 0 1 1 0-6.4 3.2 3.2 0 0 1 0 6.4Zm0-8.13a4.93 4.93 0 1 0 0 9.86 4.93 4.93 0 0 0 0-9.86Zm6.276-.194a1.152 1.152 0 1 1-2.304 0 1.152 1.152 0 0 1 2.304 0Z" fill="currentColor"/>
+      </svg>
+
+    {%- when 'pinterest' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M11.765 2.401c3.59-.054 5.837 1.4 6.895 3.95.349.842.722 2.39.442 3.675-.112.512-.144 1.048-.295 1.53-.308.983-.708 1.853-1.238 2.603-.72 1.02-1.81 1.706-3.182 2.052-1.212.305-2.328-.152-2.976-.643-.206-.156-.483-.36-.56-.643h-.029c-.046.515-.244 1.062-.383 1.531-.193.65-.23 1.321-.472 1.929a12.345 12.345 0 0 1-.942 1.868c-.184.302-.692 1.335-1.061 1.347-.04-.078-.057-.108-.06-.245-.118-.19-.035-.508-.087-.766-.082-.4-.145-1.123-.06-1.53v-.643c.096-.442.092-.894.207-1.317.25-.92.39-1.895.648-2.848.249-.915.477-1.916.678-2.847.045-.21-.21-.815-.265-1.041-.174-.713-.042-1.7.176-2.236.275-.674 1.08-1.703 2.122-1.439.838.212 1.371 1.118 1.09 2.266-.295 1.205-.677 2.284-.943 3.49-.068.311.05.641.118.827.248.672 1 1.324 2.004 1.072 1.52-.383 2.193-1.76 2.652-3.246.124-.402.109-.781.206-1.225.204-.935.118-2.331-.177-3.061-.472-1.17-1.353-1.92-2.563-2.328L12.707 4.3c-.56-.128-1.626.064-2.004.183-1.69.535-2.737 1.427-3.388 3.032-.222.546-.344 1.1-.383 1.868l-.03.276c.13.686.144 1.14.413 1.653.132.252.447.451.5.765.032.185-.104.464-.147.613-.065.224-.041.48-.147.673-.192.349-.714.087-.943-.061-1.192-.77-2.175-2.995-1.62-5.144.085-.332.09-.62.206-.919.723-1.844 1.802-2.978 3.359-3.95.583-.364 1.37-.544 2.092-.734l1.149-.154Z" fill="currentColor"/>
+      </svg>
+
+    {%- when 'twitter' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path d="M16.94 4h2.715l-5.93 6.777L20.7 20h-5.462l-4.278-5.593L6.065 20H3.35l6.342-7.25L3 4h5.6l3.868 5.113L16.94 4Zm-.952 14.375h1.504L7.784 5.54H6.17l9.818 12.836Z" fill="currentColor"/>
+      </svg>
+
+    {%- when 'threads' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path d="M16.854 10.899a6.682 6.682 0 0 0-.252-.114c-.148-2.731-1.64-4.295-4.146-4.31h-.034c-1.498 0-2.745.64-3.512 1.803l1.378.945c.573-.87 1.473-1.055 2.135-1.055h.023c.825.006 1.447.246 1.85.713.293.34.49.812.587 1.405a10.541 10.541 0 0 0-2.368-.114C10.131 10.31 8.6 11.7 8.704 13.63c.052.98.54 1.822 1.373 2.372.705.465 1.613.693 2.556.641 1.246-.068 2.223-.543 2.905-1.412.518-.66.845-1.516.99-2.593.594.358 1.034.83 1.277 1.396.413.964.437 2.547-.855 3.838-1.132 1.13-2.492 1.62-4.549 1.635-2.28-.017-4.006-.748-5.127-2.174-1.05-1.335-1.593-3.264-1.613-5.732.02-2.468.563-4.397 1.613-5.732C8.395 4.442 10.12 3.711 12.4 3.694c2.298.017 4.053.752 5.217 2.185.571.702 1.002 1.586 1.286 2.616l1.614-.43c-.344-1.269-.885-2.361-1.622-3.268C17.404 2.961 15.22 2.02 12.406 2h-.01c-2.808.02-4.967.964-6.417 2.808C4.689 6.448 4.022 8.732 4 11.593v.014c.022 2.861.688 5.144 1.979 6.785 1.45 1.844 3.61 2.789 6.417 2.808h.01c2.497-.017 4.256-.67 5.706-2.119 1.896-1.894 1.839-4.27 1.214-5.727-.448-1.045-1.303-1.894-2.472-2.455Zm-4.31 4.052c-1.044.058-2.129-.41-2.182-1.414-.04-.744.53-1.574 2.246-1.673a9.52 9.52 0 0 1 .58-.017c.623 0 1.206.06 1.736.176-.198 2.47-1.358 2.872-2.38 2.928Z" fill="currentColor" />
+      </svg>
+
+    {%- when 'linkedin' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M7.349 5.478a1.875 1.875 0 1 0-3.749 0 1.875 1.875 0 1 0 3.749 0ZM7.092 19.2H3.857V8.78h3.235V19.2ZM12.22 8.78H9.121V19.2h3.228v-5.154c0-1.36.257-2.676 1.94-2.676 1.658 0 1.68 1.554 1.68 2.763V19.2H19.2v-5.715c0-2.806-.605-4.963-3.877-4.963-1.573 0-2.629.863-3.06 1.683h-.044V8.78Z" fill="currentColor"/>
+      </svg>
+
+    {%- when 'snapchat' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M12.121 21.6c-.05 0-.098-.001-.147-.004a1.3 1.3 0 0 1-.096.004c-1.137 0-1.867-.516-2.573-1.014-.488-.344-.947-.669-1.49-.759a4.816 4.816 0 0 0-.782-.066c-.458 0-.82.07-1.083.122-.16.032-.3.059-.404.059-.11 0-.23-.024-.281-.2a6.305 6.305 0 0 1-.109-.445c-.08-.37-.138-.596-.292-.62-1.805-.278-2.32-.657-2.436-.927a.344.344 0 0 1-.028-.115.203.203 0 0 1 .17-.212c2.773-.456 4.017-3.287 4.069-3.407l.004-.01c.17-.343.203-.642.1-.886-.191-.448-.812-.645-1.223-.775-.1-.032-.196-.062-.27-.091-.82-.324-.889-.656-.857-.826.055-.289.441-.49.754-.49a.53.53 0 0 1 .224.045c.369.173.701.26.988.26.396 0 .57-.166.59-.188-.01-.188-.022-.383-.035-.585-.082-1.31-.185-2.937.23-3.866 1.243-2.784 3.88-3 4.658-3l.341-.004h.046c.78 0 3.423.217 4.667 3.002.415.93.312 2.558.23 3.867l-.004.057c-.012.182-.023.36-.032.529.02.02.179.173.538.187.274-.01.587-.098.932-.259a.704.704 0 0 1 .29-.057c.116 0 .234.023.332.064l.006.002c.278.099.46.294.465.497.003.192-.143.48-.863.764-.074.03-.17.06-.27.092-.412.13-1.032.327-1.223.775-.104.244-.07.542.1.886l.004.01c.052.12 1.294 2.95 4.069 3.407a.203.203 0 0 1 .17.212.342.342 0 0 1-.029.116c-.114.267-.63.646-2.435.924-.147.023-.204.215-.292.617-.032.147-.065.29-.11.442-.038.131-.12.193-.258.193h-.022a2.26 2.26 0 0 1-.404-.051 5.394 5.394 0 0 0-1.084-.115c-.254 0-.518.022-.782.066-.542.09-1.001.414-1.488.758-.707.5-1.437 1.015-2.575 1.015Z" fill="currentColor"/>
+      </svg>
+
+    {%- when 'tiktok' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path d="M20.027 10.168a5.125 5.125 0 0 1-4.76-2.294v7.893a5.833 5.833 0 1 1-5.834-5.834c.122 0 .241.011.361.019v2.874c-.12-.014-.237-.036-.36-.036a2.977 2.977 0 0 0 0 5.954c1.644 0 3.096-1.295 3.096-2.94L12.56 2.4h2.75a5.122 5.122 0 0 0 4.72 4.573v3.195" fill="currentColor"/>
+      </svg>
+
+    {%- when 'tumblr' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M13.906 20.4c-2.526 0-4.41-1.3-4.41-4.41v-4.98H7.2V8.314c2.527-.657 3.584-2.83 3.706-4.714h2.623v4.277h3.061v3.133h-3.06v4.337c0 1.3.655 1.75 1.7 1.75h1.482V20.4h-2.806Z" fill="currentColor"/>
+      </svg>
+
+    {%- when 'vimeo' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M21.518 6.726c.143-.815.14-1.654-.356-2.288-.693-.89-2.167-.922-3.178-.765-.821.127-3.6 1.371-4.547 4.35 1.676-.13 2.554.122 2.393 1.994-.068.783-.457 1.642-.893 2.464-.502.948-1.445 2.81-2.68 1.468-1.114-1.208-1.03-3.518-1.285-5.056-.142-.864-.292-1.94-.57-2.827-.24-.763-.791-1.684-1.465-1.883-.724-.216-1.618.12-2.143.435C5.12 5.615 3.847 7.034 2.4 8.204v.11c.287.278.364.734.786.796.996.149 1.945-.942 2.607.193.403.693.529 1.453.787 2.2.344.996.61 2.08.892 3.224.477 1.939 1.064 4.836 2.715 5.545.843.363 2.11-.122 2.75-.508 1.738-1.043 3.091-2.555 4.25-4.094 2.649-3.64 4.11-7.765 4.331-8.944Z" fill="currentColor"/>
+      </svg>
+
+    {%- when 'wechat' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M21.502 19.445C23.026 18.352 24 16.736 24 14.939c0-3.29-3.237-5.959-7.229-5.959s-7.229 2.669-7.229 5.96 3.237 5.96 7.229 5.96c.825 0 1.621-.116 2.36-.327l.212-.032a.77.77 0 0 1 .384.11l1.583.904.139.045a.24.24 0 0 0 .241-.239l-.039-.174-.326-1.202-.025-.152c0-.16.08-.302.202-.388ZM8.675 2.4C3.884 2.4 0 5.602 0 9.552c0 2.155 1.168 4.095 2.997 5.406a.567.567 0 0 1 .243.466l-.03.182-.391 1.443-.047.209c0 .158.13.286.289.286l.168-.053 1.899-1.085a.915.915 0 0 1 .46-.132l.255.038a10.36 10.36 0 0 0 2.832.392l.476-.011a5.474 5.474 0 0 1-.291-1.753c0-3.602 3.542-6.523 7.911-6.523l.471.012c-.653-3.416-4.24-6.03-8.567-6.03Zm5.686 11.587a.959.959 0 0 1-.963-.954c0-.527.431-.954.963-.954.533 0 .964.426.964.954a.959.959 0 0 1-.964.954Zm4.82 0a.959.959 0 0 1-.964-.954c0-.527.431-.954.964-.954.532 0 .963.426.963.954a.959.959 0 0 1-.963.954ZM5.783 8.407a1.15 1.15 0 0 1-1.156-1.143 1.15 1.15 0 0 1 1.156-1.145A1.15 1.15 0 0 1 6.94 7.264a1.15 1.15 0 0 1-1.157 1.143Zm5.783 0a1.15 1.15 0 0 1-1.156-1.143 1.15 1.15 0 0 1 1.156-1.145 1.15 1.15 0 0 1 1.157 1.145 1.15 1.15 0 0 1-1.157 1.143Z" fill="currentColor"/>
+      </svg>
+
+    {%- when 'youtube' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M20.44 5.243c.929.244 1.66.963 1.909 1.876.451 1.654.451 5.106.451 5.106s0 3.452-.451 5.106a2.681 2.681 0 0 1-1.91 1.876c-1.684.443-8.439.443-8.439.443s-6.754 0-8.439-.443a2.682 2.682 0 0 1-1.91-1.876c-.45-1.654-.45-5.106-.45-5.106s0-3.452.45-5.106a2.681 2.681 0 0 1 1.91-1.876c1.685-.443 8.44-.443 8.44-.443s6.754 0 8.438.443Zm-5.004 6.982L9.792 15.36V9.091l5.646 3.134Z" fill="currentColor"/>
+      </svg>
+
+    {%- when 'line' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2c6.066 0 11 4.005 11 8.927 0 1.97-.764 3.744-2.358 5.492-2.307 2.656-7.468 5.892-8.642 6.386-1.142.481-1.01-.271-.957-.569l.004-.024.157-.941c.037-.281.075-.717-.035-.995-.124-.306-.611-.465-.97-.542C4.914 19.034 1 15.339 1 10.927 1 6.005 5.935 2 12 2ZM7.91 13.769a.21.21 0 0 0 .21-.21v-.78a.21.21 0 0 0-.21-.21H5.808V8.758a.21.21 0 0 0-.21-.21h-.78a.21.21 0 0 0-.21.21V13.559c0 .116.094.21.21.21h3.09Zm11.43 0a.21.21 0 0 0 .21-.21v-.78a.21.21 0 0 0-.21-.21h-2.1v-.81h2.1a.21.21 0 0 0 .21-.21v-.78a.21.21 0 0 0-.21-.21h-2.1v-.81h2.1a.21.21 0 0 0 .21-.21v-.781a.21.21 0 0 0-.21-.21h-3.09a.21.21 0 0 0-.21.21V13.559c0 .116.094.21.21.21h3.091ZM8.99 8.548h.78a.21.21 0 0 1 .21.21v4.8a.21.21 0 0 1-.21.21h-.78a.21.21 0 0 1-.21-.21v-4.8a.21.21 0 0 1 .21-.21Zm6.09 0h-.78a.21.21 0 0 0-.21.21v2.851l-2.196-2.966a.208.208 0 0 0-.017-.022l-.002-.001a.257.257 0 0 0-.012-.013l-.001-.001-.003-.003a.376.376 0 0 0-.011-.01l-.006-.004a.24.24 0 0 0-.011-.007l-.004-.003-.003-.001-.002-.001a.13.13 0 0 0-.01-.005l-.006-.004-.002-.001-.01-.004-.007-.003a.194.194 0 0 0-.01-.003h-.003l-.007-.003a.267.267 0 0 0-.013-.002l-.009-.002-.011-.001h-.794a.21.21 0 0 0-.21.209v4.8c0 .117.094.21.21.21h.78a.21.21 0 0 0 .21-.21v-2.85l2.199 2.97c.015.022.034.04.054.053l.003.002a.22.22 0 0 0 .013.008l.006.003a.16.16 0 0 0 .01.005l.01.005.005.001h.002c.005.003.01.004.014.005l.004.001a.211.211 0 0 0 .055.008h.775a.21.21 0 0 0 .21-.21V8.758a.21.21 0 0 0-.21-.21Z" fill="currentColor"/>
+      </svg>
+
+    {%- when 'reddit' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path d="M21.604 10.841c.243.347.38.756.396 1.178a2.192 2.192 0 0 1-1.216 1.997c.017.22.017.441 0 .66 0 3.364-3.92 6.097-8.754 6.097s-8.753-2.733-8.753-6.096a4.307 4.307 0 0 1 0-.66 2.193 2.193 0 1 1 2.417-3.59 10.72 10.72 0 0 1 5.856-1.846l1.11-5.21a.465.465 0 0 1 .556-.36l3.679.736a1.501 1.501 0 1 1-.195.915l-3.213-.675-.976 4.684a10.69 10.69 0 0 1 5.78 1.847 2.192 2.192 0 0 1 3.313.323Z" fill="currentColor"/>
+      </svg>
+
+    {%- when 'spotify' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2Zm4.586 14.423a.623.623 0 0 1-.857.206c-2.348-1.434-5.304-1.759-8.785-.964a.623.623 0 0 1-.277-1.215c3.809-.87 7.076-.496 9.712 1.115.294.18.387.564.207.858ZM17.81 13.7a.78.78 0 0 1-1.072.257c-2.688-1.652-6.786-2.13-9.965-1.166A.78.78 0 0 1 6.32 11.3c3.631-1.102 8.146-.568 11.233 1.329a.78.78 0 0 1 .257 1.072Zm.105-2.836c-3.223-1.914-8.54-2.09-11.618-1.156a.935.935 0 1 1-.543-1.79c3.533-1.072 9.405-.865 13.116 1.338a.934.934 0 1 1-.955 1.608Z" fill="currentColor"/>
+      </svg>
+
+    {%- when 'whatsapp' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M19.354 4.552a10.336 10.336 0 0 0-7.36-3.052C6.257 1.5 1.588 6.168 1.586 11.905a10.383 10.383 0 0 0 1.39 5.202L1.5 22.5l5.516-1.447c1.52.83 3.232 1.266 4.973 1.266h.004c5.736 0 10.404-4.668 10.406-10.405a10.342 10.342 0 0 0-3.045-7.362Zm-7.36 16.01h-.004a8.639 8.639 0 0 1-4.402-1.205l-.316-.188-3.274.859.874-3.192-.206-.327a8.626 8.626 0 0 1-1.322-4.603c.002-4.769 3.882-8.649 8.653-8.649a8.59 8.59 0 0 1 6.115 2.537 8.596 8.596 0 0 1 2.53 6.119c-.002 4.769-3.881 8.649-8.649 8.649Zm4.744-6.477c-.26-.13-1.539-.76-1.777-.846-.239-.087-.412-.13-.585.13s-.672.846-.823 1.02c-.152.173-.304.195-.564.064-.26-.13-1.097-.404-2.09-1.29-.773-.69-1.295-1.54-1.447-1.801-.152-.26-.016-.401.114-.53.116-.117.26-.304.39-.456.13-.152.173-.26.26-.434.087-.173.043-.325-.022-.455s-.584-1.41-.802-1.93c-.21-.508-.425-.439-.584-.447a10.498 10.498 0 0 0-.499-.01.955.955 0 0 0-.693.326c-.239.26-.91.89-.91 2.169 0 1.28.931 2.516 1.061 2.69.13.174 1.834 2.8 4.442 3.926.62.268 1.105.428 1.482.548.623.198 1.19.17 1.638.103.5-.074 1.538-.629 1.755-1.236.216-.607.216-1.128.151-1.236-.064-.109-.238-.174-.498-.304v-.001Z" fill="currentColor" />
+      </svg>
+
+    {%- when '21buttons' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M12 21.6a9.6 9.6 0 1 1 0-19.2 9.6 9.6 0 0 1 0 19.2ZM10.99 9.305h-.001v-.028a1.712 1.712 0 1 0-1.684 1.712h.028a1.01 1.01 0 1 1-.028 2.021h-.028a1.712 1.712 0 1 0 1.712 1.74 1.01 1.01 0 1 1 2.021 0 1.712 1.712 0 1 0 1.74-1.74 1.01 1.01 0 0 1 0-2.02 1.712 1.712 0 1 0-1.74-1.685 1.01 1.01 0 1 1-2.02 0Z" fill="currentColor"/>
+      </svg>
+
+    {%- when 'email-social' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path fill="none" stroke="currentColor" stroke-width="1.5" d="M2.625 4.5h18.75v15H2.625v-15Z"/>
+        <path fill="none" stroke="currentColor" stroke-width="1.5" d="M2.625 7.313 12 12.938l9.375-5.626"/>
+      </svg>
+
+    {%- comment -%} PICTO (coming from library Streamline) - all those picto are normalized as 24x24 box {%- endcomment -%}
+
+    {%- when 'picto-heart' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M10.6569 4.6569L11.9999 6L13.3432 4.65678C14.404 3.59596 15.8428 3 17.3431 3C20.4673 3 22.9999 5.53273 22.9999 8.65694C22.9999 10.1572 22.4039 11.596 21.3431 12.6568L11.9999 22L2.65684 12.6569C1.59598 11.596 1 10.1571 1 8.65685C1 5.53267 3.53265 3 6.65682 3C8.15713 3 9.59599 3.59601 10.6569 4.6569Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-star' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M15.5 8L12 2L8.5 8L2 10L6.5 14.5L5 22L12 18.8421L19 22L17.5 14.5L22 10L15.5 8Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-like' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}" d="M6 11v11M18 22H2V11h4l2.5-9h.9A3.6 3.6 0 0 1 13 5.6V9h9.589L18 22Z"/>
+      </svg>
+
+    {%- when 'picto-sparkle' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M15.5001 3L13.6226 7.12304L9.5 9.00018L13.6226 10.877L15.5001 15L17.3773 10.877L21.5 9.00018L17.3773 7.12304L15.5001 3Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M4.50004 3L4.03066 4.03076L3 4.50005L4.03066 4.96924L4.50004 6L4.96933 4.96924L6 4.50005L4.96933 4.03076L4.50004 3Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M6.5001 13.5L5 16L2.5 17.5001L5 19L6.5001 21.5L8 19L10.5 17.5001L8 16L6.5001 13.5Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-store' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M21 5V10H3V5L5 1H19L21 5Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M4 13V23H20V13" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M13 23V13" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M4 19H13" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-price-tag' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M19.8849 11.9186L9.29426 22.5093L1.4906 14.7057L12.0813 4.11499H19.8849V11.9186Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M19.885 4.11493L23.2294 0.770508" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M15.0408 8.97656L16.5408 7.47656" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-discount-coupon' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M23 3V8.5C21.067 8.5 19.5 10.067 19.5 12C19.5 13.933 21.067 15.5 23 15.5V21H1V15.5C2.933 15.5 4.5 13.933 4.5 12C4.5 10.067 2.933 8.5 1 8.5V3H23Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M7.50122 16.5447L16.5012 7.54468" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M8.25122 8.79468L8.75122 8.29468L9.25122 8.79468L8.75122 9.29468L8.25122 8.79468Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M14.7512 15.2947L15.2512 14.7947L15.7512 15.2947L15.2512 15.7947L14.7512 15.2947Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-discount-badge' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M11.9997 1.40503L9.79483 3.60988L6.78295 2.80285L5.97591 5.81474L2.82433 6.70251L3.63137 9.71439L1.40479 12.0001L3.60963 14.2049L2.82419 17.2978L5.83607 18.1048L6.70213 21.1757L9.71402 20.3687L11.9997 22.595L14.2045 20.3902L17.3779 21.1539L18.185 18.142L21.1754 17.2975L20.3684 14.2856L22.5948 12.0001L20.3899 9.79521L21.1753 6.70279L18.1634 5.89575L17.2971 2.82463L14.2852 3.63166L11.9997 1.40503Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M7.50122 16.5447L16.5012 7.54468" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M8.25122 8.79468L8.75122 8.29468L9.25122 8.79468L8.75122 9.29468L8.25122 8.79468Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M14.7512 15.2947L15.2512 14.7947L15.7512 15.2947L15.2512 15.7947L14.7512 15.2947Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-ticket-star' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M12.0002 8L13.4585 10.4999L15.9585 11.1249L14.2919 12.9999L14.7085 15.9165L12.0002 14.6665L9.29197 15.9165L9.70862 12.9999L8.04199 11.1249L10.5419 10.4999L12.0002 8Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M1 3H23V9.17071C21.8348 9.58254 21 10.6938 21 12C21 13.3062 21.8348 14.4175 23 14.8293V21H1V14.8293C2.16519 14.4175 3 13.3062 3 12C3 10.6938 2.16519 9.58254 1 9.17071V3Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-gift-card' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M1 20.5V3.5H23V20.5H1Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M1 12H23" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M14 3.5V20.5" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M10.5 8.5L17.4997 15.4997" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M17.4998 8.5L10.5001 15.4997" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-happy' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M9 7V10" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M15 7V10" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M1 12C1 14.9174 2.15893 17.7153 4.22183 19.7782C6.28473 21.8411 9.08262 23 12 23C14.9174 23 17.7153 21.8411 19.7782 19.7782C21.8411 17.7153 23 14.9174 23 12C23 9.08262 21.8411 6.28473 19.7782 4.22183C17.7153 2.15893 14.9174 1 12 1C9.08262 1 6.28473 2.15893 4.22183 4.22183C2.15893 6.28473 1 9.08262 1 12Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M17 12C17 14.7614 14.7614 17 12 17C9.23858 17 7 14.7614 7 12" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-checked' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}" d="M1 12a11 11 0 1 0 22 0 11 11 0 0 0-22 0Z"/>
+        <path vector-effect="non-scaling-stroke" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}" d="m7.25 12 3.5 3.5 6-7.5"/>
+      </svg>
+
+    {%- when 'picto-gift-box' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M2 12V6H22V12H2Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M3 22V12H21V22H3Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12 6V22" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M16 2L12 5L8 2" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-credit-card' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M1 20.5V3.5H23V20.5H1Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M1 7.5L23 7.50002" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M1 11.5H23" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M15 16H19" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-wallet' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M20.5 11.7474V6H17.5V2H5L2 5V22H20.5V16.7474" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M17.5 6H6.5" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M22 16.75H14.5L13 14.25L14.5 11.75H22V16.75Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-secure' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M3 1V18L11.9999 22.86L21 18V1H3Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M8 10.5H16V15.5H8V10.5Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M9.5 10.5V7.50002C9.5 6.1193 10.6193 5 12 5C13.3807 5 14.5 6.1193 14.5 7.50002V10.5" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-refund' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M15 11C15 11.7956 14.6839 12.5587 14.1213 13.1213C13.5587 13.6839 12.7956 14 12 14C11.2044 14 10.4413 13.6839 9.87868 13.1213C9.31607 12.5587 9 11.7956 9 11C9 10.2044 9.31607 9.44129 9.87868 8.87868C10.4413 8.31607 11.2044 8 12 8C12.7956 8 13.5587 8.31607 14.1213 8.87868C14.6839 9.44129 15 10.2044 15 11Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M1.5 19H23V3H1V13" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M4.5 22L1.5 19L4.5 16" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-invoice' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M7.5 10.5C7.5 11.163 7.76339 11.7989 8.23223 12.2678C8.70107 12.7366 9.33696 13 10 13C10.663 13 11.2989 12.7366 11.7678 12.2678C12.2366 11.7989 12.5 11.163 12.5 10.5C12.5 9.83696 12.2366 9.20107 11.7678 8.73223C11.2989 8.26339 10.663 8 10 8C9.33696 8 8.70107 8.26339 8.23223 8.73223C7.76339 9.20107 7.5 9.83696 7.5 10.5Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M1 17.0001V4H19V17.0001H1Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M5 21.0001H23V8" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-loyalty-points' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M8 10L5 6V1H19V6L16 10" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12 1V9" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M5 16C5 15.0807 5.18106 14.1705 5.53284 13.3212C5.88463 12.4719 6.40024 11.7003 7.05025 11.0503C7.70026 10.4002 8.47194 9.88463 9.32122 9.53284C10.1705 9.18106 11.0807 9 12 9C12.9193 9 13.8295 9.18106 14.6788 9.53284C15.5281 9.88463 16.2997 10.4002 16.9497 11.0503C17.5998 11.7003 18.1154 12.4719 18.4672 13.3212C18.8189 14.1705 19 15.0807 19 16C19 16.9193 18.8189 17.8295 18.4672 18.6788C18.1154 19.5281 17.5998 20.2997 16.9497 20.9497C16.2997 21.5998 15.5281 22.1154 14.6788 22.4672C13.8295 22.8189 12.9193 23 12 23C11.0807 23 10.1705 22.8189 9.32122 22.4672C8.47194 22.1154 7.70026 21.5998 7.05025 20.9497C6.40024 20.2997 5.88463 19.5281 5.53284 18.6788C5.18106 17.8295 5 16.9193 5 16Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12.525 15.4L12 14.5L11.475 15.4L10.5 15.7L11.175 16.375L10.95 17.5L12 17.0263L13.05 17.5L12.825 16.375L13.5 15.7L12.525 15.4Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-location-pin' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M6 17.5997C3.57111 18.1471 2 19.0185 2 20C2 21.6568 6.47715 23 12 23C17.5228 23 22 21.6568 22 20C22 19.0185 20.4289 18.1471 18 17.5997" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12.5 8.5H11.5V7.5H12.5V8.5Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M5 8.03448C5 12.7241 12 18 12 18C12 18 19 12.7241 19 8.03448C19 4.14945 15.866 1 12 1C8.13401 1 5 4.14945 5 8.03448Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-truck' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M4.05494 18.7851H0.999756V3H13.9998V6H20L23 12V18.7851H20" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M9 18.7852H15" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M23 12H13.9998V6" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M4 18.5C4 19.163 4.26339 19.7989 4.73223 20.2678C5.20107 20.7366 5.83696 21 6.5 21C7.16304 21 7.79893 20.7366 8.26777 20.2678C8.73661 19.7989 9 19.163 9 18.5C9 17.837 8.73661 17.2011 8.26777 16.7322C7.79893 16.2634 7.16304 16 6.5 16C5.83696 16 5.20107 16.2634 4.73223 16.7322C4.26339 17.2011 4 17.837 4 18.5Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M15 18.5C15 19.163 15.2634 19.7989 15.7322 20.2678C16.2011 20.7366 16.837 21 17.5 21C18.163 21 18.7989 20.7366 19.2678 20.2678C19.7366 19.7989 20 19.163 20 18.5C20 17.837 19.7366 17.2011 19.2678 16.7322C18.7989 16.2634 18.163 16 17.5 16C16.837 16 16.2011 16.2634 15.7322 16.7322C15.2634 17.2011 15 17.837 15 18.5Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-express-delivery' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M14 1V5" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M11 1H17" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M6.5166 9C6.84179 8.51328 7.21599 8.05604 7.63599 7.63604C9.32382 5.94821 11.6131 5 14 5C16.387 5 18.6761 5.94821 20.364 7.63604C22.0518 9.32387 23 11.6131 23 14C23 16.3869 22.0518 18.6761 20.364 20.364C18.6761 22.0518 16.387 23 14 23C11.6131 23 9.32382 22.0518 7.636 20.364C7.21599 19.944 6.84179 19.4867 6.5166 19" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M14 9V14H18" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M0 12H7" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M3 16H7" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-package' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M14 18H18" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M5.5 2L2 6.85807V7.55208H22V6.85807L18.5 2H5.5Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12 2V7.5" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M2 22V7.55176L22 7.55275V22H2Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-shipping-protection' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M12 2.03613V7.03613" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12 22.0361H2V5.89421L5.5 2.03613H18.5L22 5.89421V22.0361H12Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M7 14.5L11 17.5L16.5 10.5" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M2 7H22" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-return-box' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M7.65576 12.2559H13.5045C15.0856 12.2559 16.3673 13.5376 16.3673 15.1187C16.3673 16.6997 15.0856 17.9814 13.5045 17.9814H7.79336" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M10.6103 9.28033L7.63477 12.2559L10.6103 15.2314" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12 2.03613V7.03613" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12 22.0361H2V5.89421L5.5 2.03613H18.5L22 5.89421V22.0361H12Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M2 7H22" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-return' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M7 21L2 16L7 11" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M2 16H22V4H7.5" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-fragile' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M12 15V23.0001" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M6 23H18" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M4 7V1H20V7C20 11.4183 16.4183 15 12 15C7.58172 15 4 11.4183 4 7Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M13 1V5H15V8.5" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-warehouse' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M2 7.5V22H22V7.5L12 2L2 7.5Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M6 16V22H12V16H6Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12 16V22H18V16H12Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M9 10V16H15V10H9Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-analytics-graph' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M1.5 9.5L9 2L15.5 8.5L22 2" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M22 7V2H17" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M2 23V14" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M8.66675 10V23" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M15.3333 16V23" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M22 12V23" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-social-media' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M23 18.5C23 20.433 21.433 22 19.5 22C17.567 22 16 20.433 16 18.5C16 18.0405 16.0885 17.6018 16.2495 17.1998C16.7656 15.9106 18.0265 15 19.5 15C21.433 15 23 16.567 23 18.5Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M7.75049 13.8003L16.2494 17.1999" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M7.67236 11.0196L16.3276 6.98047" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M23 5.5C23 7.433 21.433 9 19.5 9C18.0961 9 16.8853 8.17345 16.3276 6.98045C16.1174 6.53081 16 6.02912 16 5.5C16 3.567 17.567 2 19.5 2C21.433 2 23 3.567 23 5.5Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M8 12.5C8 12.9595 7.91147 13.3982 7.75053 13.8002C7.23439 15.0894 5.97354 16 4.5 16C2.567 16 1 14.433 1 12.5C1 10.567 2.567 9 4.5 9C5.90388 9 7.11471 9.82655 7.6724 11.0195C7.88259 11.4692 8 11.9709 8 12.5Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-magnifying-glass' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M15.589 8.72107L11.7994 12.5107L9.49119 10.1989L6.41113 13.279" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M1 11C1 13.6522 2.05357 16.1957 3.92893 18.0711C5.8043 19.9464 8.34784 21 11 21C13.6522 21 16.1957 19.9464 18.0711 18.0711C19.9464 16.1957 21 13.6522 21 11C21 8.34784 19.9464 5.8043 18.0711 3.92893C16.1957 2.05357 13.6522 1 11 1C8.34784 1 5.8043 2.05357 3.92893 3.92893C2.05357 5.8043 1 8.34784 1 11Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M22.5826 22.5826L18.0774 18.0774" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-trending' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M1.03784 17.481L8.71133 9.8075L14.1924 15.2885L22.9621 6.51886" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M14.9329 6.51898H22.962V14.5482" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-megaphone' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M1 8L23 2V20L1 14V8Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M4 20.9999V14.8181L10.4417 16.5749L7 20.9999H4Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-recycle' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M18 12L20.5 10.5L22.5 14L21.3462 16.5M21.3462 16.5L19.5 20.5H14.8334M21.3462 16.5H14.8334" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M16.5 23L13.5 18.5L16.5 14" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M9.77626 17.3972L9.82529 20.3123L5.7942 20.2943L4.20606 18.0451M4.20606 18.0451L1.66504 14.4462L3.99837 10.4048M4.20606 18.0451L7.46247 12.4048" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M1 10.5981L6.39711 10.25L8.79423 15.0981" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M9.5 7L7 5.5L9.5 2H12M12 2H16.5L18.5598 6.09236M12 2L15 7.54545" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12 7L17.5 8L20 3.5" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-leaf' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M1.5 22.5L13 11" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M5.71686 18.2831C9.41099 21.9773 15.4839 21.8937 19.2811 18.0965L22 2L5.90348 4.71889C2.10627 8.51609 2.02272 14.589 5.71686 18.2831Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-tree' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M12 24V19" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M7.09982 14.999C7.06663 14.9997 7.03335 15 7 15C4.23858 15 2 12.7614 2 10C2 7.23858 4.23858 5 7 5C7.03335 5 7.06662 5.00033 7.09982 5.00098C7.56271 2.71825 9.5807 1 12 1C14.4193 1 16.4373 2.71825 16.9002 5.00098C16.9334 5.00033 16.9666 5 17 5C19.7614 5 22 7.23858 22 10C22 12.7614 19.7614 15 17 15C16.9666 15 16.9334 14.9997 16.9002 14.999C16.4373 17.2817 14.4193 19 12 19C9.5807 19 7.56271 17.2817 7.09982 14.999Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-science' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}" d="M15.51 15.51c-5.17 5.17-10.932 7.79-12.87 5.85-1.94-1.938.68-7.7 5.85-12.87C13.66 3.32 19.422.7 21.361 2.64c1.939 1.938-.68 7.7-5.85 12.87Z"/>
+        <path vector-effect="non-scaling-stroke" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}" d="M8.49 15.51c5.17 5.17 10.932 7.79 12.87 5.85 1.94-1.938-.68-7.7-5.85-12.87C10.34 3.32 4.578.7 2.64 2.64c-1.939 1.938.68 7.7 5.85 12.87Z"/>
+        <path vector-effect="non-scaling-stroke" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}" d="M11.498 11.498h1.004v1.004h-1.004v-1.004Z"/>
+      </svg>
+
+    {%- when 'picto-earth' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M12 23C18.0751 23 23 18.0751 23 12C23 5.92487 18.0751 1 12 1C5.92487 1 1 5.92487 1 12C1 18.0751 5.92487 23 12 23Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M21.2211 6H15.5484C13.5887 6 12 7.58869 12 9.54845C12 10.4787 12.3653 11.3718 13.0173 12.0354L16 15.071V22.2501" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M1.41406 15H6C7.65685 15 9 16.3431 9 18V22.5859" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-sun' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M8 12C8 13.0609 8.42143 14.0783 9.17157 14.8284C9.92172 15.5786 10.9391 16 12 16C13.0609 16 14.0783 15.5786 14.8284 14.8284C15.5786 14.0783 16 13.0609 16 12C16 10.9391 15.5786 9.92172 14.8284 9.17157C14.0783 8.42143 13.0609 8 12 8C10.9391 8 9.92172 8.42143 9.17157 9.17157C8.42143 9.92172 8 10.9391 8 12Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12 0V3" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12 21V24" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M20.4856 3.51465L18.3643 5.63597" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M5.63646 18.3638L3.51514 20.4851" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M24 12H21" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M3 12H0" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M20.4856 20.4851L18.3643 18.3638" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M5.63646 5.63597L3.51514 3.51465" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-summit' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M2 22.5L12 10.5L22.5 22.5" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12 10.5V7M12 7V2H19V7H12Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M7.45703 15.9571L10 18.5L12 16.5L14 18.5L16.6653 15.8347" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-feather' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M5 11V19H13L21.3431 10.6569C22.404 9.59599 23 8.15714 23 6.65685C23 3.53266 20.4673 1 17.3431 1C15.8428 1 14.404 1.59599 13.3431 2.65686L5 11Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12 12H20" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M18 6L0.707031 23.2929" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-drop-of-water' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M3 14C3 8.00001 12 1.25 12 1.25C12 1.25 21 8.00001 21 14C21 18.9706 16.9706 23 12 23C7.02944 23 3 18.9706 3 14Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12 19C9.23858 19 7 16.7614 7 14" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-email' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M1 3H23V21H1V3Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M1 6L12 12L23 6" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-inbox' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M4 11.2V2H20V11.2" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M22 22V10L12 16L2 10V22H22Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M7 6H17" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-plane' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M22.36 1.64001L2.19995 8.71486L9.99995 14L15.2778 21.8L22.36 1.64001Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M10 14L15 9" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-mobile-phone' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M16 9.5L12 12V1H23V9.5H16Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M17 12.5V23H3V3H9" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12.0005 19H8.00049" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-phone' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M16.9717 12.5C16.9717 9.47807 14.5219 7.02832 11.5 7.02832" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M22 12.5C22 6.70101 17.299 2 11.5 2" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M4.36819 5.54236L2.07874 5.81664C2.22233 8.40872 2.9531 10.9743 4.27106 13.2971C5.01423 14.6069 5.9441 15.8395 7.06068 16.956C8.17725 18.0726 9.40982 19.0025 10.7196 19.7457C13.0424 21.0636 15.608 21.7944 18.2001 21.938L18.4744 19.6485" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M10.7195 19.7457L13.1061 15.7469L18.7486 17.3591L18.4743 19.6485" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M4.27087 13.2973L8.2696 10.9107L6.65746 5.26819L4.36801 5.54247" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-chat' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M2 2H22V19H11.1L6.25 22V19H2V2Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M9 9.5V9C9 7.34315 10.3431 6 12 6C13.6569 6 15 7.34315 15 9V9.75L12 11.5V13" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12 14.5V16.5" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-customer-support' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M12 24V19" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M1 9H5V16H1V9Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M19 9H23V16H19V9Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M5 16V8C5 4.13401 8.13401 1 12 1C15.866 1 19 4.13401 19 8V16C19 19.0376 16.5376 21.5 13.5 21.5H12" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-comment' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M2 2H22V19H11.1L6.25 22V19H2V2Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M7 8H16" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M7 13H14" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-date' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M2 4H22V22H2V4Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M2 8H22" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M6 1V4" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M18 1V4" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-info' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M1 12C1 14.9174 2.15893 17.7153 4.22183 19.7782C6.28473 21.8411 9.08262 23 12 23C14.9174 23 17.7153 21.8411 19.7782 19.7782C21.8411 17.7153 23 14.9174 23 12C23 9.08262 21.8411 6.28473 19.7782 4.22183C17.7153 2.15893 14.9174 1 12 1C9.08262 1 6.28473 2.15893 4.22183 4.22183C2.15893 6.28473 1 9.08262 1 12Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M8 10H12V17" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M8 17H16" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12 7V5" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-text' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M5 2H23" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M1 7H23" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M1 12H23" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M1 17H23" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M1 22H19" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-ai-spark' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M2 22L5 19" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M22 22L19 19" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M2 2L5 5" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M22 2L19 5" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M3 12C7 12 12 7 12 3C12 7 17 12 21 12C17 12 12 17 12 21C12 17 7 12 3 12Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-user' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M1 12C1 14.9174 2.15893 17.7153 4.22183 19.7782C6.28473 21.8411 9.08262 23 12 23C14.9174 23 17.7153 21.8411 19.7782 19.7782C21.8411 17.7153 23 14.9174 23 12C23 9.08262 21.8411 6.28473 19.7782 4.22183C17.7153 2.15893 14.9174 1 12 1C9.08262 1 6.28473 2.15893 4.22183 4.22183C2.15893 6.28473 1 9.08262 1 12Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M3.62903 19.1363C4.62443 18.5242 7.55014 17 12.0001 17C16.45 17 19.3758 18.5242 20.3712 19.1363" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M7.5 9.5C7.5 10.6935 7.97411 11.8381 8.81802 12.682C9.66193 13.5259 10.8065 14 12 14C13.1935 14 14.3381 13.5259 15.182 12.682C16.0259 11.8381 16.5 10.6935 16.5 9.5C16.5 8.30653 16.0259 7.16193 15.182 6.31802C14.3381 5.47411 13.1935 5 12 5C10.8065 5 9.66193 5.47411 8.81802 6.31802C7.97411 7.16193 7.5 8.30653 7.5 9.5Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-news' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M4.99973 9V14L2.71973 18H21.28L18.9997 14V9C18.9997 5.13401 15.8657 2 11.9997 2C8.13373 2 4.99973 5.13401 4.99973 9Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M10 22H14" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-glasses' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M2 15H10V22H2V15Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M14 15H22V22H14V15Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M10 15H14" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M2 16V2H7" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M22 16V2H17" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-craft' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M13.0287 2.28564L6.54346 8.77092L11.2003 13.4278L17.6856 6.9425L13.0287 2.28564Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M14.4429 10.1851L22.221 17.9632" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M4 18L2.5 22H15.5L14 18H4Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-compass' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M12 0V3" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M9 6C9 6.79565 9.31607 7.55871 9.87868 8.12132C10.4413 8.68393 11.2044 9 12 9C12.7956 9 13.5587 8.68393 14.1213 8.12132C14.6839 7.55871 15 6.79565 15 6C15 5.20435 14.6839 4.44129 14.1213 3.87868C13.5587 3.31607 12.7956 3 12 3C11.2044 3 10.4413 3.31607 9.87868 3.87868C9.31607 4.44129 9 5.20435 9 6Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M9.5 7.5L2 23.58" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M14.5 7.5L22 23.58" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M3 15H21" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12 12V18" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-asterisk' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M12 1V13" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M1.5 8L12 13" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M22.5 8L12 13" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M4 22.5L12 13" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M20 22.5L12 13" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-microscope' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" stroke="currentColor" fill="none" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}" d="M6 6h7v7H6V6ZM13 6h.695A8.305 8.305 0 0 1 22 14.305v3.725h-3.946v-3.42a4.61 4.61 0 0 0-4.61-4.61H13M7.294 22H22v-3.97H4M10 18l-3 4M7.697 22H2M7.5 6V2h4v4"/>
+      </svg>
+
+    {%- when 'picto-weight' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M5 7L2 22H22L19 7H5Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M9.5 4.5C9.5 5.16304 9.76339 5.79893 10.2322 6.26777C10.7011 6.73661 11.337 7 12 7C12.663 7 13.2989 6.73661 13.7678 6.26777C14.2366 5.79893 14.5 5.16304 14.5 4.5C14.5 3.83696 14.2366 3.20107 13.7678 2.73223C13.2989 2.26339 12.663 2 12 2C11.337 2 10.7011 2.26339 10.2322 2.73223C9.76339 3.20107 9.5 3.83696 9.5 4.5Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-pyramide' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M12.0001 1.72021L1.44141 16.4504L12.0001 22.8335L22.5586 16.4504L12.0001 1.72021Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12 1.72021V22.8335" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-sports' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M1 12C1 14.9174 2.15893 17.7153 4.22183 19.7782C6.28473 21.8411 9.08262 23 12 23C14.9174 23 17.7153 21.8411 19.7782 19.7782C21.8411 17.7153 23 14.9174 23 12C23 9.08262 21.8411 6.28473 19.7782 4.22183C17.7153 2.15893 14.9174 1 12 1C9.08262 1 6.28473 2.15893 4.22183 4.22183C2.15893 6.28473 1 9.08262 1 12Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M20.923 5.57739C18.014 6.26626 15.8496 8.88035 15.8496 11.9999C15.8496 15.1195 18.014 17.7336 20.923 18.4225" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M3.06714 5.57715C5.97615 6.26601 8.14051 8.8801 8.14051 11.9997C8.14051 15.1193 5.97615 17.7334 3.06714 18.4223" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12 1V23" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-wrap' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M23 6C23 6 19 3 12 3C5 3 1 6 1 6V22C1 22 5 19 12 19C19 19 23 22 23 22V6Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M23 14C23 14 19 11 12 11C5 11 1 14 1 14" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-expand' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M2 10V2H10" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M2 2L10 10" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M22 14V22H14" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M22 22L14 14" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M22 10V2H14" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M22 2L14 10" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M2 14V22H10" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M2 22L10 14" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-measure' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M2 12H22.5" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M16.5 18L22.5 12L16.5 6" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M7.5 18L1.5 12L7.5 6" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-cut' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M1 5C1 6.06087 1.42143 7.07828 2.17157 7.82843C2.92172 8.57857 3.93913 9 5 9C6.06087 9 7.07828 8.57857 7.82843 7.82843C8.57857 7.07828 9 6.06087 9 5C9 3.93913 8.57857 2.92172 7.82843 2.17157C7.07828 1.42143 6.06087 1 5 1C3.93913 1 2.92172 1.42143 2.17157 2.17157C1.42143 2.92172 1 3.93913 1 5Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M1 19C1 20.0609 1.42143 21.0783 2.17157 21.8284C2.92172 22.5786 3.93913 23 5 23C6.06087 23 7.07828 22.5786 7.82843 21.8284C8.57857 21.0783 9 20.0609 9 19C9 17.9391 8.57857 16.9217 7.82843 16.1716C7.07828 15.4214 6.06087 15 5 15C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12 19H15" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M16.5 19H19.5" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M21 19H24" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M15 15.2743L3.18562 8.7137C1.83668 7.96462 1 6.54297 1 5" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M23.51 4L3.18562 15.2863C1.83668 16.0354 1 17.457 1 19" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-furniture' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M4 7.99881V1.00002L20 1V7.99879" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M1 18L1.00007 10.4868C1.00009 9.11335 2.11345 8 3.48685 8C4.87056 8 5.98814 9.12948 5.97349 10.5131L5.94716 13H17.9472L17.9738 10.4866C17.9884 9.10906 19.1092 8 20.4869 8C21.8749 8 23.0001 9.12522 23.0001 10.5132L23 18H1Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M3.75 23L5.25 18" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M20.2501 22.9999L18.749 17.9963" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-music' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M1.0481 19.526C1.0481 20.4479 1.41432 21.3321 2.06619 21.984C2.71807 22.6358 3.6022 23.0021 4.5241 23.0021C5.44599 23.0021 6.33012 22.6358 6.982 21.984C7.63388 21.3321 8.0001 20.4479 8.0001 19.526C8.0001 18.6042 7.63388 17.72 6.982 17.0681C6.33012 16.4163 5.44599 16.05 4.5241 16.05C3.6022 16.05 2.71807 16.4163 2.06619 17.0681C1.41432 17.72 1.0481 18.6042 1.0481 19.526Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M16 16.5032C16 17.4314 16.3687 18.3217 17.0251 18.978C17.6815 19.6344 18.5717 20.0032 19.5 20.0032C20.4283 20.0032 21.3185 19.6344 21.9749 18.978C22.6313 18.3217 23 17.4314 23 16.5032C23 15.5749 22.6313 14.6847 21.9749 14.0283C21.3185 13.3719 20.4283 13.0032 19.5 13.0032C18.5717 13.0032 17.6815 13.3719 17.0251 14.0283C16.3687 14.6847 16 15.5749 16 16.5032Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M8 19.7501V5.30005L23 1.30005V16.7501" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M8 10.25L23 6.25" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-drink' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M22.05 1H1.94995L12 15L22.05 1Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12 15V23" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M6 23H18" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M18.4608 6H5.53931" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-burger' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M1 12.5H23" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M3 18.05V16.5H10.5L15 19.25L17 16.5H21V18.05C21 20.2591 19.2091 22.05 17 22.05H7C4.79086 22.05 3 20.2591 3 18.05Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M20.7769 8.5C19.8674 4.49202 16.2831 2 11.9999 2C7.71671 2 4.13236 4.49202 3.2229 8.5H20.7769Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-pizza' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M22.9999 21H1.68994L12.1156 2.01062C18.6276 5.83072 22.9999 12.9048 22.9999 21Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M12.1158 2.01062L10.1895 5.5192C15.4651 8.65754 19.0001 14.4159 19.0001 21H23.0001C23.0001 12.9048 18.6278 5.83072 12.1158 2.01062Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M11.5 17C10.1193 17 9 18.1193 9 19.5C9 20.0628 9.18597 20.5822 9.49981 21H13.5002C13.814 20.5822 14 20.0628 14 19.5C14 18.1193 12.8807 17 11.5 17Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M8.50002 14C9.88073 14 11 12.8807 11 11.5C11 10.1193 9.88073 9 8.50002 9C8.42342 9 8.34762 9.00345 8.27277 9.01019L6.2771 12.6451C6.69248 13.4498 7.532 14 8.50002 14Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-fork-knife' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M7.00024 10.0001V24.0001" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M3.00024 0V6C3.00024 8.20914 4.79111 10 7.00024 10C9.20938 10 11.0002 8.20914 11.0002 6V0" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M21 16V7C21 3.68629 18.3137 1 15 1V16H21Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M15 1V24.0001" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M7.00024 0V4" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- when 'picto-chef' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 24 }}" class="{{ class | strip }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 24 24">
+        <path vector-effect="non-scaling-stroke" d="M5 19H19" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+        <path vector-effect="non-scaling-stroke" d="M8.22461 3.67518C8.77132 2.11714 10.2552 1 12 1C13.7448 1 15.2287 2.11714 15.7754 3.67518C16.4115 3.24874 17.1767 3 18 3C20.2091 3 22 4.79086 22 7C22 8.86384 20.7252 10.4299 19 10.874V23H5V10.874C3.27477 10.4299 2 8.86384 2 7C2 4.79086 3.79086 3 6 3C6.82332 3 7.58854 3.24874 8.22461 3.67518Z" fill="none" stroke="currentColor" stroke-width="{{ stroke_width | default: settings.icon_stroke_width }}"/>
+      </svg>
+
+    {%- comment -%} STANDARD ICONS OF SHOPIFY {%- endcomment -%}
+
+    {%- when 'media-model-badge' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 26 }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 26 26">
+        <path d="M1 25h24V1H1z" fill="none"></path>
+        <path d="M.5 25v.5h25V.5H.5z" fill="none" stroke="currentColor" stroke-opacity=".15"></path>
+        <path d="M19.13 8.28L14 5.32a2 2 0 00-2 0l-5.12 3a2 2 0 00-1 1.76V16a2 2 0 001 1.76l5.12 3a2 2 0 002 0l5.12-3a2 2 0 001-1.76v-6a2 2 0 00-.99-1.72zm-6.4 11.1l-5.12-3a.53.53 0 01-.26-.38v-6a.53.53 0 01.27-.46l5.12-3a.53.53 0 01.53 0l5.12 3-4.72 2.68a1.33 1.33 0 00-.67 1.2v6a.53.53 0 01-.26 0z" fill="currentColor" opacity=".6"></path>
+      </svg>
+
+    {%- when 'media-video-badge' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 26 }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 26 26" fill="none">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M1 25h24V1H1v24z" fill="none"></path>
+        <path d="M.5 25v.5h25V.5H.5V25z" stroke="currentColor" stroke-opacity=".15"></path>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M9.718 6.72a1 1 0 00-1.518.855v10.736a1 1 0 001.562.827l8.35-5.677a1 1 0 00-.044-1.682l-8.35-5.06z" fill="currentColor" fill-opacity=".6"></path>
+      </svg>
+
+    {%- when 'media-view-in-space' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 16 }}" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 16 16">
+        <path d="M14.13 3.28L9 .32a2 2 0 00-2 0l-5.12 3a2 2 0 00-1 1.76V11a2 2 0 001 1.76l5.12 3a2 2 0 002 0l5.12-3a2 2 0 001-1.76V5a2 2 0 00-.99-1.72zm-6.4 11.1l-5.12-3a.53.53 0 01-.26-.38V5a.53.53 0 01.27-.46l5.12-3a.53.53 0 01.53 0l5.12 3-4.72 2.68A1.33 1.33 0 008 8.42v6a.53.53 0 01-.26 0l-.01-.04z" fill="currentColor" fill-rule="nonzero"></path>
+      </svg>
+
+    {%- comment -%} OTHER {%- endcomment -%}
+
+    {%- when 'shopify-logo' -%}
+      <svg aria-hidden="true" focusable="false" width="{{ mobile_width | default: 77 }}" class="{{ class | strip }}" fill="none" {% if style != blank %}style="{{ style }}"{% endif %} viewBox="0 0 77 22">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M10.268 1.384c.612.077 1.02.773 1.281 1.574l-1.034.32V3.207v-.152c0-.684-.095-1.234-.247-1.67zm2.139 20.028l6.45-1.401s-2.326-15.728-2.34-15.836a.207.207 0 00-.188-.174l-1.726-.128-1.27-1.262a.277.277 0 00-.11-.065l-.816 18.866zM7.57 9.712c.878 0 1.594.382 1.594.382l.817-2.43s-.552-.321-1.67-.321c-2.902 0-4.34 1.938-4.34 3.94 0 1.337.75 1.943 1.406 2.475.513.414.969.783.969 1.418 0 .35-.248.829-.856.829-.932 0-2.035-.948-2.035-.948l-.562 1.857s1.073 1.307 3.173 1.307c1.75 0 3.047-1.317 3.047-3.363 0-1.573-1.059-2.35-1.895-2.964-.547-.401-.999-.733-.999-1.172 0-.203.065-1.01 1.351-1.01zM9.042.861a.625.625 0 00-.355-.12C6.701.742 5.585 3.35 5.115 4.95l1.69-.523c.4-2.098 1.35-3.148 2.237-3.565zm.747 2.64v-.12c0-.824-.11-1.436-.28-1.862-.674.29-1.446 1.056-1.857 2.644l2.137-.661zm3.077-.951a.754.754 0 01.065-.015l-.818 18.887L0 19.153S1.57 7.015 1.63 6.587c.078-.565.097-.584.696-.772.098-.031.861-.268 1.936-.6C4.676 3.456 5.998 0 8.763 0c.362 0 .78.194 1.118.64a1.81 1.81 0 01.1-.003c1.187 0 1.862 1.012 2.244 2.112l.641-.198zm52.98 5.645h1.806l-.358 2.016h-1.787l-1.373 7.484h-2.597l1.374-7.484h-1.205l.377-2.016h1.204l.075-.446c.207-1.124.621-2.249 1.505-3.024.696-.62 1.618-.892 2.54-.892.64 0 1.11.097 1.411.233L68.31 6.16a2.47 2.47 0 00-.828-.135c-.865 0-1.392.814-1.542 1.725l-.094.446zM35.78 8.002c-1.148 0-2.05.562-2.747 1.416l-.038-.02.998-5.37h-2.597l-2.52 13.668h2.596l.865-4.672c.339-1.765 1.223-2.85 2.05-2.85.584 0 .81.407.81.989 0 .368-.038.813-.113 1.182l-.978 5.351h2.596l1.016-5.525c.113-.582.188-1.28.188-1.745 0-1.513-.771-2.424-2.126-2.424zm-9.294 3.994c-.659-.368-.997-.678-.997-1.105 0-.543.47-.892 1.204-.892.677 0 1.26.194 1.618.368l.602-1.9c-.414-.252-1.186-.445-2.183-.445-2.276 0-3.838 1.337-3.838 3.218 0 1.066.734 1.88 1.712 2.462.79.465 1.073.795 1.073 1.28 0 .504-.395.91-1.129.91-.81.02-1.656-.329-2.126-.58l-.64 1.9c.49.348 1.487.639 2.559.658 2.333.02 4.007-1.182 4.007-3.315 0-1.144-.846-1.958-1.862-2.559zm14.75 2.094c0 .97.377 1.745 1.26 1.745 1.374 0 2.146-2.52 2.146-4.169 0-.794-.301-1.609-1.223-1.609-1.411 0-2.183 2.501-2.183 4.033zm-2.652.058c0-3.238 2.07-6.146 5.192-6.146 2.427 0 3.518 1.823 3.518 3.742 0 3.315-2.07 6.146-5.136 6.146-2.333 0-3.575-1.668-3.575-3.742zm12.869 1.725c-.47 0-.79-.155-1.073-.387l.433-2.501c.301-1.667 1.148-2.773 2.05-2.773.791 0 1.035.757 1.035 1.474 0 1.725-.997 4.187-2.445 4.187zm2.483-7.87c-1.035 0-2.05.58-2.747 1.59h-.037l.15-1.436h-2.295c-.113.97-.32 2.443-.527 3.548l-1.806 9.791h2.596l.715-3.955h.056c.302.194.885.349 1.525.349 3.048 0 5.042-3.219 5.042-6.476 0-1.803-.772-3.412-2.672-3.412zm4.892-2.289c0-.872.659-1.55 1.486-1.55.79 0 1.299.562 1.299 1.337-.02.989-.715 1.551-1.524 1.551h-.038c-.734 0-1.223-.543-1.223-1.338zm-2.145 11.982h2.597l1.768-9.48h-2.615l-1.75 9.48zm17.215-9.48l-1.58 4.245c-.334.912-.52 1.488-.702 2.053l-.07.216h-.037a40.242 40.242 0 00-.226-2.25l-.414-4.265h-2.728l1.562 8.706c.037.193.018.31-.057.445-.3.601-.809 1.183-1.41 1.61-.49.368-1.036.6-1.468.756L67.483 22c.526-.116 1.618-.562 2.54-1.454 1.185-1.144 2.276-2.908 3.405-5.312l3.18-7.019h-2.71z" fill="currentColor"></path>
+      </svg>
+  {%- endcase -%}
+{%- endif -%}

@@ -1,0 +1,112 @@
+<x-drawer id="search-drawer" class="drawer drawer--search color-scheme color-scheme--{{ section.settings.color_scheme.id }}" handle-editor-events>
+  <div slot="header">
+    <form action="{{ routes.search_url }}" id="predictive-search-form" method="GET" aria-owns="predictive-search" class="h-stack gap-2.5" role="search">
+      {%- render 'icon' with 'search', width: 16 -%}
+
+      <label for="search-drawer-input" class="sr-only">{{ 'search.general.search_placeholder' | t }}</label>
+      <input id="search-drawer-input" type="search" class="search-drawer__input h7" name="q" placeholder="{{ 'search.general.search_placeholder' | t }}">
+    </form>
+  </div>
+
+  <predictive-search id="predictive-search">
+    <div slot="placeholder">
+      <div class="v-stack gap-8 sm:gap-12">
+        {%- assign popular_searches = section.settings.popular_searches_menu -%}
+
+        {%- if popular_searches.links.size > 0 -%}
+          <div class="v-stack gap-4.5">
+            {%- if section.settings.popular_searches_title != blank -%}
+              <p class="subheading text-subdued">{{ section.settings.popular_searches_title }}</p>
+            {%- endif -%}
+
+            <div class="v-stack justify-items-start gap-3.5">
+              {%- for link in popular_searches.links -%}
+                <a href="{{ link.url }}" class="h7 link-reversed">{{ link.title }}</a>
+              {%- endfor -%}
+            </div>
+          </div>
+        {%- endif -%}
+
+        {%- assign featured_products = section.settings.featured_products -%}
+
+        {%- if featured_products.count > 0 -%}
+          <div class="v-stack gap-4.5">
+            {%- if section.settings.featured_products_title != blank -%}
+              <p class="subheading text-subdued">{{ section.settings.featured_products_title }}</p>
+            {%- endif -%}
+
+            <div class="floating-controls-container">
+              {%- assign featured_products_carousel = section.id | append: '-featured-products-carousel' -%}
+
+              <carousel-prev-button class="floating-controls__control floating-controls__control--offset" aria-controls="{{ featured_products_carousel }}">
+                <button disabled class="circle-button circle-button--xl">
+                  <span class="sr-only">{{ 'general.accessibility.previous' | t }}</span>
+                  {%- render 'icon' with 'big-arrow-left', direction_aware: true, width: 14 -%}
+                </button>
+              </carousel-prev-button>
+          
+              <scroll-carousel id="{{ featured_products_carousel }}" class="search-drawer__product-carousel scroll-area bleed">
+                {%- for product in featured_products -%}
+                  {%- render 'product-card', product: product, show_badges: false, show_quick_buy: false -%}
+                {%- endfor -%}
+              </scroll-carousel>
+            
+              <carousel-next-button class="floating-controls__control floating-controls__control--offset" aria-controls="{{ featured_products_carousel }}">
+                <button class="circle-button circle-button--xl">
+                  <span class="sr-only">{{ 'general.accessibility.next' | t }}</span>
+                  {%- render 'icon' with 'big-arrow-right', direction_aware: true, width: 14 -%}
+                </button>
+              </carousel-next-button>
+            </div>
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+
+    <div slot="results" class="contents"><!-- FILL IN JS --></div>
+  </predictive-search>
+</x-drawer>
+
+{% schema %}
+{
+  "name": "t:sections.search_drawer.name",
+  "class": "shopify-section--search-drawer",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.search_drawer.empty_search_category",
+      "info": "t:sections.search_drawer.empty_search_category_info"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "popular_searches_title",
+      "label": "t:sections.search_drawer.popular_searches_title",
+      "default": "Popular searches"
+    },
+    {
+      "type": "link_list",
+      "id": "popular_searches_menu",
+      "label": "t:sections.search_drawer.popular_searches_menu",
+      "info": "t:sections.search_drawer.popular_searches_menu_info"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "featured_products_title",
+      "label": "t:sections.search_drawer.featured_products_title",
+      "default": "Featured products"
+    },
+    {
+      "type": "product_list",
+      "id": "featured_products",
+      "label": "t:sections.search_drawer.featured_products"
+    }
+  ]
+}
+{% endschema %}

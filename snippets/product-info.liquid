@@ -1,0 +1,630 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+PRODUCT INFO
+----------------------------------------------------------------------------------------------------------------------
+
+This snippet renders all the blocks of a given product. It uses the blocks of the section currently in use (there is
+no need to manually pass the section as it is globally available)
+
+********************************************
+Supported variables
+********************************************
+
+* product: the product on which to render the information (if blank, it renders placeholder information)
+* allow_blocks: a list of blocks name to include. If none is passed, assumes to show all the blocks
+* product_form_id: the ID of the product form
+* content_alignment: the alignment of the content
+* context: the context of the product info. Can be "main_product", "featured_product" or "quick_buy"
+{%- endcomment -%}
+
+{%- assign alignment = content_alignment | replace: 'left', 'start' | replace: 'right', 'end' | default: 'start' -%}
+
+<safe-sticky class="product-info text-{{ alignment }}">
+  <div class="product-info__block-list">
+    {%- liquid
+      assign inside_block_group_context = false
+      assign current_block_group_name = ''
+
+      if allow_blocks != blank
+        assign filtered_blocks = '' | split: ''
+
+        for block in section.blocks
+          if allow_blocks contains block.type
+            assign block_as_arr = block | sort
+            assign filtered_blocks = filtered_blocks | concat: block_as_arr
+          endif
+        endfor
+      else
+        assign filtered_blocks = section.blocks
+      endif
+    -%}
+
+    {%- for block in filtered_blocks -%}
+      {% liquid
+        assign next_block_index = forloop.index0 | plus: 1
+        assign next_block = filtered_blocks[next_block_index]
+
+        comment
+        You can use your own condition to create smart grouping. When two or more blocks match the condition, they are
+        automatically grouped by a div that will take the desired class. This can even work for more than 2 elements
+        (for instance if you specify accordion follow by an accordion). The theme takes care of properly opening and
+        closing the group for proper HTML. In order to make it work, you need to create one condition explaining when
+        to enter into the group, and you need to indicate a block_group_class and block_group_name. Most of the time,
+        the two will be identical. However, the block_group_name must be unique. This means that as long as the block_group_name
+        stays the same, then another group will not be created as long as the conditions match.
+        endcomment
+
+        assign allow_block_group = true
+
+        if block.type == 'accordion' and next_block.type == 'accordion'
+          assign block_group_class = 'accordion-group'
+          assign block_group_name = 'accordion-group'
+        elsif block.type == 'description' and block.settings.collapse_content and product.description != blank and next_block.type == 'accordion'
+          assign block_group_class = 'accordion-group'
+          assign block_group_name = 'accordion-group'
+        elsif block.type == 'accordion' and next_block.type == 'description' and next_block.settings.collapse_content and product.description != blank 
+          assign block_group_class = 'accordion-group'
+          assign block_group_name = 'accordion-group'
+        else
+          assign allow_block_group = false
+          assign block_group_class = ''
+          assign current_block_group_name = ''
+        endif
+
+        if allow_block_group
+          assign new_block_group_name = block_group_name
+
+          if inside_block_group_context == true and new_block_group_name != current_block_group_name
+            assign allow_block_group = false
+          else
+            assign current_block_group_name = new_block_group_name
+          endif
+        endif
+      %}
+
+      {%- capture block_content -%}
+        {%- case block.type -%}
+          {%- when '@app' -%}
+            {%- render block -%}
+
+          {%- when 'vendor' -%}
+            {%- if product != blank -%}
+              {%- render 'vendor' with product.vendor, class: 'subheading text-subdued' -%}
+            {%- else -%}
+              {%- assign placeholder_vendor = 'general.on_boarding.product_vendor' | t -%}
+              {%- render 'vendor' with placeholder_vendor, class: 'subheading text-subdued' -%}
+            {%- endif -%}
+
+          {%- when 'title' -%}
+            {%- if product != blank -%}
+              {%- assign product_title = product.title -%}
+            {%- else -%}
+              {%- assign product_title = 'general.on_boarding.product_title' | t -%}
+            {%- endif -%}
+
+            {%- if request.page_type == 'product' and context == 'main_product' -%}
+              <h1 class="product-title {{ block.settings.heading_tag }}">
+                {{- product_title -}}
+              </h1>
+            {%- else -%}
+              <h2 class="product-title {% if context == 'quick_buy' %}h4{% else %}{{ block.settings.heading_tag }}{% endif %}">
+                <a href="{{ product.url }}">{{ product_title }}</a>
+              </h2>
+            {%- endif -%}
+
+          {%- when 'sku' -%}
+            {%- if product.selected_or_first_available_variant.sku != blank -%}
+              <variant-sku class="variant-sku subheading text-subdued">
+                {{- 'product.general.sku' | t }} {{ product.selected_or_first_available_variant.sku -}}
+              </variant-sku>
+            {%- endif -%}
+
+          {%- when 'badges' -%}
+            {%- if product != blank -%}
+              {%- render 'product-badges', 
+                product: product, 
+                context: 'product',
+                variant: product.selected_or_first_available_variant,
+                alignment: alignment,
+                show_custom_badge: true,
+                show_sold_out_badge: settings.product_card_show_sold_out_badge,
+                show_discount_badge: settings.product_card_show_discount
+              -%}
+            {%- endif -%}
+
+          {%- when 'price' -%}
+            {%- if product.selected_or_first_available_variant != nil -%}
+              <div class="v-stack gap-2">
+                {%- render 'price-list', product: product, variant: product.selected_or_first_available_variant, alignment: alignment, context: 'product' -%}
+
+                {%- if block.settings.show_taxes_notice -%}
+                  <p class="subheading text-subdued">
+                    {%- if cart.taxes_included -%}
+                      {{ 'product.general.taxes_included' | t }}
+                    {%- else -%}
+                      {{ 'product.general.taxes_excluded' | t }}
+                    {%- endif -%}
+
+                    {%- if shop.shipping_policy.body != blank -%}
+                      {{ 'product.general.shipping_policy_html' | t: link: shop.shipping_policy.url }}
+                    {%- endif -%}
+                  </p>
+                {%- endif -%}
+              </div>
+            {%- endif -%}
+
+          {%- when 'payment_terms' -%}
+            {%- if product != blank -%}
+              <payment-terms class="payment-terms">
+                {%- capture product_installment_form_id -%}{{ product_form_id }}-payment-installment{%- endcapture -%}
+
+                {%- form 'product', product, id: product_installment_form_id -%}
+                  <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+                  {{- form | payment_terms -}}
+                {%- endform -%}
+              </payment-terms>
+            {%- endif -%}
+
+          {%- when 'rating' -%}
+            {%- if product != blank -%}
+              {%- render 'product-rating', product: product, alignment: alignment, show_empty: block.settings.show_empty, show_placeholder: false -%}
+            {%- else -%}
+              {%- render 'product-rating', alignment: alignment, show_placeholder: true -%}
+            {%- endif -%}
+
+          {%- when 'separator' -%}
+            <hr>
+
+          {%- when 'description' -%}
+            {%- liquid
+              if product == blank
+                assign product_description = 'general.on_boarding.product_description' | t
+              else
+                # Shopify RTE often adds a useless meta tag that mess with spacing, so we remove it
+                assign product_description = product.description | remove_first: '<meta charset="utf-8">'
+              endif
+            -%}
+
+            {%- if product_description != blank -%}
+              {%- if block.settings.collapse_content -%}
+                {%- assign accordion_title = 'product.general.description' | t -%}
+
+                {%- render 'accordion', 
+                  title: accordion_title, 
+                  custom_icon: block.settings.custom_icon,
+                  content: product_description,
+                  prose_content: true, 
+                  uppercase_title: block.settings.uppercase_title,
+                  block: block 
+                -%}
+              {%- else -%}
+                <div class="prose prose-justify-{{ alignment }}">
+                  {{- product_description -}}
+                </div>
+              {%- endif -%}
+            {%- endif -%}
+
+          {%- when 'variant_picker' -%}
+            {%- if product != blank -%}
+              {%- render 'variant-picker',
+                  product: product,
+                  form_id: product_form_id,
+                  context: context, 
+                  alignment: alignment,
+                  hide_sold_out_variants: block.settings.hide_sold_out_variants,
+                  separate_options: block.settings.separate_options,
+                  selector_style: block.settings.selector_style,
+                  swatch_selector_style: block.settings.swatch_selector_style,
+                  swatch_selector_size: block.settings.swatch_selector_size,
+                  block_selector_style: block.settings.block_selector_style,
+                  variant_image_options: block.settings.variant_image_options,
+                  size_chart_page: block.settings.size_chart_page 
+                -%}
+            {%- endif -%}
+
+          {%- when 'product_variations' -%}
+            {%- liquid
+              assign contains_product = false
+
+              for product_variation in block.settings.products
+                if product_variation == product
+                  assign contains_product = true
+                endif
+              endfor
+            -%}
+
+            {%- if contains_product -%}
+              {%- comment -%}
+                IMPLEMENTATION NOTE: this feature allows to connect different products on the same page. It is therefore
+                visually similar to a variant picker, although it does not share the functionality
+              {%- endcomment -%}
+              <div class="variant-picker">
+                <div class="variant-picker__option justify-{{ alignment }}">
+                  {%- assign metafield_parts = block.settings.option_value_metafield | split: '.' -%}
+                  {%- assign metafield_namespace = metafield_parts | first -%}
+                  {%- assign metafield_key = metafield_parts | last -%}
+                  {%- assign metafield = product.metafields[metafield_namespace][metafield_key] -%}
+
+                  {%- if block.settings.option_name != blank -%}
+                    <div class="h-stack gap-2">
+                      <p class="text-subdued">{{ block.settings.option_name | escape }}:</p>
+
+                      {%- if metafield.type == 'metaobject_reference' -%}
+                        <span>{{ product.metafields[metafield_namespace][metafield_key].value.label }}</span>
+                      {%- else -%}
+                        <span>{{ product.metafields[metafield_namespace][metafield_key].value }}</span>
+                      {%- endif -%}
+                    </div>
+                  {%- endif -%}
+
+                  {%- liquid
+                    case block.settings.selector_style
+                      when 'swatch'
+                        case settings.color_swatch_shape
+                          when 'circle'
+                            if swatch_selector_size == 'sm'
+                              assign list_classes = 'h-stack gap-3 wrap'
+                            else
+                              assign list_classes = 'h-stack gap-4 wrap'
+                            endif
+        
+                          else
+                            if swatch_selector_size == 'sm'
+                              assign list_classes = 'h-stack gap-3 wrap'
+                            else
+                              assign list_classes = 'h-stack gap-4 wrap'
+                            endif
+                        endcase
+                      when 'variant_image'
+                        assign list_classes = 'h-stack gap-1 wrap'
+                      else
+                        assign list_classes = 'h-stack gap-3 wrap'
+                    endcase
+                  -%}
+
+                  <div class="variant-picker__option-values {{ list_classes }}">
+                    {%- liquid
+                      for product_variation in block.settings.products
+                        assign color_metaobject = nil
+                        assign variation_metafield = product_variation.metafields[metafield_namespace][metafield_key]
+
+                        if variation_metafield.type == 'metaobject_reference' and variation_metafield.value.system.type == 'shopify--color-pattern'
+                          assign label = variation_metafield.value.label
+                          assign color_metaobject = variation_metafield.value
+                        else
+                          assign label = variation_metafield.value
+                        endif
+
+                        if product_variation == product
+                          assign selected = true
+                        else
+                          assign selected = false
+                        endif
+
+                        case block.settings.selector_style
+                          when 'swatch'
+                            render 'option-value', type: 'swatch', url: product_variation.url, label: label, color_metaobject: color_metaobject, selected: selected, size: block.settings.swatch_selector_size
+
+                          when 'variant_image'
+                            render 'option-value', type: 'thumbnail', url: product_variation.url, label: label, image: product_variation.featured_media, selected: selected
+
+                          when 'block'
+                            render 'option-value', type: 'block', url: product_variation.url, label: label, selected: selected
+
+                          when 'block_swatch'
+                            render 'option-value', type: 'block', url: product_variation.url, label: label, color_metaobject: color_metaobject, selected: selected, show_swatch: true
+                        endcase
+                      endfor
+                    -%}
+                  </div>
+                </div>
+              </div>
+            {%- endif -%}
+
+          {%- when 'line_item_property' -%}
+            {%- if block.settings.label != blank -%}
+              {%- capture name -%}properties[{{ block.settings.label | escape }}]{%- endcapture -%}
+
+              <div class="v-stack {% if block.settings.type == 'checkbox' %}justify-items-{{ alignment }}{% else %}justify-{{ alignment }}{% endif %}">
+                {%- liquid
+                  if block.settings.type == 'text'
+                    if block.settings.allow_long_text
+                      render 'input', label: block.settings.label, show_label_as_block: true, name: name, form: product_form_id, multiline: 4, alignment: alignment, required: block.settings.required, placeholder: block.settings.placeholder, maxlength: block.settings.max_length
+                    else
+                      render 'input', type: 'text', label: block.settings.label, show_label_as_block: true, name: name, form: product_form_id, alignment: alignment, required: block.settings.required, placeholder: block.settings.placeholder, maxlength: block.settings.max_length
+                    endif
+                  elsif block.settings.type == 'checkbox'
+                    render 'checkbox', label: block.settings.label, name: name, form: product_form_id, value: block.settings.checkbox_value, required: block.settings.required
+                  elsif block.settings.type == 'dropdown' and block.settings.select_values != blank
+                    assign option_values = block.settings.select_values | split: ','
+                    render 'select', label: block.settings.label, show_label_as_block: true, option_values: option_values, show_empty_value: true, name: name, alignment: alignment, form: product_form_id, required: block.settings.required
+                  endif
+                -%}
+              </div>
+            {%- endif -%}
+
+          {%- when 'inventory' -%}
+            {%- render 'inventory',
+                variant: product.selected_or_first_available_variant,
+                alignment: alignment,
+                show_in_stock_quantity: block.settings.show_in_stock_quantity,
+                show_progress_bar: block.settings.show_progress_bar,
+                progress_bar_max_value: block.settings.progress_bar_max_value,
+                low_threshold: block.settings.low_inventory_threshold
+            -%}
+
+          {%- when 'buy_buttons' -%}
+            {%- render 'buy-buttons',
+                product: product,
+                form_id: product_form_id,
+                show_quantity_selector: block.settings.show_quantity_selector,
+                add_quantity_selector_spacing: block.settings.add_quantity_selector_spacing,
+                show_payment_button: block.settings.show_payment_button,
+                show_gift_card_recipient: block.settings.show_gift_card_recipient,
+                atc_button_style: block.settings.atc_button_style,
+                atc_button_background: block.settings.atc_button_background,
+                atc_button_text_color: block.settings.atc_button_text_color,
+                payment_button_background: block.settings.payment_button_background,
+                payment_button_text_color: block.settings.payment_button_text_color
+            -%}
+
+          {%- when 'volume_pricing' -%}
+            {%- render 'volume-pricing-table', variant: product.selected_or_first_available_variant -%}
+
+          {%- when 'pickup_availability' -%}
+            {%- if product != blank -%}
+              {%- render 'pickup-availability', product_variant: product.selected_or_first_available_variant, alignment: alignment -%}
+            {%- endif -%}
+
+          {%- when 'complementary_products' -%}
+            <product-recommendations class="block" hidden product="{{ product.id }}" limit="{{ block.settings.products_count }}" intent="complementary">
+              {%- if recommendations.performed? and recommendations.intent == 'complementary' and recommendations.products_count > 0 -%}
+                {%- assign carousel_id = 'carousel-' | append: section.id | append: block.id -%}
+
+                <div class="v-stack gap-4">
+                  {%- if block.settings.title != blank or recommendations.products_count > 1 -%}
+                    <div class="h-stack justify-between">
+                      {%- if block.settings.title != blank -%}
+                        <p>{{ block.settings.title }}</p>
+                      {%- endif -%}
+
+                      {%- if recommendations.products_count > 2 -%}
+                        <div class="h-stack gap-2">
+                          <carousel-prev-button aria-controls="{{ carousel_id }}">
+                            <button type="button" disabled class="circle-button">
+                              <span class="sr-only">{{ 'general.accessibility.previous' | t }}</span>
+                              {%- render 'icon' with 'big-arrow-left', width: 9, direction_aware: true -%}
+                            </button>
+                          </carousel-prev-button>
+
+                          <carousel-next-button aria-controls="{{ carousel_id }}">
+                            <button type="button" class="circle-button">
+                              <span class="sr-only">{{ 'general.accessibility.next' | t }}</span>
+                              {%- render 'icon' with 'big-arrow-right', width: 9, direction_aware: true -%}
+                            </button>
+                          </carousel-next-button>
+                        </div>
+                      {%- endif -%}
+                    </div>
+                  {%- endif -%}
+
+                  <scroll-carousel id="{{ carousel_id }}" class="complementary-products complementary-products--vertical scroll-area bleed sm:unbleed snap-x">
+                    {%- for product in recommendations.products -%}
+                      {%- render 'product-cross-sell', product: product, layout: 'vertical', show_quick_buy: true -%}
+                    {%- endfor -%}
+                  </scroll-carousel>
+                </div>
+              {%- endif -%}
+            </product-recommendations>
+
+         {%- when 'text' -%}
+  {%- if block.settings.text != blank -%}
+    <div class="prose prose-justify-{{ alignment }}">
+      {{- block.settings.text -}}
+    </div>
+  {%- endif -%}
+
+
+          {%- when 'accordion' -%}
+            {%- liquid
+              assign accordion_title = block.settings.title | default: block.settings.page.title
+              assign accordion_content = block.settings.page.content | default: block.settings.content
+
+              if accordion_title != blank and accordion_content != blank
+                if block.settings.custom_icon != blank
+                  render 'accordion', title: accordion_title, custom_icon: block.settings.custom_icon, content: accordion_content, uppercase_title: block.settings.uppercase_title, prose_content: true, block: block
+                else
+                  render 'accordion', title: accordion_title, icon: block.settings.icon, content: accordion_content, uppercase_title: block.settings.uppercase_title, prose_content: true, block: block
+                endif
+              endif
+            -%}
+
+          {%- when 'liquid' -%}
+            {%- if block.settings.liquid != blank -%}
+              <div class="liquid">
+                {{- block.settings.liquid -}}
+              </div>
+            {%- endif -%}
+
+          {%- when 'offers' -%}
+            {%- render 'offers', block: block -%}
+
+          {%- when 'countdown' -%}
+            <div class="product-countdown" style="{% render 'surface', background: block.settings.background, text_color: block.settings.text_color %}">
+              {%- if block.settings.text != blank -%}
+                <p class="product-countdown__text text-start prose">{{ block.settings.text }}</p>
+              {%- endif -%}
+
+              <countdown-timer 
+                class="countdown-condensed__timer" 
+                role="timer" 
+                expires-at="{{ block.settings.expiration_date | date: '%FT%T%:z' | escape }}" 
+                expiration-behavior="{{ block.settings.expiration_behavior }}"
+                aria-label="{{ accessibility_text | escape }}" 
+              >
+                <div class="countdown-condensed__timer-item" aria-hidden="true">
+                  <countdown-timer-flip type="days" class="subheading bold">00</countdown-timer-flip>
+                  <span class="countdown-condensed__unit subheading subheading-xs">{{ 'sections.countdown_timer.days' | t }}</span>
+                  <span class="countdown-condensed__unit-short subheading subheading-xs">D</span>
+                </div>
+        
+                <span class="subheading subheading-xs" aria-hidden="true">:</span>
+        
+                <div class="countdown-condensed__timer-item" aria-hidden="true">
+                  <countdown-timer-flip type="hours" class="subheading bold">00</countdown-timer-flip>
+                  <span class="countdown-condensed__unit subheading subheading-xs">{{ 'sections.countdown_timer.hours' | t }}</span>
+                  <span class="countdown-condensed__unit-short subheading subheading-xs">H</span>
+                </div>
+        
+                <span class="subheading subheading-xs" aria-hidden="true">:</span>
+        
+                <div class="countdown-condensed__timer-item" aria-hidden="true">
+                  <countdown-timer-flip type="minutes" class="subheading bold">00</countdown-timer-flip>
+                  <span class="countdown-condensed__unit subheading subheading-xs">{{ 'sections.countdown_timer.minutes' | t }}</span>
+                  <span class="countdown-condensed__unit-short subheading subheading-xs">M</span>
+                </div>
+        
+                <span class="subheading subheading-xs" aria-hidden="true">:</span>
+        
+                <div class="countdown-condensed__timer-item" aria-hidden="true">
+                  <countdown-timer-flip type="seconds" class="subheading bold">00</countdown-timer-flip>
+                  <span class="countdown-condensed__unit subheading subheading-xs">{{ 'sections.countdown_timer.seconds' | t }}</span>
+                  <span class="countdown-condensed__unit-short subheading subheading-xs">S</span>
+                </div>
+              </countdown-timer>
+            </div>
+
+          {%- when 'icons_with_text' -%}
+            {%- capture icons -%}
+              {%- for i in (1..4) -%}
+                {%- liquid
+                  assign icon_setting = 'icon_' | append: i
+                  assign icon_width_setting = 'icon_' | append: i | append: '_width'
+                  assign icon_text_setting = 'icon_' | append: i | append: '_text'
+                -%}
+
+                {%- if block.settings[icon_setting] != blank or block.settings[icon_text_setting] != blank -%}
+                  <div class="{% if block.settings.items_per_row == 3 %}v-stack gap-2.5 justify-items-center text-center{% else %}h-stack gap-3{% endif %}">
+                    {%- render 'icon', image: block.settings[icon_setting], width: block.settings[icon_width_setting] -%}
+                    {{- block.settings[icon_text_setting] -}}
+                  </div>
+                {%- endif -%}
+              {%- endfor -%}
+            {%- endcapture -%}
+
+            {%- if icons != blank -%}
+              <div class="grid grid-cols-{{ block.settings.items_per_row }} justify-{{ alignment }} gap-3">
+                {{- icons -}}
+              </div>
+            {%- endif -%}
+
+          {%- when 'modal' -%}
+            {%- if block.settings.button_title != blank or block.settings.modal_content != blank -%}
+              {%- assign modal_id = product_form_id | append: block.id -%}
+
+              {%- render 'button', content: block.settings.button_title, aria_controls: modal_id, style: block.settings.button_style, stretch: block.settings.stretch_button, background: block.settings.button_background, text_color: block.settings.button_text_color -%}
+
+              {%- if block.settings.dialog_type == 'modal' -%}
+                <x-modal id="{{ modal_id | escape }}" append-to-body class="modal modal--{{ block.settings.modal_size }} color-scheme color-scheme--{{ settings.default_color_scheme.id }}">
+                  <div class="prose prose-justify-{{ alignment }}">
+                    {% if block.settings.modal_title != blank %}
+                      <p class="h5">{{ block.settings.modal_title }}</p>
+                    {%- endif -%}
+
+                    <div class="text-start">
+                      {{- block.settings.modal_content -}}
+                    </div>
+                  </div>
+                </x-modal>
+              {%- else -%}
+                <x-drawer id="{{ modal_id | escape }}" append-to-body class="drawer {% if block.settings.modal_size == 'sm' %}drawer--narrow{% endif %} color-scheme color-scheme--{{ settings.default_color_scheme.id }}">
+                  {% if block.settings.modal_title != blank %}
+                    <span class="h5" slot="header">{{ block.settings.modal_title }}</span>
+                  {%- endif -%}
+
+                  <div class="prose prose-justify-{{ alignment }}">
+                    {{- block.settings.modal_content -}}
+                  </div>
+                </x-drawer>
+              {%- endif -%}
+            {%- endif -%}
+
+          {%- when 'image' -%}
+            {%- if block.settings.image != blank -%}
+              {%- assign image_alignment = block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' -%}
+              {%- capture image_style_attribute -%}{% if image_alignment == 'center' %}margin-inline: auto;{% elsif image_alignment == 'end' %}margin-inline-start: auto;{% endif %}{%- endcapture -%}
+
+              {%- if block.settings.width_mode == 'custom' -%}
+                {%- capture image_style_attribute -%}{{ image_style_attribute }} --image-max-width: {{ block.settings.max_width }}px; --image-mobile-max-width: {{ block.settings.mobile_max_width }}px{%- endcapture -%}
+                {%- capture image_sizes_attribute -%}(max-width: 699px) min({{ block.settings.mobile_max_width }}px, 100vw), min({{ block.settings.max_width }}px, 100vw){%- endcapture -%}
+              {%- else -%}
+                {%- capture image_sizes_attribute -%}min(600px, 100vw){%- endcapture -%}
+                {%- capture image_style_attribute -%}width: 100%;{%- endcapture -%}
+              {%- endif -%}
+
+              {{- block.settings.image | image_url: width: block.settings.image.width | image_tag: loading: 'lazy', sizes: image_sizes_attribute, widths: '200,300,400,500,600,800,1000,1200,1400', class: 'constrained-image', style: image_style_attribute -}}
+            {%- endif -%}
+
+          {%- when 'button' -%}
+            {%- if block.settings.text != blank -%}
+              {%- render 'button', href: block.settings.link, content: block.settings.text, stretch: block.settings.stretch, style: block.settings.style, background: block.settings.background, text_color: block.settings.text_color -%}
+            {%- endif -%}
+
+          {%- when 'share_buttons' -%}
+            <share-button>
+              <button class="h-stack gap-2 justify-{{ alignment }} share-buttons--native" hidden>
+                <span class="subheading">{{- 'general.social.share' | t -}}</span>
+                {%- render 'icon' with 'share' -%}
+              </button>
+
+              <div class="h-stack gap-6 justify-{{ alignment }}">
+                <span class="subheading">{{- 'general.social.share' | t -}}</span>
+                {%- render 'share-buttons', url: product.url, title: product.title, description: product.description -%}
+              </div>
+            </share-button>
+        {%- endcase -%}
+      {%- endcapture -%}
+
+      {%- if allow_block_group and inside_block_group_context == false -%}
+        {%- assign inside_block_group_context = true -%}
+        <div class="product-info__block-group {{ block_group_class }}" data-group-type="{{ block_group_name }}">
+      {%- endif -%}
+
+      {%- liquid
+        assign block_types_allowing_partial_rerender = 'sku,badges,price,payment_terms,volume_pricing,variant_picker,inventory,buy_buttons,pickup_availability,liquid' | split: ','
+        assign allow_partial_rerender = false
+
+        if block_types_allowing_partial_rerender contains block.type
+          assign allow_partial_rerender = true
+        endif
+      -%}
+
+      <div class="product-info__block-item" data-block-id="{{ block.id }}" data-block-type="{{ block.type | replace: '_', '-' }}" {% if allow_partial_rerender %}data-block-allow-rerender{% endif %} {% unless block.type == '@app' or block.type == 'accordion' %}{{ block.shopify_attributes }}{% endunless %}>
+        {{- block_content -}}
+      </div>
+
+      {%- if inside_block_group_context and allow_block_group == false -%}
+        {%- assign inside_block_group_context = false -%}
+        </div>
+      {%- endif -%}
+    {%- endfor -%}
+
+    {%- if context == 'quick_buy' -%}
+      <a href="{{ product.url }}" class="link sm-max:hidden">{{ 'product.general.view_details' | t }}</a>
+    {%- endif -%}
+  </div>
+
+  {%- comment -%}
+    IMPLEMENTATION NOTE: under rare circumstances, merchant may want to show selectors to allow variant selection, but hide
+    the add to cart button. This is however problematic as product info is changed based on the form, so we create a default
+    one if no buy buttons exists
+  {%- endcomment -%}
+
+  {%- assign buy_buttons_block = section.blocks | where: 'type', 'buy_buttons' | first -%}
+
+  {%- unless buy_buttons_block != blank or product == blank -%}
+    {%- form 'product', product, id: product_form_id, hidden: true -%}
+      <input type="hidden" disabled name="id" value="{{ product.selected_or_first_available_variant.id }}">
+    {%- endform -%}
+  {%- endunless -%}
+</safe-sticky>

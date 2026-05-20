@@ -1,0 +1,164 @@
+<style>
+  #shopify-section-{{ section.id }} {
+    --product-list-column-count: {{ section.settings.products_per_row_mobile | times: 1 }};
+  }
+
+  @media screen and (min-width: 700px) {
+    #shopify-section-{{ section.id }} {
+      --product-list-column-count: 2;
+    }
+  }
+
+  @media screen and (min-width: 1000px) {
+    #shopify-section-{{ section.id }} {
+      --product-list-column-count: {{ section.settings.products_per_row_desktop }};
+    }
+  }
+</style>
+
+<product-recommendations class="block color-scheme color-scheme--{{ section.settings.color_scheme.id }}" product="{{ product.id }}" limit="{{ section.settings.recommendations_count }}" intent="related">
+  {%- if recommendations.performed? and recommendations.products_count > 0 -%}
+    <div class="container section-spacing">
+      <div class="section-stack">
+        {%- content_for 'block', type: '_section-header', id: 'section-header' -%}
+      
+        {%- assign product_list_id = 'section-' | append: section.id | append: '-product-list' -%}
+
+        {%- capture product_list -%}
+          <product-list id="{{ product_list_id }}" class="product-list product-list--padded full-bleed {% unless section.settings.stack_products %}product-list--carousel scroll-area{% endunless %}">
+            {%- capture sizes -%}
+              {%- if section.settings.stack_products -%}
+                (max-width: 699px) calc(100vw / {{ section.settings.products_per_row_mobile }} - 40px), (max-width: 999px) calc(50vw - 64px), calc((100vw - 96px) / {{ section.settings.products_per_row_desktop }})
+              {%- else -%}
+                (max-width: 699px) 74vw, (max-width: 999px) 50vw, calc((100vw - 96px) / {{ section.settings.products_per_row_desktop }})
+              {%- endif -%}
+            {%- endcapture -%}
+
+            {%- for product in recommendations.products -%}
+              {%- render 'product-card', product: product, reveal: true, sizes: sizes, position: forloop.index -%}
+            {%- endfor -%}
+          </product-list>
+        {%- endcapture -%}
+
+        {%- if section.settings.stack_products -%}
+          {{- product_list -}}
+        {%- else -%}
+          <div class="v-stack gap-8 sm:gap-12">
+            <div class="floating-controls-container">
+              <carousel-prev-button class="floating-controls__control floating-controls__control--offset" aria-controls="{{ product_list_id }}">
+                <button disabled class="circle-button circle-button--xl">
+                  <span class="sr-only">{{ 'general.accessibility.previous' | t }}</span>
+                  {%- render 'icon' with 'big-arrow-left', direction_aware: true, width: 14 -%}
+                </button>
+              </carousel-prev-button>
+
+              {{- product_list -}}
+
+              <carousel-next-button class="floating-controls__control floating-controls__control--offset" aria-controls="{{ product_list_id }}">
+                <button class="circle-button circle-button--xl">
+                  <span class="sr-only">{{ 'general.accessibility.next' | t }}</span>
+                  {%- render 'icon' with 'big-arrow-right', direction_aware: true, width: 14 -%}
+                </button>
+              </carousel-next-button>
+            </div>
+
+            {%- if section.settings.show_scrolling_bar -%}
+              <progress-bar track-scroll-target="{{ product_list_id }}" class="progress-bar progress-bar--limit-width"></progress-bar>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+  {%- endif -%}
+</product-recommendations>
+
+{% schema %}
+{
+  "name": "t:sections.related_products.name",
+  "enabled_on": {
+    "templates": ["product"]
+  },
+  "class": "shopify-section--related-products",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.related_products.info"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "checkbox",
+      "id": "stack_products",
+      "label": "t:global.product_list.stack_products",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "recommendations_count",
+      "min": 2,
+      "max": 10,
+      "label": "t:sections.related_products.recommendations_count",
+      "default": 4
+    },
+    {
+      "type": "select",
+      "id": "products_per_row_mobile",
+      "label": "t:global.product_list.products_per_row_mobile",
+      "options": [
+        {
+          "value": "1",
+          "label": "1"
+        },
+        {
+          "value": "2",
+          "label": "2"
+        }
+      ],
+      "default": "1"
+    },
+    {
+      "type": "range",
+      "id": "products_per_row_desktop",
+      "min": 2,
+      "max": 5,
+      "label": "t:global.product_list.products_per_row_desktop",
+      "default": 4
+    },
+    {
+      "type": "checkbox",
+      "id": "show_view_all_button",
+      "label": "t:sections.featured_collections.show_view_all_button",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_scrolling_bar",
+      "label": "t:global.product_list.show_scrolling_bar",
+      "default": true,
+      "visible_if": "{{ section.settings.stack_products == false }}"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.related_products.name",
+      "category": "t:global.categories.products",
+      "blocks": [
+        {
+          "type": "_section-header",
+          "id": "section-header",
+          "static": true,
+          "settings": {
+            "title": "Related products",
+            "content": ""
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

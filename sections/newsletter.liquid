@@ -1,0 +1,291 @@
+{%- liquid
+  assign center_content = false
+
+  unless section.settings.image_position == 'split' and section.settings.image != blank
+    assign center_content = true
+  endunless
+-%}
+
+<div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+  {%- capture section_text_content -%}
+    <div class="v-stack max-w-lg {% if center_content %}mx-auto{% endif %} gap-6 sm:gap-10">
+      <div class="prose {% if center_content %}prose-justify-center{% endif %}">
+        {%- if section.settings.icon != 'none' -%}
+          {%- render 'icon' with section.settings.icon, width: 48, mobile_width: 28 -%}
+        {%- endif -%}
+
+        {%- render 'heading', content: section.settings.title, style: section.settings.heading_tag, html_tag: 'h2' -%}
+      </div>
+
+      {%- assign newsletter_form_id = 'newsletter-form-' | append: section.id -%}
+
+      <div class="v-stack {% if center_content %}justify-self-center{% endif %} w-full md:max-w-sm gap-4">
+        {%- assign has_form_posted_successfully = false -%}
+
+        {%- form 'customer', id: newsletter_form_id, class: 'form' -%}
+          {%- if form.posted_successfully? -%}
+            {%- assign success_message = 'general.newsletter.subscribed_successfully' | t -%}
+            {%- assign has_form_posted_successfully = true -%}
+
+            {%- render 'banner', content: success_message, status: 'success', text_alignment: 'center' -%}
+          {%- elsif form.errors -%}
+            {%- capture error_message -%}{{ form.errors.translated_fields['email'] }} {{ form.errors.messages['email'] }}{%- endcapture -%}
+            {%- render 'banner', content: error_message, status: 'error' -%}
+          {%- endif -%}
+      
+          <input type="hidden" name="contact[tags]" value="newsletter">
+    
+          {%- assign input_label = 'general.newsletter.email' | t -%}
+    
+          <div class="input-with-connected-submit">
+            {%- liquid 
+              render 'input', name: 'contact[email]', label: input_label, type: 'email', required: true, autocomplete: 'email', enterkeyhint: 'send'
+            
+              assign button_default_content = 'general.newsletter.subscribe' | t
+              assign button_content = section.settings.button_text | default: button_default_content
+
+              render 'button', type: 'submit', content: button_content, icon: 'arrow-right'
+            -%}
+          </div>
+        {%- endform -%}
+
+        {%- if section.settings.privacy_policy_text != blank and has_form_posted_successfully == false -%}
+          <p class="text-sm {% if center_content %}text-center{% endif %} {% unless section.settings.image_position == 'background' and section.settings.image != blank %}text-subdued{% endunless %}">
+            {{- section.settings.privacy_policy_text -}}
+          </p>
+        {%- endif -%}
+      </div>
+    </div>
+  {%- endcapture -%}
+
+  {%- if section.settings.image == blank or section.settings.image_position == 'background' -%}
+    {%- if section.settings.image != blank -%}
+      <div class="content-box min-h-{{ section.settings.image_size }}">
+        {%- if section.settings.image != blank -%}
+          <div class="content-box__background-media with-overlay" style="--overlay: {{ section.settings.overlay_color.rgb }} / {{ section.settings.overlay_opacity | divided_by: 100.0 }}">
+            {{- section.settings.image | image_url: width: section.settings.image.width | image_tag: widths: '400,500,600,800,1000,1200,1400,1600,1800,2000,2200,2400,2600' -}}
+          </div>
+        {%- endif -%}
+
+        <div class="place-self-center">
+          {{- section_text_content -}}
+        </div>
+      </div>
+    {%- else -%}
+      <div class="container section-spacing">
+        {{- section_text_content -}}
+      </div>
+    {%- endif -%}
+  {%- else -%}
+    <div class="section-split">
+      <div class="section-split__column section-split__column--image {% unless section.settings.add_image_spacing %}section-split__column--flushed{% endunless %}">
+        {{- section.settings.image | image_url: width: section.settings.image.width | image_tag: sizes: '(max-width: 699px) 100vw, 50vw', widths: '400,500,600,800,1000,1200,1400,1600,1800,2000,2200,2400,2600' -}}
+      </div>
+
+      <div class="section-split__column">
+        {{- section_text_content -}}
+      </div>
+    </div>
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.newsletter.name",
+  "class": "shopify-section--newsletter",
+  "tag": "section",
+  "disabled_on": {
+    "groups": ["header", "custom.overlay"]
+  },
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.newsletter.instructions"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:global.image.image",
+      "info": "t:sections.newsletter.image_size_recommendation"
+    },
+    {
+      "type": "select",
+      "id": "image_position",
+      "label": "t:sections.newsletter.image_position",
+      "options": [
+        {
+          "value": "split",
+          "label": "t:sections.newsletter.image_position_options.split"
+        },
+        {
+          "value": "background",
+          "label": "t:sections.newsletter.image_position_options.background"
+        }
+      ],
+      "default": "split"
+    },
+    {
+      "type": "select",
+      "id": "image_size",
+      "label": "t:global.image.size",
+      "options": [
+        {
+          "value": "auto",
+          "label": "t:global.sizes.original_image_ratio"
+        },
+        {
+          "value": "sm",
+          "label": "t:global.sizes.small"
+        },
+        {
+          "value": "md",
+          "label": "t:global.sizes.medium"
+        },
+        {
+          "value": "lg",
+          "label": "t:global.sizes.large"
+        },
+        {
+          "value": "fill",
+          "label": "t:global.sizes.fit_screen"
+        }
+      ],
+      "default": "md",
+      "visible_if": "{{ section.settings.image_position == 'background' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_image_spacing",
+      "label": "t:sections.newsletter.add_image_spacing",
+      "default": false,
+      "visible_if": "{{ section.settings.image_position == 'split' }}"
+    },
+    {
+      "type": "select",
+      "id": "icon",
+      "label": "t:sections.newsletter.icon",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:sections.newsletter.icon_options.none"
+        },
+        {
+          "value": "envelope",
+          "label": "t:sections.newsletter.icon_options.envelope"
+        },
+        {
+          "value": "inbox",
+          "label": "t:sections.newsletter.icon_options.inbox"
+        },
+        {
+          "value": "plane",
+          "label": "t:sections.newsletter.icon_options.plane"
+        }
+      ],
+      "default": "envelope"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "label": "t:global.text.heading",
+      "default": "Subscribe to our newsletter"
+    },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "label": "t:global.text.heading_size",
+      "options": [
+        {
+          "value": "display-xl",
+          "label": "Display XL"
+        },
+        {
+          "value": "display-l",
+          "label": "Display L"
+        },
+        {
+          "value": "display-m",
+          "label": "Display M"
+        },
+        {
+          "value": "h1",
+          "label": "XX-Large"
+        },
+        {
+          "value": "h2",
+          "label": "X-Large"
+        },
+        {
+          "value": "h3",
+          "label": "Large"
+        },
+        {
+          "value": "h4",
+          "label": "Medium"
+        },
+        {
+          "value": "h5",
+          "label": "Small"
+        },
+        {
+          "value": "h6",
+          "label": "X-Small"
+        },
+        {
+          "value": "h7",
+          "label": "XX-Small"
+        }
+      ],
+      "default": "h3"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "t:global.text.button_text",
+      "default": "Subscribe"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "privacy_policy_text",
+      "label": "t:sections.newsletter.privacy_policy_text",
+      "default": "By signing up, you agree with our privacy policy."
+    },
+    {
+      "type": "header",
+      "content": "t:global.colors.category",
+      "visible_if": "{{ section.settings.image_position == 'background' }}"
+    },
+    {
+      "type": "color",
+      "id": "overlay_color",
+      "label": "t:global.colors.image_overlay_color",
+      "default": "#000000",
+      "visible_if": "{{ section.settings.image_position == 'background' }}"
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "label": "t:global.colors.image_overlay_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 20,
+      "visible_if": "{{ section.settings.image_position == 'background' }}"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.newsletter.name",
+      "category": "t:global.categories.call_to_action",
+      "settings": {}
+    }
+  ]
+}
+{% endschema %}

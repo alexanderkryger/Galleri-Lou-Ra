@@ -1,0 +1,176 @@
+<style>
+  #shopify-section-{{ section.id }} {
+    --hot-spot-background: {{ section.settings.hot_spot_background.rgb }};
+    --hot-spot-text-color: {{ section.settings.hot_spot_color.rgb }};
+  }
+</style>
+
+<div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+  <div class="content-box overflow-visible">
+    <div class="content-box__background-media">
+      {%- if section.settings.image != blank -%}
+        {%- render 'media' with section.settings.image, mobile_media: section.settings.mobile_image -%}
+      {%- else -%}
+        {{- 'hero-apparel-3' | placeholder_svg_tag: 'block' -}}
+      {%- endif -%}
+    </div>
+
+    {%- if section.settings.show_scrolling_title -%}
+      <div class="column-span-full align-self-center" {% if section.settings.lower_scrolling_text_layer %}style="order: -1"{% endif %}>
+        <marquee-text speed="0.3" direction="start-to-end" class="scrolling-content">
+          <div class="scrolling-content__item" style="font-size: var(--text-{{ section.settings.background_text_size }})">
+            <p class="scrolling-content__text text-ghost {{ section.settings.background_text_size }}">{{- section.settings.background_text -}}</p>
+          </div>
+        </marquee-text>
+      </div>
+    {%- else -%}
+      <div class="align-self-center" {% if section.settings.lower_scrolling_text_layer %}style="order: -1"{% endif %}>
+        <p class="scrolling-content__text text-ghost {{ section.settings.background_text_size }}">{{- section.settings.background_text -}}</p>
+      </div>
+    {%- endif -%}
+
+    {%- content_for 'blocks' -%}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.hot_spots.name",
+  "class": "shopify-section--hot-spots",
+  "tag": "section",
+  "disabled_on": {
+    "groups": ["header", "custom.overlay"]
+  },
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-3"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:global.image.image",
+      "info": "t:sections.hot_spots.image_size_recommendation"
+    },
+    {
+      "type": "image_picker",
+      "id": "mobile_image",
+      "label": "t:global.image.mobile_image",
+      "info": "t:sections.hot_spots.mobile_image_size_recommendation"
+    },
+    {
+      "type": "color",
+      "id": "hot_spot_background",
+      "label": "t:sections.hot_spots.hot_spot_background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "hot_spot_color",
+      "label": "t:sections.hot_spots.hot_spot_color",
+      "default": "#000000"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.hot_spots.background_text"
+    },
+    {
+      "type": "text",
+      "id": "background_text",
+      "label": "t:global.text.text"
+    },
+    {
+      "type": "select",
+      "id": "background_text_size",
+      "label": "t:global.text.size",
+      "options": [
+        {
+          "value": "display-xl",
+          "label": "Display XL"
+        },
+        {
+          "value": "display-l",
+          "label": "Display L"
+        },
+        {
+          "value": "display-m",
+          "label": "Display M"
+        },
+        {
+          "value": "h1",
+          "label": "XX-Large"
+        },
+        {
+          "value": "h2",
+          "label": "X-Large"
+        },
+        {
+          "value": "h3",
+          "label": "Large"
+        }
+      ],
+      "default": "display-l"
+    },
+    {
+      "type": "checkbox",
+      "id": "lower_scrolling_text_layer",
+      "label": "t:sections.hot_spots.lower_scrolling_text_layer",
+      "info": "t:sections.hot_spots.lower_scrolling_text_layer_info",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_scrolling_title",
+      "label": "t:blocks.section_header.show_scrolling_title",
+      "default": false
+    }
+  ],
+  "blocks": [
+    { "type": "_placeable-content" },
+    { "type": "_hot-spot-content-item" },
+    { "type": "_hot-spot-content-product" }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.hot_spots.name",
+      "category": "t:global.categories.storytelling",
+      "blocks": [
+        {
+          "type": "_placeable-content",
+          "blocks": [
+            {
+              "type": "heading",
+              "settings": {
+                "text": "Hot spots",
+                "heading_size": "h3"
+              }
+            }
+          ]
+        },
+        {
+          "type": "_hot-spot-content-item",
+          "settings": {
+            "mobile_horizontal_position": 40,
+            "mobile_vertical_position": 40,
+            "desktop_horizontal_position": 40,
+            "desktop_vertical_position": 40,
+            "title": "Hot spot 1"
+          }
+        },
+        {
+          "type": "_hot-spot-content-item",
+          "settings": {
+            "mobile_horizontal_position": 60,
+            "mobile_vertical_position": 60,
+            "desktop_horizontal_position": 60,
+            "desktop_vertical_position": 60,
+            "title": "Hot spot 2"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,262 @@
+{%- if section.blocks.size > 0 -%}
+  {%- liquid
+    assign logo_max_width = 0
+    assign mobile_logo_max_width = 0
+
+    for block in section.blocks
+      assign logo_max_width = logo_max_width | at_least: block.settings.width
+      assign mobile_logo_max_width = mobile_logo_max_width | at_least: block.settings.mobile_width
+    endfor
+
+    assign show_logos_in_block = false
+
+    if section.settings.logo_border != 'rgba(0,0,0,0)' or section.settings.logo_background != 'rgba(0,0,0,0)' and section.settings.logo_background != section.settings.color_scheme.settings.background
+      assign show_logos_in_block = true
+    endif
+  -%}
+
+  <style>
+    #shopify-section-{{ section.id }} {
+      --logo-list-grid: {% if section.settings.stack_on_mobile %}minmax(0, 1fr) / repeat(2, minmax(0, 1fr)){% else %}auto / auto-flow max-content{% endif %};
+      --logo-list-gap: {% if show_logos_in_block %}{% if section.settings.add_logos_spacing %}0.5rem{% else %}0px{% endif %}{% else %}0.5rem 5rem{% endif %};
+      --logo-list-justify-content: safe {{ section.settings.content_alignment | replace: 'left', 'start' | replace: 'right', 'end' }};
+
+      --logo-item-padding-block: {{ section.settings.logos_padding_block }}px;
+      --logo-item-padding-inline: {% if show_logos_in_block %}40px{% else %}0px{% endif %};
+      --logo-item-border-color: {{ section.settings.logo_border.rgba }};
+      --logo-item-background: {{ section.settings.logo_background.rgba }};
+    }
+
+    @media screen and (min-width: 700px) {
+      #shopify-section-{{ section.id }} {
+        --logo-list-grid: auto-flow minmax(0, 1fr) / repeat(auto-fit, {% if show_logos_in_block %}calc({{ logo_max_width }}px + var(--logo-item-padding-inline) * 2){% else %}{{ logo_max_width }}px{% endif %});
+        --logo-list-gap: {% if show_logos_in_block %}{% if section.settings.add_logos_spacing %}1.5rem{% else %}0px{% endif %}{% else %}1.5rem 7.5rem{% endif %};
+      }
+    }
+  </style>
+
+  <div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+    <div class="section-spacing section-spacing--loose container">
+      <div class="section-stack">
+        {%- if section.settings.subheading != blank or section.settings.title != blank -%}
+          <div class="prose prose-justify-{{ section.settings.content_alignment }}">
+            {%- render 'subheading', content: section.settings.subheading -%}
+            {%- render 'heading', content: section.settings.title, style: section.settings.heading_tag, html_tag: 'h2' -%}
+          </div>
+        {%- endif -%}
+        
+        <logo-list class="logo-list {% unless section.settings.stack_on_mobile %}scroll-area bleed{% endunless %}">
+          {%- for block in section.blocks -%}
+            {%- capture block_content -%}
+              {%- if block.settings.logo != blank -%}
+                {%- capture sizes -%}(max-width: 699px) {{ block.settings.mobile_width }}px, {{ block.settings.width }}px{%- endcapture -%}
+                {%- capture widths -%}{{ block.settings.width }}, {{ block.settings.width | times: 2 | at_most: block.settings.logo.width }}{%- endcapture -%}
+                {%- capture style_attribute -%}--image-mobile-max-width: {{ block.settings.mobile_width }}px; --image-max-width: {{ block.settings.width }}px{%- endcapture -%}
+
+                {{- block.settings.logo | image_url: width: block.settings.logo.width | image_tag: style: style_attribute, widths: widths, sizes: sizes, class: 'constrained-image' -}}
+              {%- else -%}
+                {{- 'image' | placeholder_svg_tag: 'w-full' -}}
+              {%- endif -%}
+            {%- endcapture -%}
+
+            {%- if block.settings.link != blank -%}
+              <a class="logo-list__item" href="{{ block.settings.link }}" {% if section.settings.reveal_on_scroll %}reveal-on-scroll="true"{% endif %} {{ block.shopify_attributes }}>
+                {{- block_content -}}
+              </a>
+            {%- else -%}
+              <div class="logo-list__item" {% if section.settings.reveal_on_scroll %}reveal-on-scroll="true"{% endif %} {{ block.shopify_attributes }}>
+                {{- block_content -}}
+              </div>
+            {%- endif -%}
+          {%- endfor -%}
+        </logo-list>
+      </div>
+    </div>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.logo_list.name",
+  "class": "shopify-section--logo-list",
+  "tag": "section",
+  "disabled_on": {
+    "groups": ["header", "custom.overlay"]
+  },
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "subheading",
+      "label": "t:global.text.subheading"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "label": "t:global.text.heading",
+      "default": "Logo list"
+    },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "label": "t:global.text.heading_size",
+      "options": [
+        {
+          "value": "display-xl",
+          "label": "Display XL"
+        },
+        {
+          "value": "display-l",
+          "label": "Display L"
+        },
+        {
+          "value": "display-m",
+          "label": "Display M"
+        },
+        {
+          "value": "h1",
+          "label": "XX-Large"
+        },
+        {
+          "value": "h2",
+          "label": "X-Large"
+        },
+        {
+          "value": "h3",
+          "label": "Large"
+        },
+        {
+          "value": "h4",
+          "label": "Medium"
+        },
+        {
+          "value": "h5",
+          "label": "Small"
+        },
+        {
+          "value": "h6",
+          "label": "X-Small"
+        },
+        {
+          "value": "h7",
+          "label": "XX-Small"
+        }
+      ],
+      "default": "h3"
+    },
+    {
+      "type": "text_alignment",
+      "id": "content_alignment",
+      "label": "t:sections.logo_list.content_alignment",
+      "default": "center"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.logo_list.logos_category"
+    },
+    {
+      "type": "checkbox",
+      "id": "reveal_on_scroll",
+      "label": "t:sections.logo_list.reveal_on_scroll",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "stack_on_mobile",
+      "label": "t:sections.logo_list.stack_on_mobile",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "add_logos_spacing",
+      "label": "t:sections.logo_list.add_logos_spacing",
+      "info": "t:sections.logo_list.add_logos_spacing_info",
+      "default": false
+    },
+    {
+      "type": "range",
+      "min": 0,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "id": "logos_padding_block",
+      "label": "t:sections.logo_list.logos_padding_block",
+      "default": 20
+    },
+    {
+      "type": "color",
+      "id": "logo_background",
+      "label": "t:global.colors.background"
+    },
+    {
+      "type": "color",
+      "id": "logo_border",
+      "label": "t:global.colors.border"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "logo",
+      "name": "t:sections.logo_list.blocks.logo.name",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "logo",
+          "label": "t:sections.logo_list.blocks.logo.logo_image",
+          "info": "t:sections.logo_list.blocks.logo.logo_image_info"
+        },
+        {
+          "type": "range",
+          "id": "width",
+          "min": 30,
+          "max": 300,
+          "unit": "px",
+          "step": 10,
+          "label": "t:global.image.width",
+          "default": 120
+        },
+        {
+          "type": "range",
+          "id": "mobile_width",
+          "min": 30,
+          "max": 300,
+          "unit": "px",
+          "step": 10,
+          "label": "t:global.image.mobile_width",
+          "default": 90
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "t:global.text.link"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.logo_list.name",
+      "category": "t:global.categories.media",
+      "blocks": [
+        {
+          "type": "logo"
+        },
+        {
+          "type": "logo"
+        },
+        {
+          "type": "logo"
+        },
+        {
+          "type": "logo"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

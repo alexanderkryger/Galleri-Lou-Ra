@@ -1,0 +1,590 @@
+{% comment %}
+  ============================================================================
+  snippets/upsell-drawer.liquid
+  Frame Upsell Drawer for Galleri Lou Ra
+  ============================================================================
+  Include in layout/theme.liquid before </body>:
+    {% render 'upsell-drawer' %}
+  ============================================================================
+{% endcomment %}
+
+{% comment %} ── DATA INJECTION ─────────────────────────────────────────────── {% endcomment %}
+{% comment %}
+  Output the upsell metafield map for the current product page.
+  Format: { "variant_id": ["product-handle-1", "product-handle-2"], ... }
+  Only populated on product pages where variants have the metafield.
+{% endcomment %}
+
+{% if request.page_type == 'product' %}
+  <script id="upsell-drawer-data" type="application/json">
+    {
+      "enabled": true,
+      "productId": {{ product.id | json }},
+      "variantUpsellMap": {
+        {%- liquid
+          assign first_entry = true
+          for variant in product.variants
+            assign upsell_products = variant.metafields.custom.upsell.value
+            if upsell_products != blank and upsell_products.size > 0
+              unless first_entry
+                echo ','
+              endunless
+              assign first_entry = false
+              echo '"' | append: variant.id | append: '": ['
+              assign first_handle = true
+              for upsell_product in upsell_products
+                unless first_handle
+                  echo ','
+                endunless
+                assign first_handle = false
+                echo upsell_product.handle | json
+              endfor
+              echo ']'
+            endif
+          endfor
+        -%}
+      }
+    }
+  </script>
+{% else %}
+  <script id="upsell-drawer-data" type="application/json">
+    { "enabled": false, "productId": null, "variantUpsellMap": {} }
+  </script>
+{% endif %}
+
+{% comment %} ── MARKUP ───────────────────────────────────────────────────────── {% endcomment %}
+
+<div
+  id="upsell-drawer"
+  class="upsell-drawer"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="upsell-drawer-title"
+  aria-hidden="true"
+  tabindex="-1"
+>
+  <div class="upsell-drawer__backdrop" data-upsell-close></div>
+
+  <div class="upsell-drawer__panel" role="document">
+    {% comment %} ── Header ── {% endcomment %}
+    <div class="upsell-drawer__header">
+      <h2 id="upsell-drawer-title" class="upsell-drawer__title">
+        Tilføj en ramme til din kunstplakat
+      </h2>
+      <button
+        class="upsell-drawer__close"
+        data-upsell-close
+        aria-label="Luk"
+        type="button"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    {% comment %} ── Success banner ── {% endcomment %}
+    <div class="upsell-drawer__banner">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Kunstplakaten er blevet tilføjet til kurven</span>
+    </div>
+
+    {% comment %} ── Scrollable content ── {% endcomment %}
+    <div class="upsell-drawer__body">
+      {% comment %} Loading state {% endcomment %}
+      <div class="upsell-drawer__loading" data-upsell-loading>
+        <div class="upsell-drawer__spinner"></div>
+        <p>Henter ramme-muligheder…</p>
+      </div>
+
+      {% comment %} Frame options rendered by JS {% endcomment %}
+      <div class="upsell-drawer__frames" data-upsell-frames aria-live="polite">
+        {% comment %} JS will inject frame cards here {% endcomment %}
+      </div>
+
+      {% comment %} Error state {% endcomment %}
+      <div class="upsell-drawer__error" data-upsell-error hidden>
+        <p>Der opstod en fejl. Prøv venligst igen.</p>
+        <button type="button" class="upsell-drawer__retry-btn" data-upsell-retry>
+          Prøv igen
+        </button>
+      </div>
+    </div>
+
+    {% comment %} ── Footer ── {% endcomment %}
+    <div class="upsell-drawer__footer">
+      <p class="upsell-drawer__delivery" data-upsell-delivery hidden>
+        Forlænget levering 5–10 dage
+      </p>
+
+      <button
+        type="button"
+        class="upsell-drawer__add-btn"
+        data-upsell-add
+        disabled
+      >
+        Tilføj ramme til kurven
+      </button>
+
+      <button
+        type="button"
+        class="upsell-drawer__skip-btn"
+        data-upsell-skip
+      >
+        Fortsæt uden ramme
+      </button>
+    </div>
+  </div>
+</div>
+
+{% comment %} ── CSS ──────────────────────────────────────────────────────────── {% endcomment %}
+<style>
+  /* ── Base / Reset ──────────────────────────────────────────────── */
+  .upsell-drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    pointer-events: none;
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s 0.3s, opacity 0.3s ease;
+  }
+
+  .upsell-drawer[aria-hidden="false"] {
+    pointer-events: auto;
+    visibility: visible;
+    opacity: 1;
+    transition: visibility 0s, opacity 0.3s ease;
+  }
+
+  /* ── Backdrop ──────────────────────────────────────────────────── */
+  .upsell-drawer__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .upsell-drawer[aria-hidden="false"] .upsell-drawer__backdrop {
+    opacity: 1;
+  }
+
+  /* ── Panel ─────────────────────────────────────────────────────── */
+  .upsell-drawer__panel {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 680px;
+    max-height: 100vh;
+    max-height: 100dvh;
+    background: #fff;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+    overflow: hidden;
+  }
+
+  .upsell-drawer[aria-hidden="false"] .upsell-drawer__panel {
+    transform: translateY(0);
+  }
+
+  @media (min-width: 768px) {
+    .upsell-drawer {
+      align-items: center;
+    }
+
+    .upsell-drawer__panel {
+      max-height: 90vh;
+      max-height: 90dvh;
+      border-radius: 12px;
+      transform: translateY(24px);
+      opacity: 0;
+      transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+                  opacity 0.25s ease;
+    }
+
+    .upsell-drawer[aria-hidden="false"] .upsell-drawer__panel {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* ── Header ────────────────────────────────────────────────────── */
+  .upsell-drawer__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    flex-shrink: 0;
+  }
+
+  .upsell-drawer__title {
+    font-family: inherit;
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1.3;
+    margin: 0;
+    color: #1a1a1a;
+  }
+
+  .upsell-drawer__close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: #1a1a1a;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: background 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  .upsell-drawer__close:hover {
+    background: #f5f5f5;
+  }
+
+  .upsell-drawer__close:focus-visible {
+    outline: 2px solid #1a1a1a;
+    outline-offset: 2px;
+  }
+
+  /* ── Banner ────────────────────────────────────────────────────── */
+  .upsell-drawer__banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: #1a1a1a;
+    color: #fff;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .upsell-drawer__banner svg {
+    flex-shrink: 0;
+  }
+
+  /* ── Body / Scrollable ─────────────────────────────────────────── */
+  .upsell-drawer__body {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 24px;
+  }
+
+  /* ── Loading ───────────────────────────────────────────────────── */
+  .upsell-drawer__loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 48px 0;
+    color: #666;
+    font-size: 14px;
+  }
+
+  .upsell-drawer__loading[hidden] {
+    display: none;
+  }
+
+  .upsell-drawer__spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #e5e5e5;
+    border-top-color: #1a1a1a;
+    border-radius: 50%;
+    animation: upsell-spin 0.8s linear infinite;
+  }
+
+  @keyframes upsell-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* ── Error ─────────────────────────────────────────────────────── */
+  .upsell-drawer__error {
+    text-align: center;
+    padding: 32px 0;
+    color: #666;
+    font-size: 14px;
+  }
+
+  .upsell-drawer__error[hidden] {
+    display: none;
+  }
+
+  .upsell-drawer__retry-btn {
+    margin-top: 12px;
+    padding: 8px 20px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff;
+    color: #1a1a1a;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+
+  .upsell-drawer__retry-btn:hover {
+    border-color: #1a1a1a;
+  }
+
+  /* ── Frame cards grid ──────────────────────────────────────────── */
+  .upsell-drawer__frames[hidden] {
+    display: none;
+  }
+
+  .upsell-drawer__product-group {
+    margin-bottom: 24px;
+  }
+
+  .upsell-drawer__product-group:last-child {
+    margin-bottom: 0;
+  }
+
+  .upsell-drawer__product-title {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0 0 6px;
+    color: #1a1a1a;
+  }
+
+  .upsell-drawer__product-desc {
+    font-size: 13px;
+    color: #888;
+    margin: 0 0 16px;
+  }
+
+  .upsell-drawer__variants-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  /* ── Individual frame card ─────────────────────────────────────── */
+  .upsell-drawer__card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    border: 2px solid #e5e5e5;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    text-align: center;
+  }
+
+  .upsell-drawer__card:hover {
+    border-color: #ccc;
+  }
+
+  .upsell-drawer__card:focus-visible {
+    outline: 2px solid #1a1a1a;
+    outline-offset: 2px;
+  }
+
+  .upsell-drawer__card[aria-checked="true"] {
+    border-color: #1a1a1a;
+    box-shadow: 0 0 0 1px #1a1a1a;
+  }
+
+  .upsell-drawer__card[aria-disabled="true"] {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .upsell-drawer__card-badge {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 2px 10px;
+    background: #1a1a1a;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: 4px;
+    white-space: nowrap;
+    line-height: 1.4;
+  }
+
+  .upsell-drawer__card-image {
+    width: 100%;
+    max-width: 100px;
+    aspect-ratio: 1;
+    object-fit: contain;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    background: #fafafa;
+  }
+
+  .upsell-drawer__card-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #1a1a1a;
+    margin: 0 0 4px;
+    line-height: 1.3;
+  }
+
+  .upsell-drawer__card-price {
+    font-size: 13px;
+    color: #666;
+    margin: 0;
+  }
+
+  .upsell-drawer__card-price--sale {
+    color: #cd7629;
+    font-weight: 500;
+  }
+
+  .upsell-drawer__card-price--compare {
+    text-decoration: line-through;
+    opacity: 0.6;
+  }
+
+  .upsell-drawer__card-stock {
+    font-size: 11px;
+    color: #c00;
+    margin: 4px 0 0;
+  }
+
+  /* ── Footer ────────────────────────────────────────────────────── */
+  .upsell-drawer__footer {
+    flex-shrink: 0;
+    padding: 16px 24px 24px;
+    border-top: 1px solid #eee;
+  }
+
+  .upsell-drawer__delivery {
+    text-align: center;
+    font-size: 13px;
+    color: #666;
+    margin: 0 0 12px;
+  }
+
+  .upsell-drawer__delivery[hidden] {
+    display: none;
+  }
+
+  .upsell-drawer__add-btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: inherit;
+    color: #fff;
+    background: #1a1a1a;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.15s ease, background 0.15s ease;
+  }
+
+  .upsell-drawer__add-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .upsell-drawer__add-btn:not(:disabled):hover {
+    background: #333;
+  }
+
+  .upsell-drawer__add-btn:focus-visible {
+    outline: 2px solid #1a1a1a;
+    outline-offset: 2px;
+  }
+
+  .upsell-drawer__add-btn--loading {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  .upsell-drawer__skip-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-top: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #1a1a1a;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.15s ease;
+  }
+
+  .upsell-drawer__skip-btn:hover {
+    color: #666;
+  }
+
+  .upsell-drawer__skip-btn:focus-visible {
+    outline: 2px solid #1a1a1a;
+    outline-offset: 2px;
+  }
+
+  /* ── Mobile tweaks ─────────────────────────────────────────────── */
+  @media (max-width: 767px) {
+    .upsell-drawer__panel {
+      align-self: flex-end;
+      border-radius: 16px 16px 0 0;
+      max-height: 92vh;
+      max-height: 92dvh;
+    }
+
+    .upsell-drawer__header {
+      padding: 16px 16px 12px;
+    }
+
+    .upsell-drawer__body {
+      padding: 16px;
+    }
+
+    .upsell-drawer__footer {
+      padding: 12px 16px 20px;
+    }
+
+    .upsell-drawer__variants-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .upsell-drawer__title {
+      font-size: 17px;
+    }
+  }
+
+  /* ── Reduce motion ─────────────────────────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    .upsell-drawer,
+    .upsell-drawer__backdrop,
+    .upsell-drawer__panel,
+    .upsell-drawer__card {
+      transition: none !important;
+    }
+
+    .upsell-drawer__spinner {
+      animation-duration: 1.5s;
+    }
+  }
+</style>
+
+{% comment %} ── JS ASSET ───────────────────────────────────────────────────── {% endcomment %}
+<script src="{{ 'upsell-drawer.js' | asset_url }}" defer></script>

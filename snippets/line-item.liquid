@@ -1,0 +1,132 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+LINE ITEM
+----------------------------------------------------------------------------------------------------------------------
+
+This component renders a single line item product information, and is used on order and cart page.
+
+********************************************
+Supported variables
+********************************************
+
+* line_item: the line item to render (required)
+* show_line_price: if true, the whole line price (quantity * unit price) is displayed
+* show_quantity_selector: if true, a quantity selector is displayed inside the line item
+* hide_unit_price: if set to true, we hide the unit price. We do that in the cart drawer to simplify it.
+{%- endcomment -%}
+
+<line-item class="line-item">
+  {%- if line_item.image != blank -%}
+    <a href="{{ line_item.url }}" class="line-item__media">
+      {{- line_item.image | image_url: width: line_item.image.width | image_tag: loading: 'lazy', sizes: '(max-width: 699px) 80px, 96px', widths: '80,96,160,192' -}}
+    </a>
+  {%- endif -%}
+
+  <div class="{% if show_line_price %}line-item__info-with-line-price{% else %}contents{% endif %}">
+    <div class="line-item__info">
+      <div class="v-stack gap-3">
+        <div class="v-stack gap-2">
+          <div class="v-stack gap-0.5">
+            {%- if settings.product_card_show_vendor and line_item.vendor != blank -%}
+              {%- render 'vendor' with line_item.vendor, class: 'subheading text-subdued' -%}
+            {%- endif -%}
+
+            {%- if line_item.url != blank -%}
+              <a href="{{ line_item.url }}" class="subheading">{{ line_item.product.title | default: line_item.title }}</a>
+            {%- else -%}
+              <p class="subheading">{{ line_item.product.title | default: line_item.title }}</p>
+            {%- endif -%}
+
+            {%- if hide_unit_price -%}
+              {%- unless line_item.product.has_only_default_variant or line_item.gift_card -%}
+                <p class="subheading text-subdued">{{ line_item.variant.title }}</p>
+              {%- endunless -%}
+            {%- else -%}
+              {%- render 'price-list', line_item: line_item, context: 'line_item' -%}
+            {%- endif -%}
+          </div>
+
+          {%- if hide_unit_price != true -%}
+            {%- unless line_item.product.has_only_default_variant or line_item.gift_card -%}
+              <p class="subheading text-subdued">{{ line_item.variant.title }}</p>
+            {%- endunless -%}
+          {%- endif -%}
+
+          {%- if line_item.selling_plan_allocation -%}
+            <p class="subheading text-subdued">{{ line_item.selling_plan_allocation.selling_plan.name }}</p>
+          {%- endif -%}
+          
+          {%- unless line_item.properties == empty -%}
+            <ul role="list">
+              {%- for property in line_item.properties -%}
+                {%- assign first_character_in_key = property.first | truncate: 1, '' -%}
+
+                {%- if property.last == blank or first_character_in_key == '_' -%}
+                  {%- continue -%}
+                {%- endif -%}
+
+                <li class="subheading text-subdued">
+                  {%- if property.last contains '/uploads/' -%}
+                    <a href="{{ property.last }}">{{ property.last | split: '/' | last }}</a>
+                  {%- else -%}
+                    {{ property.first }}: {{ property.last }}
+                  {%- endif -%}
+                </li>
+              {%- endfor -%}
+            </ul>
+          {%- endunless -%}
+
+          {%- if line_item.line_level_discount_allocations != blank -%}
+            <ul role="list" class="unstyled-list">
+              {%- for discount_allocation in line_item.line_level_discount_allocations -%}
+                <li class="discount-badge text-xxs">
+                  {%- render 'icon' with 'discount', width: 10 -%} {{ discount_allocation.discount_application.title }} (-{{ discount_allocation.amount | money }})
+
+                  {%- if section.settings.allow_discount_application and discount_allocation.discount_application.type != '' -%}
+                    <cart-discount-remove-button discount-code="{{ discount_allocation.discount_application.title | escape }}" class="h-stack align-center">
+                      <button type="button">{%- render 'icon' with 'close', width: 8 -%}</button>
+                    </cart-discount-remove-button>
+                  {%- endif -%}
+                </li>
+              {%- endfor -%}
+            </ul>
+          {%- endif -%}
+        </div>
+
+        {%- if show_quantity_selector -%}
+          <div class="line-item__quantity-selector">
+            <div class="h-stack gap-5">
+              {%- render 'quantity-selector', line_item: line_item, show_rules: false -%}
+
+              <a href="{{ line_item.url_to_remove }}" class="line-item__remove-button">
+                <span class="sr-only">{{ 'cart.general.remove_item' | t: title: line_item.title }}</span>
+                {%- render 'icon' with 'remove-bin' -%}
+                <span aria-hidden="true" class="text-xs">{{ 'cart.order.remove' | t }}</span>
+              </a>
+            </div>
+
+            <div class="line-item__error-container empty:hidden"></div>
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+
+    {%- if show_line_price -%}
+      <div class="v-stack justify-items-end shrink-0 gap-0.5">
+        <span class="line-item__line-price subheading">
+          {%- if settings.currency_code_enabled -%}
+            {{- line_item.final_line_price | money_with_currency -}}
+          {%- else -%}
+            {{- line_item.final_line_price | money -}}
+          {%- endif -%}
+        </span>
+
+        {%- if line_item.unit_price -%}
+          <unit-price class="line-item__unit-line-price subheading text-subdued">
+            ({{- line_item.unit_price | unit_price_with_measurement: line_item.unit_price_measurement -}})
+          </unit-price>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+  </div>
+</line-item>

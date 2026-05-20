@@ -1,0 +1,144 @@
+<div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+  <div class="section-spacing container">
+    <div class="max-w-{{ section.settings.content_width }} mx-auto">
+      <div class="article-main">
+        <div class="v-stack gap-8 sm:gap-10">
+          <div class="prose">
+            {{- article.content -}}
+          </div>
+
+          {%- if section.settings.show_share_buttons -%}
+            {%- assign excerpt = article.excerpt | strip_html -%}
+
+            <div class="h-stack gap-6">
+              <span class="uppercase">{{- 'general.social.share' | t -}}</span>
+              {%- render 'share-buttons', url: article.url, title: article.title, description: excerpt -%}
+            </div>
+          {%- endif -%}
+        </div>
+      </div>
+
+      {%- if article.comments_enabled? -%}
+        <div id="comments" class="article-comments v-stack gap-6 sm:gap-12">
+          {%- if article.comments_count > 0 -%}
+            <div class="article-comments__list">
+              <h3 class="h5">{{ 'blog.comments.count' | t: count: article.comments_count }}</h3>
+
+              {%- paginate article.comments by 50 -%}
+                {%- for comment in article.comments -%}
+                  <article class="article-comment">
+                    <div class="prose">
+                      {{- comment.content -}}
+                    </div>
+
+                    <div class="h-stack gap-6">
+                      <p class="text-sm text-subdued">{{ comment.author }}</p>
+                      <time class="text-sm text-subdued">{{ comment.created_at | date: format: 'date_at_time' }}</time>
+                    </div>
+                  </article>
+                {%- endfor -%}
+
+                {%- render 'pagination', paginate: paginate, hash: '#comments' -%}
+              {%- endpaginate -%}
+            </div>
+          {%- endif -%}
+
+          <div class="article-comments__form">
+            <p class="h5">{{ 'blog.comments.leave_comment' | t }}</p>
+
+            <div>
+              {%- if blog.moderated? -%}
+                <p>{{ 'blog.comments.moderated' | t }}</p>
+              {%- endif -%}
+
+              <div class="prose">{{- 'shopify.online_store.spam_detection.disclaimer_html' | t -}}</div>
+            </div>
+
+            {%- form 'new_comment', article, class: 'form' -%}
+              {%- if form.posted_successfully? -%}
+                {%- capture content -%}
+                  {%- if blog.moderated? -%}
+                    {{- 'blog.comments.comment_sent' | t -}}
+                  {%- else -%}
+                    {{- 'blog.comments.comment_published' | t -}}
+                  {%- endif -%}
+                {%- endcapture -%}
+                {%- render 'banner', status: 'success', content: content -%}
+
+              {%- else -%}
+                {%- if form.errors -%}
+                  {%- assign content = form.errors | default_errors -%}
+                  {%- render 'banner', status: 'error', content: content -%}
+                {%- endif -%}
+              {%- endif -%}
+
+              <div class="fieldset">
+                <div class="fieldset-row">
+                  {%- liquid
+                    assign label = 'blog.comments.name' | t
+                    render 'input', type: 'text', name: 'comment[author]', label: label, value: customer.name, required: true, autocomplete: 'name'
+
+                    assign label = 'blog.comments.email' | t
+                    render 'input', type: 'email', name: 'comment[email]', label: label, value: customer.email, required: true, autocomplete: 'email'
+                  -%}
+                </div>
+
+                {%- assign label = 'blog.comments.message' | t -%}
+                {%- render 'input', name: 'comment[body]', label: label, multiline: 9, required: true -%}
+              </div>
+
+              {%- assign button_content = 'blog.comments.submit' | t -%}
+              {%- render 'button', type: 'submit', content: button_content, class: 'justify-self-start' -%}
+            {%- endform -%}
+          </div>
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.main_article.name",
+  "class": "shopify-section--main-article",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "select",
+      "id": "content_width",
+      "label": "t:global.sizes.content_width",
+      "options": [
+        {
+          "value": "sm",
+          "label": "t:global.sizes.small"
+        },
+        {
+          "value": "md",
+          "label": "t:global.sizes.medium"
+        },
+        {
+          "value": "lg",
+          "label": "t:global.sizes.large"
+        }
+      ],
+      "default": "md"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_share_buttons",
+      "label": "t:sections.main_article.show_share_buttons",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "t:sections.main_article.comments_category"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,61 @@
+{%- comment -%}
+{%- endcomment -%}
+
+<div class="slideshow__controls" style="--slideshow-controls-color: {{ block.settings.controls_color.rgb }}" {{ block.shopify_attributes }}>
+  <carousel-navigation class="scroll-marker-group scroll-marker-group--{% if block.settings.controls_style == 'line' %}lines{% elsif block.settings.controls_style == 'dot' %}dots{% endif %} {% if section.settings.autoplay %}scroll-marker-group--autoplay{% endif %}" aria-controls="slideshow-{{ section.id }}">
+    {%- for i in (1..section.blocks.size) -%}
+      <button class="scroll-marker tap-area tap-area--sm" aria-current="{% if forloop.first %}true{% else %}false{% endif %}">
+        <span class="sr-only">{{ 'general.accessibility.go_to_item' | t: index: forloop.index }}</span>
+
+        {%- if block.settings.controls_style == 'line' and section.settings.autoplay -%}
+          <span class="scroll-marker-group__line-progress"></span>
+        {%- endif -%}
+      </button>
+    {%- endfor -%}
+  </carousel-navigation>
+
+  {%- if section.settings.autoplay -%}
+    <carousel-player-button aria-controls="slideshow-{{ section.id }}">
+      <button class="slideshow__autoplay-button tap-area" aria-label="{{ 'general.accessibility.toggle_autoplay' | t | escape }}">
+        {%- render 'icon' with 'slideshow-pause' -%}
+        {%- render 'icon' with 'slideshow-play', class: 'hidden' -%}
+      </button>
+    </carousel-player-button>
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.slideshow.blocks.controls.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "select",
+      "id": "controls_style",
+      "label": "t:sections.slideshow.blocks.controls.style",
+      "options": [
+        {
+          "value": "line",
+          "label": "t:sections.slideshow.blocks.controls.style_options.line"
+        },
+        {
+          "value": "dot",
+          "label": "t:sections.slideshow.blocks.controls.style_options.dot"
+        }
+      ],
+      "default": "line"
+    },
+    {
+      "type": "color",
+      "id": "controls_color",
+      "label": "t:global.colors.color",
+      "default": "#ffffff"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.slideshow.blocks.controls.name"
+    }
+  ]
+}
+{% endschema %}

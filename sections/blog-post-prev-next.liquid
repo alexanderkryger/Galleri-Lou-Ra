@@ -1,0 +1,115 @@
+{%- if blog.previous_article or blog.next_article -%}
+  <div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+    <div class="section-spacing container">
+      <div class="max-w-md mx-auto">
+        <div class="section-stack">
+          <div class="h-stack gap-4" style="font-size: var(--text-{{ section.settings.heading_size }})">
+            {%- render 'icon' with 'big-arrow-right', class: 'capped-icon' -%}
+            <p class="{{ section.settings.heading_size }}">{{ 'blog.prev_next.heading' | t }}</p>
+          </div>
+
+          <blog-post-list class="blog-post-prev-next scroll-area bleed sm:unbleed">
+            {%- if blog.previous_article -%}
+              {%- render 'blog-post-card', 
+                article: blog.previous_article, 
+                show_category: section.settings.show_category,
+                show_date: section.settings.show_date,
+                show_reading_time: section.settings.show_reading_time,
+                show_excerpt: section.settings.show_excerpt,
+                sizes: '(max-width: 699px) 100vw, 360px'
+              -%}
+            {%- endif -%}
+
+            {%- if blog.next_article -%}
+              {%- render 'blog-post-card', 
+                article: blog.next_article, 
+                show_category: section.settings.show_category,
+                show_date: section.settings.show_date,
+                show_reading_time: section.settings.show_reading_time,
+                show_excerpt: section.settings.show_excerpt,
+                sizes: '(max-width: 699px) 100vw, 360px'
+              -%}
+            {%- endif -%}
+          </blog-post-list>
+        </div>
+      </div>
+    </div>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.blog_post_prev_next.name",
+  "class": "shopify-section--blog-post-prev-next",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "label": "t:global.text.size",
+      "options": [
+        {
+          "value": "h1",
+          "label": "XX-Large"
+        },
+        {
+          "value": "h2",
+          "label": "X-Large"
+        },
+        {
+          "value": "h3",
+          "label": "Large"
+        },
+        {
+          "value": "h4",
+          "label": "Medium"
+        },
+        {
+          "value": "h5",
+          "label": "Small"
+        },
+        {
+          "value": "h6",
+          "label": "X-Small"
+        },
+        {
+          "value": "h7",
+          "label": "XX-Small"
+        }
+      ],
+      "default": "h3"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_category",
+      "label": "t:global.blog.show_category",
+      "info": "t:global.blog.show_category_info",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_date",
+      "label": "t:global.blog.show_date",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_reading_time",
+      "label": "t:global.blog.show_reading_time",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_excerpt",
+      "label": "t:global.blog.show_excerpt",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

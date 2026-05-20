@@ -1,0 +1,220 @@
+{%- capture slide -%}
+  {%- liquid
+    assign is_first = false
+
+    for section_block in section.blocks
+      if block.id == section_block.id and forloop.first
+        assign is_first = true
+      endif
+    endfor
+  -%}
+
+  <div class="content-box min-h-{{ section.settings.image_size }}">
+    <div class="content-box__background-media with-overlay" style="--overlay: {{ block.settings.overlay_color.rgb }} / {{ block.settings.overlay_opacity | divided_by: 100.0 }}">
+      {%- liquid
+        if block.settings.video != blank
+          if section.settings.autoplay and section.blocks.size > 1
+            assign loop_video = false
+          else
+            assign loop_video = true
+          endif
+
+          render 'media', media: block.settings.video, mobile_media: block.settings.mobile_video, playsinline: true, autoplay: false, loop: loop_video, muted: true, controls: false, preload: is_first, show_play_button: false
+        else
+          echo 'hero-apparel-1' | placeholder_svg_tag: 'size-full'
+        endif
+      -%}
+    </div>
+
+    <div class="{{ block.settings.mobile_content_position }} {{ block.settings.desktop_content_position }}" style="max-width: {{ block.settings.content_max_width }}px">
+      <div class="prose prose-justify-{{ block.settings.mobile_content_position | split: '-' | last }} sm:prose-justify-{{ block.settings.desktop_content_position | split: '-' | last }}">
+        {%- content_for 'blocks' -%}
+      </div>
+    </div>
+  </div>
+{%- endcapture -%}
+
+{%- if block.settings.slide_link != blank -%}
+  <a href="{{ block.settings.slide_link }}" class="slideshow__slide {% if is_first %}is-selected{% endif %} color-scheme color-scheme--{{ block.settings.color_scheme.id }}" data-slide-type="video" role="group" {{ block.shopify_attributes }}>
+    {{- slide -}}
+  </a>
+{%- else -%}
+  <div class="slideshow__slide {% if is_first %}is-selected{% endif %} color-scheme color-scheme--{{ block.settings.color_scheme.id }}" data-slide-type="video" role="group" {{ block.shopify_attributes }}>
+    {{- slide -}}
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.slideshow.blocks.video.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-3"
+    },
+    {
+      "type": "video",
+      "id": "video",
+      "label": "t:global.video.video"
+    },
+    {
+      "type": "video",
+      "id": "mobile_video",
+      "label": "t:global.video.mobile_video"
+    },
+    {
+      "type": "url",
+      "id": "slide_link",
+      "label": "t:global.text.link_url",
+      "info": "t:sections.slideshow.blocks.global.link_info"
+    },
+    {
+      "type": "header",
+      "content": "t:global.text.content"
+    },
+    {
+      "type": "range",
+      "id": "content_max_width",
+      "label": "t:sections.slideshow.blocks.global.content_maximum_width",
+      "min": 400,
+      "max": 1400,
+      "step": 20,
+      "unit": "px",
+      "default": 1000
+    },
+    {
+      "type": "select",
+      "id": "mobile_content_position",
+      "label": "t:global.position.mobile_content_position",
+      "options": [
+        {
+          "value": "place-self-start",
+          "label": "t:global.position.top_left"
+        },
+        {
+          "value": "place-self-start-center",
+          "label": "t:global.position.top_center"
+        },
+        {
+          "value": "place-self-start-end",
+          "label": "t:global.position.top_right"
+        },
+        {
+          "value": "place-self-center-start",
+          "label": "t:global.position.middle_left"
+        },
+        {
+          "value": "place-self-center",
+          "label": "t:global.position.middle_center"
+        },
+        {
+          "value": "place-self-center-end",
+          "label": "t:global.position.middle_right"
+        },
+        {
+          "value": "place-self-end-start",
+          "label": "t:global.position.bottom_left"
+        },
+        {
+          "value": "place-self-end-center",
+          "label": "t:global.position.bottom_center"
+        },
+        {
+          "value": "place-self-end",
+          "label": "t:global.position.bottom_right"
+        }
+      ],
+      "default": "place-self-center"
+    },
+    {
+      "type": "select",
+      "id": "desktop_content_position",
+      "label": "t:global.position.desktop_content_position",
+      "options": [
+        {
+          "value": "sm:place-self-start",
+          "label": "t:global.position.top_left"
+        },
+        {
+          "value": "sm:place-self-start-center",
+          "label": "t:global.position.top_center"
+        },
+        {
+          "value": "sm:place-self-start-end",
+          "label": "t:global.position.top_right"
+        },
+        {
+          "value": "sm:place-self-center-start",
+          "label": "t:global.position.middle_left"
+        },
+        {
+          "value": "sm:place-self-center",
+          "label": "t:global.position.middle_center"
+        },
+        {
+          "value": "sm:place-self-center-end",
+          "label": "t:global.position.middle_right"
+        },
+        {
+          "value": "sm:place-self-end-start",
+          "label": "t:global.position.bottom_left"
+        },
+        {
+          "value": "sm:place-self-end-center",
+          "label": "t:global.position.bottom_center"
+        },
+        {
+          "value": "sm:place-self-end",
+          "label": "t:global.position.bottom_right"
+        }
+      ],
+      "default": "sm:place-self-center"
+    },
+    {
+      "type": "header",
+      "content": "t:global.colors.category"
+    },
+    {
+      "type": "color",
+      "id": "overlay_color",
+      "label": "t:global.colors.image_overlay_color",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "label": "t:global.colors.image_overlay_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 20
+    }
+  ],
+  "blocks": [
+    { "type": "subheading" },
+    { "type": "heading" },
+    { "type": "icon" },
+    { "type": "rich-text" },
+    { "type": "button-group" },
+    { "type": "button" }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.slideshow.blocks.video.name",
+      "blocks": [
+        {
+          "type": "heading",
+          "settings": {
+            "text": "Slide",
+            "heading_size": "h1"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,58 @@
+
+
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+COLLECTION FACETING COMPONENT
+----------------------------------------------------------------------------------------------------------------------
+
+This component is used on collection and search page, and show the button that allow to open drawer
+
+* data_source: can either be a collection or search drop
+* filter_layout: can be "drawer" or "sidebar"
+* show_count: if set to true, the results count will be added in parenthesis after the label
+* class: extra class applied on the wrapper element
+* context: allows to differentiate between mobile and desktop.
+{%- endcomment -%}
+
+{%- liquid
+  assign only_show_sort = false
+
+  if section.settings.show_sort_by and section.settings.show_filters and data_source.filters.size > 0 and filter_layout == 'drawer'
+    assign button_content = 'collection.faceting.filter_and_sort_button' | t
+  elsif section.settings.show_sort_by == false
+    assign button_content = 'collection.faceting.filter_button' | t
+  else
+    assign only_show_sort = true
+    assign button_content = 'collection.faceting.sort_button' | t
+  endif
+-%}
+
+{%- if only_show_sort -%}
+  <div class="relative {{ class }}">
+    <button type="button" aria-controls="collection-sort-by-popover-{{ context }}" class="h-stack gap-2 link-faded-reverse">
+      <span class="subheading">{{ button_content }}</span>
+      {%- render 'icon' with 'chevron-down' -%}
+    </button>
+
+    <x-popover class="popover color-scheme color-scheme--{{ settings.default_color_scheme.id }}" close-on-listbox-change preferred-alignment="start" id="collection-sort-by-popover-{{ context }}" role="dialog">
+      <p slot="header" class="subheading">{{ 'collection.faceting.sort_by' | t }}</p>
+
+      <div class="popover__value-list">
+        {%- assign sort_by = data_source.sort_by | default: data_source.default_sort_by -%}
+
+        {%- for sort_option in data_source.sort_options -%}
+          <facet-link merge-params>
+            <a href="{{ data_source.url | default: routes.search_url | sort_by: sort_option.value }}" class="popover__value-option subheading" aria-selected="{% if sort_option.value == sort_by %}true{% else %}false{% endif %}">
+              {{- sort_option.name -}}
+            </a>
+          </facet-link>
+        {%- endfor -%}
+      </div>
+    </x-popover>
+  </div>
+{%- else -%}
+  <button type="button" aria-controls="facets-drawer" class="h-stack gap-2.5 link-faded-reverse {{ class }}">
+    {%- render 'icon' with 'filters' -%}
+    <span class="subheading">{{ button_content }} {% if show_count %}({{ data_source.products_count }}){% endif %}</span>
+  </button>
+{%- endif -%}

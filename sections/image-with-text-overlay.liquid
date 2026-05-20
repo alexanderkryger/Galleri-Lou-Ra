@@ -1,0 +1,284 @@
+<div {% if section.settings.allow_transparent_header %}allow-transparent-header{% endif %} class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+  <div class="content-box min-h-{{ section.settings.image_size }}">
+    <div class="content-box__background-media with-overlay" style="--overlay: {{ section.settings.overlay_color.rgb }} / {{ section.settings.overlay_opacity | divided_by: 100.0 }}">
+      {%- liquid
+        if section.settings.image != blank
+          render 'media' with section.settings.image, mobile_media: section.settings.mobile_image, preload: true
+        else
+          echo 'hero-apparel-1' | placeholder_svg_tag: 'size-full'
+        endif
+      -%}
+    </div>
+
+    {%- capture blocks -%}{% content_for 'blocks' %}{%- endcapture -%}
+
+    {%- if section.blocks.size > 0 -%}
+      {%- assign mobile_text_alignment = section.settings.mobile_text_position | split: '-' | last -%}
+      {%- assign desktop_text_alignment = section.settings.desktop_text_position | split: '-' | last -%}
+
+      {%- if section.settings.enable_sticky_content -%}
+        <div class="justify-self-{{ mobile_text_alignment }} sm:justify-self-{{ desktop_text_alignment }}">
+          <div class="sticky">
+            <div class="max-w-{{ section.settings.content_width }} prose prose-justify-{{ mobile_text_alignment }} sm:prose-justify-{{ desktop_text_alignment }}">
+              {{- blocks -}}
+            </div>
+          </div>
+        </div>
+      {%- else -%}
+        <div class="{{ section.settings.mobile_text_position }} {{ section.settings.desktop_text_position }}">
+          <div class="max-w-{{ section.settings.content_width }} prose prose-justify-{{ mobile_text_alignment }} sm:prose-justify-{{ desktop_text_alignment }}">
+            {{- blocks -}}
+          </div>
+        </div>
+      {% endif %}
+    {%- endif -%}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.image_with_text_overlay.name",
+  "class": "shopify-section--image-with-text-overlay",
+  "tag": "section",
+  "max_blocks": 10,
+  "disabled_on": {
+    "groups": ["header", "custom.overlay"]
+  },
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-3"
+    },
+    {
+      "type": "checkbox",
+      "id": "allow_transparent_header",
+      "label": "t:global.section.allow_transparent_header",
+      "info": "t:global.section.allow_transparent_header_info",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "t:sections.image_with_text_overlay.image_category"
+    },
+    {
+      "type": "select",
+      "id": "image_size",
+      "label": "t:global.image.size",
+      "options": [
+        {
+          "value": "auto",
+          "label": "t:global.sizes.original_image_ratio"
+        },
+        {
+          "value": "xs",
+          "label": "t:global.sizes.x_small"
+        },
+        {
+          "value": "sm",
+          "label": "t:global.sizes.small"
+        },
+        {
+          "value": "md",
+          "label": "t:global.sizes.medium"
+        },
+        {
+          "value": "lg",
+          "label": "t:global.sizes.large"
+        },
+        {
+          "value": "fill",
+          "label": "t:global.sizes.fit_screen"
+        }
+      ],
+      "info": "t:global.image.ratio_avoid_cropping_info",
+      "default": "auto"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:global.image.image",
+      "info": "t:sections.image_with_text_overlay.image_size_recommendation"
+    },
+    {
+      "type": "image_picker",
+      "id": "mobile_image",
+      "label": "t:global.image.mobile_image",
+      "info": "t:sections.image_with_text_overlay.mobile_image_size_recommendation"
+    },
+    {
+      "type": "color",
+      "id": "overlay_color",
+      "label": "t:global.colors.image_overlay_color",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "label": "t:global.colors.image_overlay_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 20
+    },
+    {
+      "type": "header",
+      "content": "t:sections.image_with_text_overlay.layout_category"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_sticky_content",
+      "label": "t:sections.image_with_text_overlay.content_follows_on_scroll",
+      "info": "t:sections.image_with_text_overlay.content_follows_on_scroll_info",
+      "default": false
+    },
+    {
+      "type": "select",
+      "id": "content_width",
+      "label": "t:global.sizes.content_width",
+      "options": [
+        {
+          "value": "sm",
+          "label": "t:global.sizes.small"
+        },
+        {
+          "value": "md",
+          "label": "t:global.sizes.medium"
+        },
+        {
+          "value": "lg",
+          "label": "t:global.sizes.large"
+        },
+        {
+          "value": "full",
+          "label": "t:global.sizes.full_width"
+        }
+      ],
+      "default": "md"
+    },
+    {
+      "type": "select",
+      "id": "desktop_text_position",
+      "label": "t:global.position.desktop_content_position",
+      "options": [
+        {
+          "value": "sm:place-self-start",
+          "label": "t:global.position.top_left"
+        },
+        {
+          "value": "sm:place-self-start-center",
+          "label": "t:global.position.top_center"
+        },
+        {
+          "value": "sm:place-self-start-end",
+          "label": "t:global.position.top_right"
+        },
+        {
+          "value": "sm:place-self-center-start",
+          "label": "t:global.position.middle_left"
+        },
+        {
+          "value": "sm:place-self-center",
+          "label": "t:global.position.middle_center"
+        },
+        {
+          "value": "sm:place-self-center-end",
+          "label": "t:global.position.middle_right"
+        },
+        {
+          "value": "sm:place-self-end-start",
+          "label": "t:global.position.bottom_left"
+        },
+        {
+          "value": "sm:place-self-end-center",
+          "label": "t:global.position.bottom_center"
+        },
+        {
+          "value": "sm:place-self-end",
+          "label": "t:global.position.bottom_right"
+        }
+      ],
+      "default": "sm:place-self-center"
+    },
+    {
+      "type": "select",
+      "id": "mobile_text_position",
+      "label": "t:global.position.mobile_content_position",
+      "options": [
+        {
+          "value": "place-self-start",
+          "label": "t:global.position.top_left"
+        },
+        {
+          "value": "place-self-start-center",
+          "label": "t:global.position.top_center"
+        },
+        {
+          "value": "place-self-start-end",
+          "label": "t:global.position.top_right"
+        },
+        {
+          "value": "place-self-center-start",
+          "label": "t:global.position.middle_left"
+        },
+        {
+          "value": "place-self-center",
+          "label": "t:global.position.middle_center"
+        },
+        {
+          "value": "place-self-center-end",
+          "label": "t:global.position.middle_right"
+        },
+        {
+          "value": "place-self-end-start",
+          "label": "t:global.position.bottom_left"
+        },
+        {
+          "value": "place-self-end-center",
+          "label": "t:global.position.bottom_center"
+        },
+        {
+          "value": "place-self-end",
+          "label": "t:global.position.bottom_right"
+        }
+      ],
+      "default": "place-self-center"
+    }
+  ],
+  "blocks": [
+    { "type": "@app" },
+    { "type": "icon" },
+    { "type": "subheading" },
+    { "type": "heading" },
+    { "type": "button-group" },
+    { "type": "button" },
+    { "type": "rich-text" },
+    { "type": "liquid" }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.image_with_text_overlay.name",
+      "category": "t:global.categories.banners",
+      "blocks": [
+        {
+          "type": "subheading",
+          "settings": {
+            "text": "Subheading"
+          }
+        },
+        {
+          "type": "heading",
+          "settings": {
+            "text": "Image with text overlay"
+          }
+        },
+        {
+          "type": "rich-text"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

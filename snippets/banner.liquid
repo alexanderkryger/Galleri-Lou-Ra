@@ -1,0 +1,33 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+BANNER COMPONENT
+----------------------------------------------------------------------------------------------------------------------
+
+This component is used to create banner. This is used on every form status or to convey information.
+
+********************************************
+Supported variables
+********************************************
+
+* status: can be "success", "error" or "warning" (if none is set it will use a neutral colors based on variation of text color)
+* content: the textual content to use
+* action_content: an optional action button content to display along the text
+* action_url: an optional action URL to use with the action button
+* action_external: if set to true, the action button will open the URL in a new tab
+* text_alignment: can be set to "start", "center" or "end". If none is set, the default is start. When using a button,
+                  the text_alignment will be ignored and the button text will be aligned on the start.
+{%- endcomment -%}
+
+{%- if action_content != blank -%}
+  {%- assign text_alignment = 'start' -%}
+{%- endif -%}
+
+<div class="banner {% if status != blank %}banner--{{ status }}{% endif %} text-{{ text_alignment | default: 'start' }}">
+  <div class="banner__content">
+    {{- content -}}
+  </div>
+
+  {%- if action_content != blank -%}
+    {%- render 'button', content: action_content, href: action_url, external: action_external, class: 'banner__action' size: 'sm' -%}
+  {%- endif -%}
+</div>

@@ -1,0 +1,147 @@
+{%- unless request.page_type == 'captcha' or section.settings.show_only_on_index and template != 'index' -%}
+  {%- unless section.settings.show_only_for_visitors and customer -%}
+    {%- liquid
+      assign posted_successfully = false
+      assign newsletter_id = 'newsletter-' | append: section.id
+
+      capture _temporary
+        form 'customer', id: newsletter_id, class: 'form'
+          assign posted_successfully = form.posted_successfully?
+        endform
+      endcapture
+    -%}
+
+    <newsletter-popup class="modal modal--newsletter color-scheme color-scheme--{{ section.settings.color_scheme.id }}" {% if section.settings.show_only_once %}only-once{% endif %} apparition-delay="{{ section.settings.apparition_delay }}" {% if posted_successfully %}open{% endif %} title="{{ 'sections.newsletter_popup.accessibility_title' | t | escape }}" handle-editor-events>
+      {%- if section.settings.image != blank -%}
+        {{- section.settings.image | image_url: width: section.settings.image.width | image_tag: loading: 'lazy', sizes: '(max-width: 699px) 100vw, 430px', widths: '200,400,600,800,1000,1200', slot: 'image' -}}
+      {%- endif -%}
+
+      <div class="v-stack gap-6">
+        {%- if section.settings.title != blank -%}
+          <p class="h4" style="padding-inline-end: 2rem">{{ section.settings.title }}</p>
+        {%- endif -%}
+
+        {%- if section.settings.content != blank -%}
+          <p>{{ section.settings.content }}</p>
+        {%- endif -%}
+
+        <div class="v-stack gap-4">
+          {%- form 'customer', id: newsletter_id, class: 'form' -%}
+            {%- if form.posted_successfully? -%}
+              {%- capture success_message -%}{{ 'general.newsletter.subscribed_successfully' | t }}{%- endcapture -%}
+              {%- render 'banner', content: success_message, status: 'success', text_alignment: 'start' -%}
+
+              <script>
+                localStorage.setItem('theme:popup-filled', 'true');
+              </script>
+            {%- else -%}
+              {%- if form.errors -%}
+                {%- assign content = form.errors | default_errors -%}
+                {%- render 'banner', status: 'error', content: content, text_alignment: 'start' -%}
+              {%- endif -%}
+
+              <div class="fieldset">
+                <input type="hidden" name="contact[tags]" value="newsletter">
+
+                {%- assign label = 'general.newsletter.email' | t -%}
+                {%- render 'input', type: 'email', name: 'contact[email]', label: label, value: customer.email, required: true, autocomplete: 'email' -%}
+
+                {%- render 'button', content: section.settings.button_text, type: 'submit' -%}
+              </div> 
+
+              {%- if section.settings.conditions != blank -%}
+                <p class="text-sm text-subdued">{{ section.settings.conditions }}</p>
+              {%- endif -%}
+            {%- endif -%}
+          {%- endform -%}
+        </div>
+      </div>
+    </newsletter-popup>
+  {%- endunless -%}
+{%- endunless -%}
+
+{% schema %}
+{
+  "name": "t:sections.newsletter_popup.name",
+  "class": "shopify-section--popup",
+  "enabled_on": {
+    "groups": ["custom.overlay"]
+  },
+  "limit": 1,
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.newsletter_popup.instructions"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "range",
+      "id": "apparition_delay",
+      "min": 0,
+      "max": 15,
+      "step": 1,
+      "unit": "sec",
+      "label": "t:sections.newsletter_popup.delay",
+      "default": 5
+    },
+    {
+      "type": "checkbox",
+      "id": "show_only_on_index",
+      "label": "t:sections.newsletter_popup.show_only_on_home_page",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "hide_for_account_holders",
+      "label": "t:sections.newsletter_popup.hide_for_account_holders",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_only_once",
+      "label": "t:sections.newsletter_popup.show_only_once",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:global.image.image",
+      "info": "t:sections.newsletter_popup.image_recommendation"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "label": "t:global.text.heading",
+      "default": "Signup for our newsletter"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "t:global.text.button_text",
+      "default": "Subscribe"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "content",
+      "label": "t:global.text.text",
+      "default": "Describe what your customers will receive when subscribing to your newsletter."
+    },
+    {
+      "type": "inline_richtext",
+      "id": "conditions",
+      "label": "t:global.text.secondary_text",
+      "default": "By entering your address, you confirm that you have read our privacy policy."
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.newsletter_popup.name"
+    }
+  ]
+}
+{% endschema %}

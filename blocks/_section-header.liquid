@@ -1,0 +1,206 @@
+{%- if block.settings.title != blank or block.settings.subheading != blank or block.settings.content != blank -%}
+  <div class="section-header {% if block.settings.text_alignment == 'center' or block.settings.show_scrolling_title %}section-header--stack justify-items-{{ block.settings.text_alignment | replace: 'left', 'start' | replace: 'right', 'end' }}{% endif %}" {{ block.shopify_attributes }}>
+    {%- if block.settings.text_alignment == 'left' and block.settings.subheading == blank and block.settings.content == blank and block.settings.show_scrolling_title == false -%}
+      {%- comment -%}When we only have a title and a button and that it is left aligned, we do a different layout{%- endcomment -%}
+      {%- render 'heading', content: block.settings.title, indent: block.settings.title_icon, style: block.settings.heading_size, html_tag: 'h2' -%}
+      {%- render 'button', content: block.settings.button_text, href: block.settings.button_link, style: block.settings.button_style -%}
+    {%- else -%}
+      <div class="prose prose-justify-{{ block.settings.text_alignment }}" {% if block.settings.text_alignment == 'right' and section.settings.stack_on_desktop == false and block.settings.show_scrolling_title == false %}style="order: 2" {% endif %}>
+        {%- render 'subheading', content: block.settings.subheading -%}
+
+        {%- if block.settings.show_scrolling_title and block.settings.title != blank -%}
+          <h2 class="{{ block.settings.heading_size }}">
+            <marquee-text speed="0.3" direction="start-to-end" class="scrolling-content bleed">
+              <span class="scrolling-content__item" style="font-size: var(--text-{{ block.settings.heading_size }})">
+                <span class="scrolling-content__text">
+                  {%- render 'heading', content: block.settings.title, style: block.settings.heading_size, html_tag: 'span', instant: true -%}
+                </span>
+
+                {%- if block.settings.title_icon != 'none' -%}
+                  <span class="shape shape--{{ block.settings.title_icon }}" style="font-size: var(--text-{{ block.settings.heading_size }})" aria-hidden="true"></span>
+                {%- endif -%}
+              </span>
+            </marquee-text>
+          </h2>
+        {%- else -%}
+          {%- render 'heading', content: block.settings.title, indent: block.settings.title_icon, style: block.settings.heading_size, html_tag: 'h2' -%}
+        {%- endif -%}
+
+        {%- if block.settings.content != blank -%}
+          <div class="max-w-md">
+            {{- block.settings.content -}}
+          </div>
+        {%- endif -%}
+
+        {%- render 'button', content: block.settings.button_text, href: block.settings.button_link, style: block.settings.button_style -%}
+      </div>
+    {%- endif -%}
+
+    {%- if section.settings.stack_on_desktop == false -%}
+      {%- comment -%}
+      Implementation note: theme blocks currently do not allow passing parameters down. This will be added in the future, but for now
+      the only way we've found (that is a bit fragile) is to rely on setting naming conventions and we-use the parent.
+      {%- endcomment -%}
+      <div class="section-header__controls h-stack gap-3 sm-max:hidden" {% if block.settings.text_alignment == 'right' and block.settings.show_scrolling_title == false  %}style="order: 1" {% endif %}>
+        {%- assign carousel_id = section.id | append: '-carousel' -%}
+
+        <carousel-prev-button aria-controls="{{ carousel_id }}">
+          <button disabled class="circle-button circle-button--lg">
+            <span class="sr-only">{{ 'general.accessibility.previous' | t }}</span>
+            {%- render 'icon' with 'big-arrow-left', direction_aware: true, width: 12 -%}
+          </button>
+        </carousel-prev-button>
+
+        <carousel-next-button aria-controls="{{ carousel_id }}">
+          <button class="circle-button circle-button--lg">
+            <span class="sr-only">{{ 'general.accessibility.next' | t }}</span>
+            {%- render 'icon' with 'big-arrow-right', direction_aware: true, width: 12 -%}
+          </button>
+        </carousel-next-button>
+      </div>
+    {%- endif -%}
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:blocks.section_header.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "inline_richtext",
+      "id": "subheading",
+      "label": "t:global.text.subheading"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "label": "t:global.text.heading",
+      "default": "Header"
+    },
+    {
+      "type": "richtext",
+      "id": "content",
+      "label": "t:global.text.content",
+      "default": "<p>Use this content to share information about your store and products.</p>"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "t:global.text.button_text"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "t:global.text.button_link"
+    },
+    {
+      "type": "select",
+      "id": "button_style",
+      "label": "t:global.text.button_style",
+      "options": [
+        {
+          "value": "outline",
+          "label": "t:global.text.button_style_options.outline"
+        },
+        {
+          "value": "solid",
+          "label": "t:global.text.button_style_options.solid"
+        },
+        {
+          "value": "link",
+          "label": "t:global.text.button_style_options.link"
+        }
+      ],
+      "default": "outline"
+    },
+    {
+      "type": "header",
+      "content": "t:blocks.section_header.display_category"
+    },
+    {
+      "type": "text_alignment",
+      "id": "text_alignment",
+      "label": "t:global.text.alignment"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "label": "t:global.text.heading_size",
+      "options": [
+        {
+          "value": "display-xl",
+          "label": "Display XL"
+        },
+        {
+          "value": "display-l",
+          "label": "Display L"
+        },
+        {
+          "value": "display-m",
+          "label": "Display M"
+        },
+        {
+          "value": "h1",
+          "label": "XX-Large"
+        },
+        {
+          "value": "h2",
+          "label": "X-Large"
+        },
+        {
+          "value": "h3",
+          "label": "Large"
+        },
+        {
+          "value": "h4",
+          "label": "Medium"
+        },
+        {
+          "value": "h5",
+          "label": "Small"
+        },
+        {
+          "value": "h6",
+          "label": "X-Small"
+        },
+        {
+          "value": "h7",
+          "label": "XX-Small"
+        }
+      ],
+      "default": "h3"
+    },
+    {
+      "type": "select",
+      "id": "title_icon",
+      "label": "t:blocks.section_header.title_icon",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:blocks.section_header.title_icon_options.none"
+        },
+        {
+          "value": "circle",
+          "label": "t:blocks.section_header.title_icon_options.circle"
+        },
+        {
+          "value": "square",
+          "label": "t:blocks.section_header.title_icon_options.square"
+        },
+        {
+          "value": "diamond",
+          "label": "t:blocks.section_header.title_icon_options.diamond"
+        }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_scrolling_title",
+      "label": "t:blocks.section_header.show_scrolling_title",
+      "default": false
+    }
+  ]
+}
+{% endschema %}

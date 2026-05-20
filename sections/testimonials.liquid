@@ -1,0 +1,384 @@
+{%- liquid
+  assign carousel_id = 'testimonial-carousel-' | append: section.id
+  assign text_alignment = section.settings.text_alignment | replace: 'left', 'start' | replace: 'right', 'end'
+
+  assign has_block_with_info = false
+
+  for block in section.blocks
+    if block.settings.image != blank or block.settings.product != blank
+      assign has_block_with_info = true
+      break
+    endif
+  endfor
+-%}
+
+{%- if has_block_with_info -%}
+  <style>
+    @media screen and (max-width: 999px) {
+      #shopify-section-{{ section.id }} .section-split__column--image {
+        padding-block-end: var(--section-vertical-spacing);
+      }
+    }
+  </style>
+{%- endif -%}
+
+{%- capture carousel_controls -%}
+  <carousel-prev-button aria-controls="{{ carousel_id }}">
+    <button type="button" class="circle-button circle-button--lg tap-area">
+      <span class="sr-only">{{ 'general.accessibility.previous' | t }}</span>
+      {%- render 'icon' with 'big-arrow-left', width: 14, direction_aware: true -%}
+    </button>
+  </carousel-prev-button>
+
+  <carousel-next-button aria-controls="{{ carousel_id }}">
+    <button type="button" class="circle-button circle-button--lg tap-area">
+      <span class="sr-only">{{ 'general.accessibility.next' | t }}</span>
+      {%- render 'icon' with 'big-arrow-right', width: 14, direction_aware: true -%}
+    </button>
+  </carousel-next-button>
+{%- endcapture -%}
+
+{%- capture content_part -%}
+  {%- for block in section.blocks -%}
+    {%- if block.settings.author != blank or block.settings.show_rating or block.settings.title != blank -%}
+      <div data-block-id="{{ block.id }}" class="testimonials__content max-w-xl justify-items-{{ text_alignment }} {% if forloop.first %}is-selected{% endif %}" {{ block.shopify_attributes }}>
+        {%- if block.settings.author != blank or block.settings.show_rating -%}
+          <div class="h-stack gap-3 justify-start">
+            {%- if block.settings.show_rating -%}
+              <div class="h-stack gap-0.5">
+                {%- for i in (1..5) -%}
+                  {%- if block.settings.rating >= i -%}
+                    {%- render 'icon' with 'star-rating', width: 10, fill_color: 'currentColor' -%}
+                  {%- else -%}
+                    {%- render 'icon' with 'star-rating-empty', width: 10, fill_color: 'currentColor' -%}
+                  {%- endif -%}
+                {%- endfor -%}
+              </div>
+            {%- endif -%}
+
+            {%- if block.settings.author != blank -%}
+              <p>{{ block.settings.author }}</p>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+
+        {%- if block.settings.title != blank -%}
+          {%- render 'heading', content: block.settings.title, style: block.settings.heading_tag -%}
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+  {%- endfor -%}
+{%- endcapture -%}
+
+{%- capture info_part -%}
+  {%- for block in section.blocks -%}
+    {%- liquid
+      assign has_both_info = false
+
+      if block.settings.image != blank and block.settings.product != blank
+        assign has_both_info = true
+      endif
+    -%}
+
+    {%- if block.settings.image != blank or block.settings.product != blank -%}
+      <div class="testimonials__info-list-item {% if has_both_info %}content-box{% endif %}" data-info-block-id="{{ block.id }}">
+        {%- if block.settings.image != blank -%}
+          <div class="content-box__background-media">
+            {%- render 'media', media: block.settings.image, mobile_media: block.settings.mobile_image, size: '(max-width: 699px) 100vw, 50vw' -%}
+          </div>
+        {%- endif -%}
+
+        {%- if block.settings.product != blank -%}
+          {%- if has_both_info -%}
+            <a href="{{ block.settings.product.url }}" class="testimonials__product color-scheme color-scheme--{{ settings.default_color_scheme.id }} {{ block.settings.position }}">
+              {%- render 'media', media: block.settings.product.featured_media, size: '64px' -%}
+
+              <div class="testimonials__product-info">
+                <p>{{ block.settings.product.title }}</p>
+                {%- render 'price-list', product: block.settings.product, context: 'card' -%}
+              </div>
+            </a>
+          {% else %}
+            <div class="w-full max-w-xs justify-self-{{ section.settings.image_position }}">
+              {%- render 'product-card', product: block.settings.product -%}
+            </div>
+          {%- endif -%}
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+  {%- endfor -%}
+{%- endcapture -%}
+
+<div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+  <div class="testimonials">
+    {%- if has_block_with_info -%}
+      <div class="section-split {% if section.settings.image_position == 'start' %}section-split--reverse{% endif %}">
+        <div class="section-split__column h-full">
+          <div class="testimonials__content-wrapper align-{{ text_alignment }} text-{{ text_alignment }}">
+            <testimonials-carousel class="testimonials__carousel" id="{{ carousel_id }}" {% if section.settings.autoplay %}autoplay="{{ section.settings.cycle_speed }}"{% endif %} allow-swipe>
+              {{- content_part -}}
+            </testimonials-carousel>
+
+            {%- if section.blocks.size > 1 -%}
+              <div class="testimonials__nav">
+                {{- carousel_controls -}}
+              </div>
+            {%- endif -%}
+          </div>
+        </div>
+
+        <div class="section-split__column section-split__column--image h-full">
+          <div class="v-stack gap-8 sm:gap-10">
+            <div class="testimonials__info-list">
+              {{- info_part -}}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    {%- else -%}
+      <div class="container section-spacing">
+        <div class="v-stack gap-10 sm:gap-12 justify-items-{{ text_alignment }} text-{{ text_alignment }}">
+          <testimonials-carousel class="testimonials__carousel" id="{{ carousel_id }}" {% if section.settings.autoplay %}autoplay="{{ section.settings.cycle_speed }}"{% endif %}>
+            {{- content_part -}}
+          </testimonials-carousel>
+
+          {%- if section.blocks.size > 1 -%}
+            <div class="testimonials__nav">
+              {{- carousel_controls -}}
+            </div>
+          {%- endif -%}
+        </div>
+      </div>
+
+    {%- endif -%}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.testimonials.name",
+  "class": "shopify-section--testimonials",
+  "tag": "section",
+  "disabled_on": {
+    "groups": ["header", "custom.overlay"]
+  },
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "text_alignment",
+      "id": "text_alignment",
+      "label": "t:global.text.alignment"
+    },
+    {
+      "type": "select",
+      "id": "image_position",
+      "label": "t:sections.testimonials.image_position",
+      "options": [
+        {
+          "value": "start",
+          "label": "t:global.position.left"
+        },
+        {
+          "value": "end",
+          "label": "t:global.position.right"
+        }
+      ],
+      "default": "start"
+    },
+    {
+      "type": "checkbox",
+      "id": "autoplay",
+      "label": "t:sections.testimonials.auto_rotate_between_slides",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "cycle_speed",
+      "min": 4,
+      "max": 20,
+      "step": 1,
+      "unit": "sec",
+      "label": "t:sections.testimonials.cycle_speed",
+      "default": 6,
+      "visible_if": "{{ section.settings.autoplay }}"
+    },
+  ],
+  "blocks": [
+    {
+      "type": "testimonial",
+      "name": "t:sections.testimonials.blocks.testimonial.name",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:global.image.image"
+        },
+        {
+          "type": "image_picker",
+          "id": "mobile_image",
+          "label": "t:global.image.mobile_image"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.testimonials.blocks.testimonial.content_category"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_rating",
+          "label": "t:sections.testimonials.blocks.testimonial.show_rating"
+        },
+        {
+          "type": "range",
+          "id": "rating",
+          "label": "t:sections.testimonials.blocks.testimonial.rating",
+          "min": 0,
+          "max": 5,
+          "step": 1,
+          "default": 3
+        },
+        {
+          "type": "inline_richtext",
+          "id": "author",
+          "label": "t:sections.testimonials.blocks.testimonial.author",
+          "default": "John D."
+        },
+        {
+          "type": "inline_richtext",
+          "id": "title",
+          "label": "t:sections.testimonials.blocks.testimonial.testimonial",
+          "info": "t:sections.testimonials.blocks.testimonial.testimonial_info",
+          "default": "Share a testimonial about your product or services and highlight your brand's strengths."
+        },
+        {
+          "type": "select",
+          "id": "heading_tag",
+          "label": "t:sections.testimonials.blocks.testimonial.testimonial_size",
+          "options": [
+            {
+              "value": "h1",
+              "label": "XX-Large"
+            },
+            {
+              "value": "h2",
+              "label": "X-Large"
+            },
+            {
+              "value": "h3",
+              "label": "Large"
+            },
+            {
+              "value": "h4",
+              "label": "Medium"
+            },
+            {
+              "value": "h5",
+              "label": "Small"
+            },
+            {
+              "value": "h6",
+              "label": "X-Small"
+            },
+            {
+              "value": "h7",
+              "label": "XX-Small"
+            }
+          ],
+          "default": "h3"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.testimonials.blocks.testimonial.product"
+        },
+        {
+          "type": "product",
+          "id": "product",
+          "label": "t:sections.testimonials.blocks.testimonial.product"
+        },
+        {
+          "type": "select",
+          "id": "position",
+          "label": "t:sections.testimonials.blocks.testimonial.product_position",
+          "options": [
+            {
+              "value": "place-self-start",
+              "label": "t:global.position.top_left"
+            },
+            {
+              "value": "place-self-start-center",
+              "label": "t:global.position.top_center"
+            },
+            {
+              "value": "place-self-start-end",
+              "label": "t:global.position.top_right"
+            },
+            {
+              "value": "place-self-center-start",
+              "label": "t:global.position.middle_left"
+            },
+            {
+              "value": "place-self-center",
+              "label": "t:global.position.middle_center"
+            },
+            {
+              "value": "place-self-center-end",
+              "label": "t:global.position.middle_right"
+            },
+            {
+              "value": "place-self-end-start",
+              "label": "t:global.position.bottom_left"
+            },
+            {
+              "value": "place-self-end-center",
+              "label": "t:global.position.bottom_center"
+            },
+            {
+              "value": "place-self-end",
+              "label": "t:global.position.bottom_right"
+            }
+          ],
+          "default": "place-self-start",
+          "visible_if": "{{ block.settings.image != blank }}"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.testimonials.name",
+      "category": "t:global.categories.trust_social",
+      "blocks": [
+                {
+          "type": "testimonial",
+          "settings": {
+            "rating": 4,
+            "author": "John S.",
+            "title": "Share a testimonial about your product or services and highlight your brand's strengths."
+          }
+        },
+        {
+          "type": "testimonial",
+          "settings": {
+            "rating": 5,
+            "author": "Mary U.",
+            "title": "Share a testimonial about your product or services and highlight your brand's strengths."
+          }
+        },
+        {
+          "type": "testimonial",
+          "settings": {
+            "rating": 4,
+            "author": "Joshua A.",
+            "title": "Share a testimonial about your product or services and highlight your brand's strengths."
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

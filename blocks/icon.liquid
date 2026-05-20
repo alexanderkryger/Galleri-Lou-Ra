@@ -1,0 +1,441 @@
+{%- liquid
+  if block.settings.custom_icon != blank
+    render 'icon', image: block.settings.custom_icon, width: block.settings.icon_width, mobile_width: block.settings.mobile_icon_width, block: block
+  else
+    render 'icon' with block.settings.icon, width: block.settings.icon_width, mobile_width: block.settings.mobile_icon_width, stroke_width: block.settings.stroke_width, block: block
+  endif
+-%}
+
+{% schema %}
+{
+  "name": "t:blocks.icon.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "select",
+      "id": "icon",
+      "label": "t:global.icons.icon",
+      "options": [
+        {
+          "value": "picto-heart",
+          "label": "t:global.icons.icon_options.heart",
+          "group": "t:global.icons.icon_options.shopping_and_products_category"
+        },
+        {
+          "value": "picto-star",
+          "label": "t:global.icons.icon_options.star",
+          "group": "t:global.icons.icon_options.shopping_and_products_category"
+        },
+        {
+          "value": "picto-like",
+          "label": "t:global.icons.icon_options.like",
+          "group": "t:global.icons.icon_options.shopping_and_products_category"
+        },
+        {
+          "value": "picto-sparkle",
+          "label": "t:global.icons.icon_options.sparkle",
+          "group": "t:global.icons.icon_options.shopping_and_products_category"
+        },
+        {
+          "value": "picto-store",
+          "label": "t:global.icons.icon_options.store",
+          "group": "t:global.icons.icon_options.shopping_and_products_category"
+        },
+        {
+          "value": "picto-price-tag",
+          "label": "t:global.icons.icon_options.price_tag",
+          "group": "t:global.icons.icon_options.shopping_and_products_category"
+        },
+        {
+          "value": "picto-discount-coupon",
+          "label": "t:global.icons.icon_options.discount_coupon",
+          "group": "t:global.icons.icon_options.shopping_and_products_category"
+        },
+        {
+          "value": "picto-discount-badge",
+          "label": "t:global.icons.icon_options.discount_badge",
+          "group": "t:global.icons.icon_options.shopping_and_products_category"
+        },
+        {
+          "value": "picto-ticket-star",
+          "label": "t:global.icons.icon_options.ticket_star",
+          "group": "t:global.icons.icon_options.shopping_and_products_category"
+        },
+        {
+          "value": "picto-gift-card",
+          "label": "t:global.icons.icon_options.gift_card",
+          "group": "t:global.icons.icon_options.shopping_and_products_category"
+        },
+        {
+          "value": "picto-happy",
+          "label": "t:global.icons.icon_options.happy",
+          "group": "t:global.icons.icon_options.shopping_and_products_category"
+        },
+        {
+          "value": "picto-checked",
+          "label": "t:global.icons.icon_options.checked",
+          "group": "t:global.icons.icon_options.shopping_and_products_category"
+        },
+        {
+          "value": "picto-gift-box",
+          "label": "t:global.icons.icon_options.gift_box",
+          "group": "t:global.icons.icon_options.shopping_and_products_category"
+        },
+        {
+          "value": "picto-credit-card",
+          "label": "t:global.icons.icon_options.credit_card",
+          "group": "t:global.icons.icon_options.payments_category"
+        },
+        {
+          "value": "picto-wallet",
+          "label": "t:global.icons.icon_options.wallet",
+          "group": "t:global.icons.icon_options.payments_category"
+        },
+        {
+          "value": "picto-secure",
+          "label": "t:global.icons.icon_options.secure",
+          "group": "t:global.icons.icon_options.payments_category"
+        },
+        {
+          "value": "picto-refund",
+          "label": "t:global.icons.icon_options.refund",
+          "group": "t:global.icons.icon_options.payments_category"
+        },
+        {
+          "value": "picto-invoice",
+          "label": "t:global.icons.icon_options.invoice",
+          "group": "t:global.icons.icon_options.payments_category"
+        },
+        {
+          "value": "picto-loyalty-points",
+          "label": "t:global.icons.icon_options.loyalty_points",
+          "group": "t:global.icons.icon_options.payments_category"
+        },
+        {
+          "value": "picto-location-pin",
+          "label": "t:global.icons.icon_options.location_pin",
+          "group": "t:global.icons.icon_options.shipping_and_delivery_category"
+        },
+        {
+          "value": "picto-truck",
+          "label": "t:global.icons.icon_options.truck",
+          "group": "t:global.icons.icon_options.shipping_and_delivery_category"
+        },
+        {
+          "value": "picto-express-delivery",
+          "label": "t:global.icons.icon_options.express_delivery",
+          "group": "t:global.icons.icon_options.shipping_and_delivery_category"
+        },
+        {
+          "value": "picto-package",
+          "label": "t:global.icons.icon_options.package",
+          "group": "t:global.icons.icon_options.shipping_and_delivery_category"
+        },
+        {
+          "value": "picto-shipping-protection",
+          "label": "t:global.icons.icon_options.shipping_protection",
+          "group": "t:global.icons.icon_options.shipping_and_delivery_category"
+        },
+        {
+          "value": "picto-return-box",
+          "label": "t:global.icons.icon_options.return_box",
+          "group": "t:global.icons.icon_options.shipping_and_delivery_category"
+        },
+        {
+          "value": "picto-return",
+          "label": "t:global.icons.icon_options.return",
+          "group": "t:global.icons.icon_options.shipping_and_delivery_category"
+        },
+        {
+          "value": "picto-fragile",
+          "label": "t:global.icons.icon_options.fragile",
+          "group": "t:global.icons.icon_options.shipping_and_delivery_category"
+        },
+        {
+          "value": "picto-warehouse",
+          "label": "t:global.icons.icon_options.warehouse",
+          "group": "t:global.icons.icon_options.shipping_and_delivery_category"
+        },
+        {
+          "value": "picto-analytics-graph",
+          "label": "t:global.icons.icon_options.analytics_graph",
+          "group": "t:global.icons.icon_options.marketing_category"
+        },
+        {
+          "value": "picto-social-media",
+          "label": "t:global.icons.icon_options.social_media",
+          "group": "t:global.icons.icon_options.marketing_category"
+        },
+        {
+          "value": "picto-magnifying-glass",
+          "label": "t:global.icons.icon_options.magnifying_glass",
+          "group": "t:global.icons.icon_options.marketing_category"
+        },
+        {
+          "value": "picto-trending",
+          "label": "t:global.icons.icon_options.trending",
+          "group": "t:global.icons.icon_options.marketing_category"
+        },
+        {
+          "value": "picto-megaphone",
+          "label": "t:global.icons.icon_options.megaphone",
+          "group": "t:global.icons.icon_options.marketing_category"
+        },
+        {
+          "value": "picto-recycle",
+          "label": "t:global.icons.icon_options.recycle",
+          "group": "t:global.icons.icon_options.nature_and_ecology_category"
+        },
+        {
+          "value": "picto-leaf",
+          "label": "t:global.icons.icon_options.leaf",
+          "group": "t:global.icons.icon_options.nature_and_ecology_category"
+        },
+        {
+          "value": "picto-tree",
+          "label": "t:global.icons.icon_options.tree",
+          "group": "t:global.icons.icon_options.nature_and_ecology_category"
+        },
+        {
+          "value": "picto-science",
+          "label": "t:global.icons.icon_options.science",
+          "group": "t:global.icons.icon_options.nature_and_ecology_category"
+        },
+        {
+          "value": "picto-earth",
+          "label": "t:global.icons.icon_options.earth",
+          "group": "t:global.icons.icon_options.nature_and_ecology_category"
+        },
+        {
+          "value": "picto-sun",
+          "label": "t:global.icons.icon_options.sun",
+          "group": "t:global.icons.icon_options.nature_and_ecology_category"
+        },
+        {
+          "value": "picto-summit",
+          "label": "t:global.icons.icon_options.summit",
+          "group": "t:global.icons.icon_options.nature_and_ecology_category"
+        },
+        {
+          "value": "picto-feather",
+          "label": "t:global.icons.icon_options.feather",
+          "group": "t:global.icons.icon_options.nature_and_ecology_category"
+        },
+        {
+          "value": "picto-drop-of-water",
+          "label": "t:global.icons.icon_options.drop_of_water",
+          "group": "t:global.icons.icon_options.nature_and_ecology_category"
+        },
+        {
+          "value": "picto-email",
+          "label": "t:global.icons.icon_options.email",
+          "group": "t:global.icons.icon_options.communication_category"
+        },
+        {
+          "value": "picto-inbox",
+          "label": "t:global.icons.icon_options.inbox",
+          "group": "t:global.icons.icon_options.communication_category"
+        },
+        {
+          "value": "picto-plane",
+          "label": "t:global.icons.icon_options.plane",
+          "group": "t:global.icons.icon_options.communication_category"
+        },
+        {
+          "value": "picto-mobile-phone",
+          "label": "t:global.icons.icon_options.mobile_phone",
+          "group": "t:global.icons.icon_options.communication_category"
+        },
+        {
+          "value": "picto-phone",
+          "label": "t:global.icons.icon_options.phone",
+          "group": "t:global.icons.icon_options.communication_category"
+        },
+        {
+          "value": "picto-chat",
+          "label": "t:global.icons.icon_options.chat",
+          "group": "t:global.icons.icon_options.communication_category"
+        },
+        {
+          "value": "picto-customer-support",
+          "label": "t:global.icons.icon_options.customer_support",
+          "group": "t:global.icons.icon_options.communication_category"
+        },
+        {
+          "value": "picto-comment",
+          "label": "t:global.icons.icon_options.comment",
+          "group": "t:global.icons.icon_options.communication_category"
+        },
+        {
+          "value": "picto-date",
+          "label": "t:global.icons.icon_options.date",
+          "group": "t:global.icons.icon_options.communication_category"
+        },
+        {
+          "value": "picto-info",
+          "label": "t:global.icons.icon_options.info",
+          "group": "t:global.icons.icon_options.communication_category"
+        },
+        {
+          "value": "picto-text",
+          "label": "t:global.icons.icon_options.text",
+          "group": "t:global.icons.icon_options.communication_category"
+        },
+        {
+          "value": "picto-ai-spark",
+          "label": "t:global.icons.icon_options.ai_spark",
+          "group": "t:global.icons.icon_options.communication_category"
+        },
+        {
+          "value": "picto-user",
+          "label": "t:global.icons.icon_options.user",
+          "group": "t:global.icons.icon_options.communication_category"
+        },
+        {
+          "value": "picto-news",
+          "label": "t:global.icons.icon_options.news",
+          "group": "t:global.icons.icon_options.communication_category"
+        },
+        {
+          "value": "picto-glasses",
+          "label": "t:global.icons.icon_options.glasses",
+          "group": "t:global.icons.icon_options.objects_category"
+        },
+        {
+          "value": "picto-craft",
+          "label": "t:global.icons.icon_options.craft",
+          "group": "t:global.icons.icon_options.objects_category"
+        },
+        {
+          "value": "picto-compass",
+          "label": "t:global.icons.icon_options.compass",
+          "group": "t:global.icons.icon_options.objects_category"
+        },
+        {
+          "value": "picto-asterisk",
+          "label": "t:global.icons.icon_options.asterisk",
+          "group": "t:global.icons.icon_options.objects_category"
+        },
+        {
+          "value": "picto-microscope",
+          "label": "t:global.icons.icon_options.microscope",
+          "group": "t:global.icons.icon_options.objects_category"
+        },
+        {
+          "value": "picto-weight",
+          "label": "t:global.icons.icon_options.weight",
+          "group": "t:global.icons.icon_options.objects_category"
+        },
+        {
+          "value": "picto-pyramide",
+          "label": "t:global.icons.icon_options.pyramide",
+          "group": "t:global.icons.icon_options.objects_category"
+        },
+        {
+          "value": "picto-sports",
+          "label": "t:global.icons.icon_options.sports",
+          "group": "t:global.icons.icon_options.objects_category"
+        },
+        {
+          "value": "picto-wrap",
+          "label": "t:global.icons.icon_options.wrap",
+          "group": "t:global.icons.icon_options.objects_category"
+        },
+        {
+          "value": "picto-expand",
+          "label": "t:global.icons.icon_options.expand",
+          "group": "t:global.icons.icon_options.objects_category"
+        },
+        {
+          "value": "picto-measure",
+          "label": "t:global.icons.icon_options.measure",
+          "group": "t:global.icons.icon_options.objects_category"
+        },
+        {
+          "value": "picto-cut",
+          "label": "t:global.icons.icon_options.cut",
+          "group": "t:global.icons.icon_options.objects_category"
+        },
+        {
+          "value": "picto-furniture",
+          "label": "t:global.icons.icon_options.furniture",
+          "group": "t:global.icons.icon_options.objects_category"
+        },
+        {
+          "value": "picto-music",
+          "label": "t:global.icons.icon_options.music",
+          "group": "t:global.icons.icon_options.objects_category"
+        },
+        {
+          "value": "picto-drink",
+          "label": "t:global.icons.icon_options.drink",
+          "group": "t:global.icons.icon_options.food_and_drink_category"
+        },
+        {
+          "value": "picto-burger",
+          "label": "t:global.icons.icon_options.burger",
+          "group": "t:global.icons.icon_options.food_and_drink_category"
+        },
+        {
+          "value": "picto-pizza",
+          "label": "t:global.icons.icon_options.pizza",
+          "group": "t:global.icons.icon_options.food_and_drink_category"
+        },
+        {
+          "value": "picto-fork-knife",
+          "label": "t:global.icons.icon_options.fork_knife",
+          "group": "t:global.icons.icon_options.food_and_drink_category"
+        },
+        {
+          "value": "picto-chef",
+          "label": "t:global.icons.icon_options.chef",
+          "group": "t:global.icons.icon_options.food_and_drink_category"
+        },
+      ],
+      "default": "picto-heart"
+    },
+    {
+      "type": "image_picker",
+      "id": "custom_icon",
+      "label": "t:global.icons.custom_icon",
+      "info": "t:global.icons.custom_icon_info"
+    },
+    {
+      "type": "range",
+      "id": "icon_width",
+      "min": 16,
+      "max": 128,
+      "step": 4,
+      "unit": "px",
+      "label": "t:global.icons.desktop_icon_width",
+      "default": 32
+    },
+    {
+      "type": "range",
+      "id": "mobile_icon_width",
+      "min": 16,
+      "max": 128,
+      "step": 4,
+      "unit": "px",
+      "label": "t:global.icons.mobile_icon_width",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "stroke_width",
+      "min": 1,
+      "max": 4,
+      "step": 0.5,
+      "unit": "px",
+      "label": "t:global.icons.stroke_width",
+      "default": 1.5,
+      "visible_if": "{{ block.settings.custom_icon == blank }}"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:blocks.icon.name"
+    }
+  ]
+}
+{% endschema %}

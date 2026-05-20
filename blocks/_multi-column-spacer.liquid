@@ -1,0 +1,37 @@
+<div class="multi-column__item multi-column__item--spacer color-scheme color-scheme--{{ block.settings.color_scheme.id }} md-max:hidden" style="--multi-column-item-span: {{ block.settings.column_count }}" {{ block.shopify_attributes }}>
+  <!-- Empty item -->
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.multi_column.blocks.spacer.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.multi_column.blocks.spacer.instructions"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-2"
+    },
+    {
+      "type": "range",
+      "min": 1,
+      "max": 5,
+      "step": 1,
+      "id": "column_count",
+      "label": "t:sections.multi_column.blocks.spacer.column_count",
+      "info": "t:sections.multi_column.blocks.spacer.column_count_info",
+      "default": 1
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.multi_column.blocks.spacer.name"
+    }
+  ]
+}
+{% endschema %}

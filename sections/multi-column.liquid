@@ -1,0 +1,253 @@
+{%- if section.blocks.size > 0 -%}
+  <style>
+    #shopify-section-{{ section.id }} {
+      {% if section.settings.add_top_spacing == false %}
+        --section-vertical-spacing-block-start: 0px;
+      {% endif %}
+
+      {% if section.settings.add_bottom_spacing == false %}
+        --section-vertical-spacing-block-end: 0px;
+      {% endif %}
+
+      --multi-column-grid: {% if section.settings.stack_on_mobile %}auto-flow / minmax(0, 1fr){% else %}auto / auto-flow 78vw{% endif %};
+      --multi-column-column-count: {{ section.settings.items_per_row }};
+      --multi-column-column-gap: {% if section.settings.column_spacing == 'none' %}0px{% elsif section.settings.column_spacing == 'sm' %}calc(var(--container-gutter) / 2){% elsif section.settings.column_spacing == 'md' %}var(--container-gutter){% elsif section.settings.column_spacing == 'lg' %}calc(var(--container-gutter) * 1.5){% endif %};
+      --multi-column-row-gap: {% if section.settings.row_spacing == 'none' %}0px{% elsif section.settings.row_spacing == 'sm' %}calc(var(--container-gutter) / 2){% elsif section.settings.row_spacing == 'md' %}var(--container-gutter){% elsif section.settings.row_spacing == 'lg' %}calc(var(--container-gutter) * 1.5){% endif %};
+    }
+
+    @media screen and (min-width: 700px) {
+      #shopify-section-{{ section.id }} {
+        --multi-column-grid: {% if section.settings.stack_on_mobile %}auto-flow / minmax(0, 1fr){% else %}auto / auto-flow 54vw{% endif %};
+      }
+    }
+
+    @media screen and (min-width: 1000px) {
+      #shopify-section-{{ section.id }} {
+        {%- if section.settings.stack_on_desktop -%}
+          --multi-column-grid: auto-flow / repeat({{ section.settings.items_per_row }}, minmax(0, 1fr));
+        {%- else -%}
+          {%- assign items_per_row = section.settings.items_per_row | at_most: section.blocks.size -%}
+        
+          --multi-column-grid: auto / auto-flow {{ 100.0 | divided_by: items_per_row }}vw;
+        {%- endif -%}
+      }
+    }
+
+    {%- comment -%}If the section has a different color scheme from columns, we add a padding{%- endcomment -%}
+    #shopify-section-{{ section.id }} .multi-column__item:not(.color-scheme--{{ section.settings.color_scheme.id }}) {
+      padding: var(--container-gutter);
+    }
+  </style>
+
+  <div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+    <div class="{% if section.settings.add_horizontal_spacing %}container{% endif %} section-spacing">
+      <div class="section-stack">
+        {%- content_for "block", type: "_section-header", id: "section-header" -%}
+
+        {%- assign carousel_id = section.id | append: '-carousel' -%}
+
+        <scroll-carousel id="{{ carousel_id }}" class="multi-column {% if section.settings.show_internal_borders %}multi-column--bordered{% endif %} scroll-area snap-x bleed">
+          {%- content_for 'blocks' -%}
+        </scroll-carousel>
+      </div>
+    </div>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.multi_column.name",
+  "class": "shopify-section--multi-column",
+  "tag": "section",
+  "disabled_on": {
+    "groups": ["header", "custom.overlay"]
+  },
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_internal_borders",
+      "label": "t:sections.multi_column.show_internal_borders",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "add_horizontal_spacing",
+      "label": "t:global.spacing.add_horizontal_spacing",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "add_top_spacing",
+      "label": "t:global.spacing.add_top_spacing",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "add_bottom_spacing",
+      "label": "t:global.spacing.add_bottom_spacing",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "t:sections.multi_column.column_category"
+    },
+    {
+      "type": "range",
+      "id": "items_per_row",
+      "min": 2,
+      "max": 5,
+      "label": "t:sections.multi_column.items_per_row",
+      "default": 3
+    },
+    {
+      "type": "checkbox",
+      "id": "stack_on_mobile",
+      "label": "t:sections.multi_column.stack_on_mobile",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "stack_on_desktop",
+      "label": "t:sections.multi_column.stack_on_desktop",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "column_spacing",
+      "label": "t:global.spacing.column_spacing",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:global.spacing.spacing_options.none"
+        },
+        {
+          "value": "sm",
+          "label": "t:global.spacing.spacing_options.small"
+        },
+        {
+          "value": "md",
+          "label": "t:global.spacing.spacing_options.medium"
+        },
+        {
+          "value": "lg",
+          "label": "t:global.spacing.spacing_options.large"
+        }
+      ],
+      "default": "md"
+    },
+    {
+      "type": "select",
+      "id": "row_spacing",
+      "label": "t:global.spacing.row_spacing",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:global.spacing.spacing_options.none"
+        },
+        {
+          "value": "sm",
+          "label": "t:global.spacing.spacing_options.small"
+        },
+        {
+          "value": "md",
+          "label": "t:global.spacing.spacing_options.medium"
+        },
+        {
+          "value": "lg",
+          "label": "t:global.spacing.spacing_options.large"
+        }
+      ],
+      "default": "md"
+    }
+  ],
+  "blocks": [
+    { "type": "_multi-column-column" },
+    { "type": "_multi-column-spacer" }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.multi_column.name",
+      "category": "t:global.categories.storytelling",
+      "blocks": [
+        {
+          "type": "_section-header",
+          "static": true,
+          "id": "section-header",
+          "settings": {
+            "title": "Multi-column"
+          }
+        },
+        {
+          "type": "_multi-column-column",
+          "blocks": [
+            {
+              "type": "image"
+            },
+            {
+              "type": "heading",
+              "settings": {
+                "text": "Column 1",
+                "heading_size": "h4"
+              }
+            },
+            {
+              "type": "rich-text",
+              "settings": {
+                "text": "<p>Pair text with an image to focus on your chosen product, collection, or blog post. Add details on availability, style, or even provide a review.</p>"
+              }
+            }
+          ]
+        },
+        {
+          "type": "_multi-column-column",
+          "blocks": [
+            {
+              "type": "image"
+            },
+            {
+              "type": "heading",
+              "settings": {
+                "text": "Column 2",
+                "heading_size": "h4"
+              }
+            },
+            {
+              "type": "rich-text",
+              "settings": {
+                "text": "<p>Pair text with an image to focus on your chosen product, collection, or blog post. Add details on availability, style, or even provide a review.</p>"
+              }
+            }
+          ]
+        },
+        {
+          "type": "_multi-column-column",
+          "blocks": [
+            {
+              "type": "image"
+            },
+            {
+              "type": "heading",
+              "settings": {
+                "text": "Column 3",
+                "heading_size": "h4"
+              }
+            },
+            {
+              "type": "rich-text",
+              "settings": {
+                "text": "<p>Pair text with an image to focus on your chosen product, collection, or blog post. Add details on availability, style, or even provide a review.</p>"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

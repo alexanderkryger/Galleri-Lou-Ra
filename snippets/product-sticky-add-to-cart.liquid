@@ -1,0 +1,53 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+PRODUCT STICKY ADD TO CART
+----------------------------------------------------------------------------------------------------------------------
+
+This component is used to render the sticky add to cart.
+
+********************************************
+Supported variables
+********************************************
+
+* product: the product to render
+* product_form_id: the main product form
+* section: the section is implicitly available. Here, the section is always a "product" template section, so you can
+           access all the information from the section
+{%- endcomment -%}
+
+{%- if product.available and section.settings.show_sticky_add_to_cart -%}
+  <product-sticky-add-to-cart class="product-sticky-add-to-cart color-scheme color-scheme--{{ settings.default_color_scheme.id }}" main-product-form="{{ product_form_id }}">
+    <product-rerender id="product-sticky-add-to-cart-{{ product.id }}-{{ section.id }}" observe-form="{{ product_form_id }}">
+      <div class="h-stack gap-6 sm-max:hidden">
+        {%- assign image = product.selected_or_first_available_variant.featured_media | default: product.featured_media -%}
+
+        {%- if image != blank -%}
+          {{- image | image_url: width: image.width | image_tag: loading: 'lazy', widths: '70,140,210,280', class: 'constrained-image', style: '--image-max-width: 70px' -}}
+        {%- endif -%}
+
+        <div class="v-stack gap-0.5">
+          <span class="subheading">{{ product.title }}</span>
+
+          {%- unless product.has_only_default_variant -%}
+            <span class="subheading text-subdued">{{ product.selected_or_first_available_variant.title }}</span>
+          {%- endunless -%}
+
+          {%- render 'price-list', variant: product.selected_or_first_available_variant, context: 'line_item' -%}
+        </div>
+      </div>
+
+      {%- liquid
+        if product.selected_or_first_available_variant.available
+          assign button_label = 'product.general.add_to_cart_button' | t
+          assign disabled = false
+        else
+          assign button_label = 'product.general.sold_out_button' | t
+          assign disabled = true
+        endif
+
+        render 'button', type: 'submit', form: product_form_id, content: button_label, disabled: disabled, style: 'outline', class: 'sm-max:hidden'
+        render 'button', type: 'submit', form: product_form_id, content: button_label, disabled: disabled, style: 'solid', class: 'sm:hidden'
+      -%}
+    </product-rerender>
+  </product-sticky-add-to-cart>
+{%- endif -%}

@@ -1,0 +1,120 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+PRODUCT LIST COMPONENT
+----------------------------------------------------------------------------------------------------------------------
+
+This component display a list of product that can be used in collection, search...
+
+********************************************
+Supported variables
+********************************************
+
+* products: the list of products to render
+* id: the id of the product list (neeeded for carousel)
+* prefix_id: an optional prefix that is used to prefix all the inputs. This is useful when we have to output multiple
+             product list on the same page, to avoid any ID conflicts.
+* section_color_scheme: the color scheme of the section where the product list is used. By default, the theme uses
+                        the section.settings.color_scheme so it does not have to be passed explicitly, but it can
+                        be overriden if needed
+* blocks: the list of blocks from section
+* allow_highlight: set to true to highlight a product
+* spotlight: set to true to display a carousel on desktop that shows one product at a time.
+* stack: set to true when products are stacked
+* show_placeholder: set to true to display placeholder when no product set
+* output_override_attributes: only for collection page, we allow customers to switch the layout. To avoid CLS, we have
+                              to save the attribute in the cart and apply it to the product list. A better approach would
+                              be to use container query around cards, but unfortunately we are using subgrid, and currently
+                              in browsers, subgrid and container queries can't be used together, so we have to revert to
+                              this approach
+{%- endcomment -%}
+<product-list {% if id %}id="{{ id }}"{% endif %} class="product-list {% if stack == false or spotlight == false %}product-list--carousel scroll-area bleed{% endif %} {% if spotlight %}product-list--spotlight scroll-area bleed{% if settings.product_listing_spacing == 'none' %}border{% endif %}{% endif %}" {% if output_override_attributes %}mobile-items-per-row="{{ cart.attributes.product_card_mobile_items_per_row | default: section.settings.products_per_row_mobile }}" desktop-layout="{{ cart.attributes.product_card_desktop_layout | default: 'grid' }}"{% endif %}>
+  {%- liquid
+    assign has_active_filters = false
+
+    for filter in collection.filters
+      if filter.type == 'price_range'
+        if filter.max_value.value != blank or filter.min_value.value != blank
+          assign has_active_filters = true
+          break
+        endif
+      else
+        if filter.active_values.size > 0
+          assign has_active_filters = true
+          break
+        endif
+      endif
+    endfor
+  -%}
+
+  {%- capture sizes -%}
+    {%- if stack -%}
+      (max-width: 699px) calc(100vw / {{ section.settings.products_per_row_mobile | default: 2 }}), (max-width: 999px) calc(100vw / {{ section.settings.products_per_row_desktop | default: 4 | at_most: 3 }} - 64px), calc(100vw / {{ section.settings.products_per_row_desktop | default: 4 }})
+    {%- else -%}
+      (max-width: 699px) 74vw, (max-width: 999px) 38vw, calc(100vw / {{ section.settings.products_per_row_desktop | default: 4 }})
+    {%- endif -%}
+  {%- endcapture -%}
+
+  {%- for product in products -%}
+    {%- for block in blocks -%}
+      {%- if has_active_filters or paginate.current_page > 1 or forloop.parentloop.index != block.settings.position -%}
+        {%- continue -%}
+      {%- endif -%}
+
+      <div class="product-list__promo {% if block.settings.image == blank and settings.product_listing_spacing == 'none' %}outline{% endif %} color-scheme color-scheme--{{ block.settings.color_scheme.id }}" {% if settings.stagger_products %}reveal-on-scroll="true"{% endif %} style="--product-list-promo-row-span: {{ block.settings.size | split: '_' | last }}; --product-list-promo-column-span: {{ block.settings.size | split: '_' | first }}" {{ block.shopify_attributes }}>
+        <div class="content-box min-h-full">
+          <div class="content-box__background-media with-overlay" style="--overlay: {{ block.settings.overlay_color.rgb }} / {{ block.settings.overlay_opacity | divided_by: 100.0 }}">
+            {%- liquid
+              if block.type == 'image'
+                if block.settings.image != blank
+                  render 'media', media: block.settings.image, mobile_media: block.settings.mobile_image
+                endif
+
+              elsif block.type == 'video'
+                if block.settings.video != blank
+                  render 'media', media: block.settings.video, mobile_media: block.settings.mobile_video, autoplay: true, loop: true, muted: true, controls: false, preload: forloop.first, show_play_button: false
+                endif
+              endif
+            -%}
+          </div>
+
+          {%- if block.settings.heading != blank or block.settings.content != blank or block.settings.subheading != blank -%}
+            <div class="{{ block.settings.content_position }}">
+              <div class="prose prose-justify-{{ block.settings.content_position | split: '-' | last }}">
+                {%- if block.settings.subheading != blank -%}
+                  {%- render 'subheading', content: block.settings.subheading -%}
+                {%- endif -%}
+
+                {%- if block.settings.heading != blank -%}
+                  {%- render 'heading', content: block.settings.heading, style: block.settings.heading_size -%}
+                {%- endif -%}
+
+                {%- if block.settings.content != blank -%}
+                  <div class="max-w-xs">
+                    {{- block.settings.content -}}
+                  </div>
+                {%- endif -%}
+
+                {%- if block.settings.button_text -%}
+                  {%- render 'button',
+                      content: block.settings.button_text,
+                      href: block.settings.url,
+                      style: block.settings.style,
+                      external: block.settings.open_in_new_tab
+                  -%}
+                {%- endif -%}
+              </div>
+            </div>
+          {%- endif -%}
+        </div>
+      </div>
+    {%- endfor -%}
+
+    {%- render 'product-card', product: product, reveal: true, allow_highlight: allow_highlight, sizes: sizes, force_no_border: spotlight, section_color_scheme: section_color_scheme, prefix_id: prefix_id, position: forloop.index -%}
+  {%- else -%}
+    {%- if show_placeholder -%}
+      {%- for i in (1..4) -%}
+        {%- render 'product-card-placeholder', loop_index: i -%}
+      {%- endfor -%}
+    {%- endif -%}
+  {%- endfor -%}
+</product-list>

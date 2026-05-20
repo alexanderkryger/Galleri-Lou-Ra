@@ -1,0 +1,96 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+BLOG POST CARD COMPONENT
+----------------------------------------------------------------------------------------------------------------------
+Renders a single blog post
+
+********************************************
+Supported parameters
+********************************************
+* article: the article to render. If no article is passed then a placeholder is generated
+* reveal: if set to true the card is revealed on scroll
+* horizontal: if set to true, the card is rendered horizontally on desktop
+* heading_size: the size of the heading to use (default to h5 size)
+* show_category: if set to true, the first tag of the article is shown as a category
+* show_date: if set to true, the date of the article is shown
+* show_reading_time: if set to true, the reading time of the article is shown
+* show_excerpt: if set to true, it will show the excerpt first or truncated part of the main content if none is set
+* use_secondary_image: if set to true, the theme will be an image specified in the metafield "custom.secondary_image"
+* sizes: the sizes attribute to show for loading the images
+* position: the position of the card in the list. If specified, the theme will eagerly load the first 3 cards images
+* placeholder_image: the name of an image used for the placeholder_svg_tag
+* block: an optional block from which theme editor attributes are rendered
+{%- endcomment -%}
+
+<a href="{{ article.url }}" class="blog-post-card {% if horizontal %}blog-post-card--horizontal{% endif %} group snap-start" {% if settings.stagger_blog_posts and reveal != false %}reveal-on-scroll="true"{% endif %} {{ block.shopify_attributes }}>
+  {%- if article -%}
+    {%- if article.image != blank -%}
+      {%- liquid
+        assign loading_strategy = nil
+        
+        if section.index > 3 or position > 3
+          assign loading_strategy = 'lazy'
+        endif
+
+        if use_secondary_image
+          assign image = article.metafields.custom.secondary_image
+        endif
+
+        assign image = image | default: article.image
+      -%}
+
+      <div class="blog-post-card__image-container overflow-hidden">
+        {{- image | image_url: width: image.width | image_tag: loading: loading_strategy, sizes: sizes, widths: '300,400,500,600,800,1000,1200,1400', class: 'w-full zoom-image group-hover:zoom' -}}
+      </div>
+    {%- endif -%}
+  {%- else -%}
+    <div class="blog-post-card__image-container overflow-hidden">
+      {{- placeholder_image | placeholder_svg_tag: 'w-full zoom-image group-hover:zoom' -}}
+    </div>
+  {%- endif -%}
+
+  <div class="blog-post-card__content">
+    <div class="prose prose--compact">
+      {%- capture meta_content -%}
+        {%- if show_category and article.tags.size > 0 -%}
+          <span>{{ article.tags | first }}</span>
+        {%- endif -%}
+
+        {%- if show_date and article != blank -%}
+          <span>{{ article.published_at | date: format: 'abbreviated_date' }}</span>
+        {%- endif -%}
+
+        {%- if show_reading_time -%}
+          {%- assign reading_time = article.content | strip_html | split: ' ' | size | times: 1.0 | divided_by: 250 | ceil -%}
+          <span>{{ 'blog.post.reading_time' | t: time: reading_time }}</span>
+        {%- endif -%}
+      {%- endcapture -%}
+
+      {%- if meta_content != blank -%}
+        <div class="meta-information subheading">
+          {%- if settings.subheading_icon != blank -%}
+            <span class="shape shape--{{ settings.subheading_icon }}"></span>
+          {%- endif -%}
+          
+          {{- meta_content -}}
+        </div>
+      {%- endif -%}
+      
+      {%- if article -%}
+        <span class="{{ heading_size | default: 'h5' }}">{{ article.title }}</span>
+      {%- else -%}
+        <span class="{{ heading_size | default: 'h5' }}">{{- 'general.on_boarding.blog_post_title' | t -}}</span>
+      {%- endif -%}
+
+      {%- if show_excerpt -%}
+        {%- if article -%}
+          {%- unless article.excerpt_or_content == blank -%}
+            <p>{{ article.excerpt_or_content | strip_html | truncate: 200 }}</p>
+          {%- endunless -%}
+        {%- else -%}
+          <p>{{ 'general.on_boarding.blog_post_excerpt' | t }}</p>
+        {%- endif -%}
+      {%- endif -%}
+    </div>
+  </div>
+</a>

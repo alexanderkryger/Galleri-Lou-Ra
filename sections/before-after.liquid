@@ -1,0 +1,535 @@
+{%- if request.design_mode or section.blocks.size > 0 -%}
+  <style>
+    #shopify-section-{{ section.id }} {
+      --before-after-initial-cursor-position: {{ section.settings.cursor_initial_position }}%;
+      --before-after-cursor-background: {{ section.settings.cursor_background.rgb }};
+
+      {%- if section.settings.layout == 'split_image_right' -%}
+        --section-split-grid-template-columns: minmax(0, 0.45fr) minmax(0, 0.55fr);
+      {%- elsif section.settings.layout == 'split_image_left' -%}
+        --section-split-grid-template-columns: minmax(0, 0.55fr) minmax(0, 0.45fr);
+      {%- elsif section.settings.add_comparison_spacing == false -%}
+        --section-vertical-spacing-block-end: 0px;
+      {%- endif -%}
+    }
+
+    {%- if section.settings.layout == 'split_image_right' -%}
+      @media screen and (min-width: 1400px) {
+        #shopify-section-{{ section.id }} {
+          --section-split-grid-template-columns: minmax(0, 0.35fr) minmax(0, 0.65fr);
+        }
+      }
+    {% elsif section.settings.layout == 'split_image_left' -%}
+      @media screen and (min-width: 1400px) {
+        #shopify-section-{{ section.id }} {
+          --section-split-grid-template-columns: minmax(0, 0.65fr) minmax(0, 0.35fr);
+        }
+      }
+    {%- endif -%}
+
+    {%- if section.settings.layout == 'stacked' and section.settings.add_comparison_spacing == false -%}
+      #shopify-section-{{ section.id }} + .shopify-section {
+        --section-enable-padding-collapsing: 0;
+      }
+    {%- endif -%}
+  </style>
+
+  <div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+    {%- if request.design_mode and section.blocks.size < 2 -%}
+      <div class="container section-spacing">
+        {%- assign error_message = 'sections.before_after.not_enough_blocks' | t -%}
+        {%- render 'banner', content: error_message, status: 'error', text_alignment: 'center' -%}
+      </div>
+    {%- endif -%}
+
+    {%- capture section_header_content -%}
+      {%- if section.settings.subheading != blank or section.settings.title != blank or section.settings.content != blank or section.settings.button_text != blank -%}
+        <div class="prose {% if section.settings.layout == 'stacked' %}prose-justify-center{% endif %}">
+          {%- render 'subheading', content: section.settings.subheading -%}
+          {%- render 'heading', content: section.settings.title, balance_text: true, style: section.settings.title_tag, html_tag: 'h2' -%}
+
+          <div class="max-w-sm">
+            {{- section.settings.content -}}
+          </div>
+
+          {%- render 'button', content: section.settings.button_text, href: section.settings.button_url, style: section.settings.button_style -%}
+        </div>
+      {%- endif -%}
+    {%- endcapture -%}
+
+    {%- capture section_main_content -%}
+      <before-after class="before-after before-after--{{ section.settings.cursor_direction }}" {% if section.settings.cursor_direction == 'vertical' %}vertical{% endif %}>
+        {%- comment -%}
+        ----------------------------------------------------------------------------------------------------------------
+        BEFORE AFTER IMAGES
+        ----------------------------------------------------------------------------------------------------------------
+        {%- endcomment -%}
+
+        {%- for block in section.blocks -%}
+          <div class="before-after__image before-after__image--{{ block.type }}" {{ block.shopify_attributes }}>
+            {%- liquid
+              assign sizes = '(max-width: 999px) 100vw, min(1260px, 100vw)'
+              assign image_class = ''
+  
+              if forloop.first
+                assign image_class = 'w-full'
+              else
+                assign image_class = 'image-background'
+              endif
+            -%}
+
+            {%- if block.settings.image != blank -%}
+              {% render 'media' with block.settings.image, mobile_media: block.settings.mobile_image, sizes: sizes, widths: '300,400,500,600,800,1000,1200,1400,1600,1800,2000,2200,2400', draggable: false, class: image_class  %}
+            {%- else -%}
+              {%- capture placeholder_image -%}{% cycle 'collection-apparel-1', 'collection-apparel-2' %}{%- endcapture -%}
+              {{- placeholder_image | placeholder_svg_tag: 'block w-full' -}}
+            {%- endif -%}
+
+            {%- if block.settings.text != blank -%}
+              {%- liquid
+                assign content_placement = ''
+  
+                if section.settings.cursor_direction == 'horizontal'
+                  if block.type == 'before'
+                    if block.settings.text_position == 'start'
+                      assign content_placement = 'place-self-start'
+                    else
+                      assign content_placement = 'place-self-end-start'
+                    endif
+                  else
+                    if block.settings.text_position == 'start'
+                      assign content_placement = 'place-self-start-end'
+                    else
+                      assign content_placement = 'place-self-end'
+                    endif
+                  endif
+                else
+                  if block.type == 'before'
+                    assign content_placement = 'place-self-start'
+                  else
+                    assign content_placement = 'place-self-end'
+                  endif
+                endif
+              -%}
+
+              {%- assign add_padding = false -%}
+
+              {%- if block.settings.color_scheme.settings.background != 'rgba(0,0,0,0)' -%}
+                {%- assign add_padding = true -%}
+              {%- endif -%}
+
+              <div class="before-after__content {% if add_padding %}before-after__content--padded{% endif %} {{ content_placement }} color-scheme color-scheme--{{ block.settings.color_scheme.id }}">
+                <p class="{{ block.settings.text_size }}">{{ block.settings.text }}</p>
+              </div>
+            {%- endif -%}
+          </div>
+        {%- endfor -%}
+
+        {%- comment -%}
+        ----------------------------------------------------------------------------------------------------------------
+        BEFORE AFTER CURSOR
+        ----------------------------------------------------------------------------------------------------------------
+        {%- endcomment -%}
+
+        <div class="before-after__cursor" tabindex="0">
+          <span class="sr-only">{{ 'sections.before_after.cursor_accessibility_text' | t }}</span>
+          
+          <svg role="presentation" focusable="false" fill="none" width="68" height="68" viewBox="0 0 68 68">
+            <g {% if section.settings.cursor_direction == 'vertical' %}transform="rotate(90, 34, 34)"{% endif %}>
+              <rect width="60" height="60" x="4" y="2" fill="{{ section.settings.cursor_background }}" rx="30"/>
+              <path fill="{{ section.settings.cursor_arrows_color }}" d="M28 26h1.5v12H28zM33 26h1.5v12H33zM38 26h1.5v12H38z"/>
+            </g>
+          </svg>
+        </div>
+      </before-after>
+    {%- endcapture -%}
+    
+    {%- if section.settings.layout == 'stacked' -%}
+      <div class="container">
+        <div class="section-spacing">
+          <div class="section-stack">
+            {{- section_header_content -}}
+
+            <div class="{% if section.settings.add_comparison_spacing %}w-full max-w-2xl mx-auto{% else %}full-bleed{% endif %}">
+              {{- section_main_content -}}
+            </div>
+          </div>
+        </div>
+      </div>
+    {%- else -%}
+      <div class="section-split align-start {% if section.settings.layout == 'split_image_left' %}section-split--reverse{% endif %}">
+        <div class="section-split__column align-self-start">
+          {{- section_header_content -}}
+        </div>
+
+        <div class="section-split__column section-split__column--image {% unless section.settings.add_comparison_spacing %}section-split__column--flushed{% endunless %} align-self-center">
+          {{- section_main_content -}}
+        </div>
+      </div>
+    {%- endif -%}
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.before_after.name",
+  "class": "shopify-section--before-after-image",
+  "tag": "section",
+  "disabled_on": {
+    "groups": ["header", "custom.overlay"]
+  },
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "t:global.layout.layout",
+      "options": [
+        {
+          "value": "split_image_right",
+          "label": "t:global.layout.layout_options.split_image_right"
+        },
+        {
+          "value": "split_image_left",
+          "label": "t:global.layout.layout_options.split_image_left"
+        },
+        {
+          "value": "stacked",
+          "label": "t:global.layout.layout_options.stacked"
+        }
+      ],
+      "default": "stacked"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_comparison_spacing",
+      "label": "t:sections.before_after.add_comparison_spacing",
+      "default": true
+    },
+    {
+      "type": "inline_richtext",
+      "id": "subheading",
+      "label": "t:global.text.subheading"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "label": "t:global.text.heading",
+      "default": "Before/after"
+    },
+    {
+      "type": "select",
+      "id": "title_tag",
+      "label": "t:global.text.heading_size",
+      "options": [
+        {
+          "value": "display-xl",
+          "label": "Display XL"
+        },
+        {
+          "value": "display-l",
+          "label": "Display L"
+        },
+        {
+          "value": "display-m",
+          "label": "Display M"
+        },
+        {
+          "value": "h1",
+          "label": "XX-Large"
+        },
+        {
+          "value": "h2",
+          "label": "X-Large"
+        },
+        {
+          "value": "h3",
+          "label": "Large"
+        },
+        {
+          "value": "h4",
+          "label": "Medium"
+        },
+        {
+          "value": "h5",
+          "label": "Small"
+        },
+        {
+          "value": "h6",
+          "label": "X-Small"
+        },
+        {
+          "value": "h7",
+          "label": "XX-Small"
+        }
+      ],
+      "default": "h3"
+    },
+    {
+      "type": "richtext",
+      "id": "content",
+      "label": "t:global.text.content",
+      "default": "<p>Showcase your product benefit by using before/after image comparison.</p>"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "t:global.text.button_text",
+      "default": "Learn more"
+    },
+    {
+      "type": "url",
+      "id": "button_url",
+      "label": "t:global.text.button_link"
+    },
+    {
+      "type": "select",
+      "id": "button_style",
+      "label": "t:global.text.button_style",
+      "options": [
+        {
+          "value": "outline",
+          "label": "t:global.text.button_style_options.outline"
+        },
+        {
+          "value": "solid",
+          "label": "t:global.text.button_style_options.solid"
+        },
+        {
+          "value": "link",
+          "label": "t:global.text.button_style_options.link"
+        }
+      ],
+      "default": "solid"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.before_after.cursor_category"
+    },
+    {
+      "type": "select",
+      "id": "cursor_direction",
+      "label": "t:sections.before_after.cursor_direction",
+      "options": [
+        {
+          "value": "horizontal",
+          "label": "t:sections.before_after.cursor_direction_options.horizontal"
+        },
+        {
+          "value": "vertical",
+          "label": "t:sections.before_after.cursor_direction_options.vertical"
+        }
+      ],
+      "default": "horizontal"
+    },
+    {
+      "type": "range",
+      "id": "cursor_initial_position",
+      "min": 0,
+      "max": 100,
+      "unit": "%",
+      "label": "t:sections.before_after.cursor_initial_position",
+      "default": 50
+    },
+    {
+      "type": "color",
+      "id": "cursor_background",
+      "label": "t:global.colors.background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "cursor_arrows_color",
+      "label": "t:sections.before_after.cursor_arrows_color",
+      "default": "#000000"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "before",
+      "name": "t:sections.before_after.blocks.before.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "color_scheme",
+          "id": "color_scheme",
+          "label": "t:global.colors.scheme",
+          "default": "scheme-3"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:global.image.image",
+          "info": "t:sections.before_after.blocks.before.image_info"
+        },
+        {
+          "type": "image_picker",
+          "id": "mobile_image",
+          "label": "t:global.image.mobile_image",
+          "info": "t:sections.before_after.blocks.before.mobile_image_info"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "text",
+          "label": "t:global.text.text",
+          "default": "Before"
+        },
+        {
+          "type": "select",
+          "id": "text_size",
+          "label": "t:global.text.size",
+          "options": [
+            {
+              "value": "h1",
+              "label": "XX-Large"
+            },
+            {
+              "value": "h2",
+              "label": "X-Large"
+            },
+            {
+              "value": "h3",
+              "label": "Large"
+            },
+            {
+              "value": "h4",
+              "label": "Medium"
+            },
+            {
+              "value": "h5",
+              "label": "Small"
+            },
+            {
+              "value": "h6",
+              "label": "X-Small"
+            },
+            {
+              "value": "h7",
+              "label": "XX-Small"
+            }
+          ],
+          "default": "h7"
+        },
+        {
+          "type": "select",
+          "id": "text_position",
+          "label": "t:sections.before_after.blocks.before.text_position",
+          "options": [
+            {
+              "value": "start",
+              "label": "t:global.position.top",
+            },
+            {
+              "value": "end",
+              "label": "t:global.position.bottom",
+            }
+          ],
+          "default": "start"
+        }
+      ]
+    },
+    {
+      "type": "after",
+      "name": "t:sections.before_after.blocks.after.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "color_scheme",
+          "id": "color_scheme",
+          "label": "t:global.colors.scheme",
+          "default": "scheme-3"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:global.image.image",
+          "info": "t:sections.before_after.blocks.after.image_info"
+        },
+        {
+          "type": "image_picker",
+          "id": "mobile_image",
+          "label": "t:global.image.mobile_image",
+          "info": "t:sections.before_after.blocks.after.image_info"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "text",
+          "label": "t:global.text.text",
+          "default": "After"
+        },
+        {
+          "type": "select",
+          "id": "text_size",
+          "label": "t:global.text.size",
+          "options": [
+            {
+              "value": "h1",
+              "label": "XX-Large"
+            },
+            {
+              "value": "h2",
+              "label": "X-Large"
+            },
+            {
+              "value": "h3",
+              "label": "Large"
+            },
+            {
+              "value": "h4",
+              "label": "Medium"
+            },
+            {
+              "value": "h5",
+              "label": "Small"
+            },
+            {
+              "value": "h6",
+              "label": "X-Small"
+            },
+            {
+              "value": "h7",
+              "label": "XX-Small"
+            }
+          ],
+          "default": "h7"
+        },
+        {
+          "type": "select",
+          "id": "text_position",
+          "label": "t:sections.before_after.blocks.before.text_position",
+          "options": [
+            {
+              "value": "start",
+              "label": "t:global.position.top",
+            },
+            {
+              "value": "end",
+              "label": "t:global.position.bottom",
+            }
+          ],
+          "default": "start"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.before_after.name",
+      "category": "t:global.categories.media",
+      "blocks": [
+        {
+          "type": "before"
+        },
+        {
+          "type": "after"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

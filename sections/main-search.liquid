@@ -1,0 +1,330 @@
+{%- liquid
+  assign has_active_filters = false
+  
+  for filter in search.filters
+    if filter.type == 'price_range'
+      if filter.max_value.value != blank or filter.min_value.value != blank
+        assign has_active_filters = true
+        break
+      endif
+    else
+      if filter.active_values.size > 0
+        assign has_active_filters = true
+        break
+      endif
+    endif
+  endfor
+-%}
+
+<style>
+  #shopify-section-{{ section.id }} {
+    --blog-post-list-grid: auto / minmax(0, 1fr);
+    --blog-post-list-gap: 2.5rem;
+  }
+
+  @media screen and (min-width: 700px) {
+    #shopify-section-{{ section.id }} {
+      --blog-post-list-grid: auto / repeat(2, minmax(0, 1fr));
+      --blog-post-list-gap: var(--container-gutter);
+    }
+  }
+
+  @media screen and (min-width: 1000px) {
+    #shopify-section-{{ section.id }} {
+      --blog-post-list-grid: auto / repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media screen and (min-width: 1400px) {
+    #shopify-section-{{ section.id }} {
+      --blog-post-list-grid: auto / repeat(4, minmax(0, 1fr));
+    }
+  }
+</style>
+
+<div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+  {%- if search.performed == false or search.performed and search.results_count == 0 and has_active_filters == false -%}
+    <div class="container">
+      <div class="empty-state">
+        <div class="prose prose-justify-center">
+          <h1 class="h3">{{ 'search.general.title' | t }}</h1>
+
+          {%- if search.performed -%}
+            <p>{{ 'search.general.no_results' | t: terms: search.terms }}</p>
+          {%- endif -%}
+
+          <form class="max-w-xs" action="{{ routes.search_url }}" method="get" role="search">
+            <div class="search-form">
+              {%- render 'icon' with 'search' -%}
+              <input type="search" name="q" class="search-form__input heading" placeholder="{{ 'search.general.search_placeholder' | t }}" autocomplete="off" autocorrect="off">
+            </div>
+
+            {%- assign button_content = 'search.general.title' | t -%}
+            {%- render 'button', type: 'submit', content: button_content -%}
+          </form>
+        </div>
+      </div>
+    </div>
+  {%- else -%}
+    {%- comment -%}
+    Implementation note: contrary to the predictive search, main search results (products, blog posts and pages) are mingled together, which makes it
+    hard to display them in a tabbed interface. If we detect that the search is for more than one type of resources, then we actually perform multiple
+    Ajax requests to fetch the results for each type of resources. This is not ideal, but it's the best we can do with the current limitations of the
+    search
+    {%- endcomment -%}
+
+    <div class="container section-spacing section-spacing--tight">
+      <div class="prose prose-justify-center">
+        <p>{{ 'search.results_count' | t: count: search.results_count }}</p>
+        
+        <form class="max-w-xs" action="{{ routes.search_url }}" method="get" role="search">
+          <div class="search-form">
+            {%- render 'icon' with 'search' -%}
+            <input type="search" name="q" value="{{ search.terms }}" class="search-form__input heading" placeholder="{{ 'search.general.search_placeholder' | t }}" autocomplete="off" autocorrect="off">
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="collection" class="collection">
+      <div class="collection__toolbar">
+        <x-tabs class="collection__resource-tab-list">
+          <template shadowrootmode="open">
+            <slot part="tablist" role="tablist" name="tab"></slot>
+          </template>
+
+          {%- comment -%}We reverse to ensure that "products" is the first tab{%- endcomment -%}
+
+          {%- for search_type in search.types reversed -%}
+            <button slot="tab" class="link-reversed subheading" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="main-search-results-{{ search_type }}">
+              {%- assign translation_key = 'search.general.' | append: search_type | append: 's' -%}
+              {{- translation_key | t }} {% if search.types.size == 1 %}({{ search.results_count }}){% endif %}
+            </button>
+          {%- endfor -%}
+        </x-tabs>
+
+        {%- if search.types contains 'product' and section.settings.show_sort_by or section.settings.show_filters and search.filters.size > 0 -%}
+          {%- render 'collection-faceting-button', data_source: search, filter_layout: 'drawer', class: 'sm-max:hidden' -%}
+        {%- endif -%}
+      </div>
+    
+      {%- comment -%}If there is only one type of resources and that those are products, then we can show the results directly{%- endcomment -%}
+        
+      {%- if search.types.size == 1 -%}
+        <search-result-panel id="main-search-results-{{ search.types.first | escape }}">
+          {%- case search.types.first -%}
+            {%- when 'product' -%}
+              <div class="collection__inner">
+                {%- paginate search.results by section.settings.products_per_page -%}
+                  {%- if search.results_count == 0 -%}
+                    <div class="empty-state empty-state--sm">
+                      <div class="prose prose-justify-center prose--compact">
+                        <p>{{ 'collection.faceting.no_results' | t }}</p>
+        
+                        {%- assign button_content = 'collection.faceting.clear_filters' | t -%}
+                        {%- assign search_url = routes.search_url | append: '?q=' | append: search.terms | append: '#collection' -%}
+                        {%- render 'button', href: search_url, is: 'facet-link', content: button_content -%}
+                      </div>
+                    </div>
+                  {%- else -%}
+                    <div class="collection__results">
+                      {%- render 'active-facets', source: search, hash: '#collection' -%}
+                      {%- render 'product-list', products: search.results, allow_highlight: false -%}
+                    </div>
+        
+                    {%- render 'pagination', paginate: paginate, facet: true, hash: '#collection' -%}
+                  {%- endif -%}
+                {%- endpaginate -%}
+        
+                {%- render 'collection-facets-floating-button' -%}
+              </div>
+
+            {%- when 'article' -%}
+              {%- paginate search.results by 50 -%}
+                <div class="container container--narrow">
+                  <blog-post-list class="blog-post-list">
+                    {%- for article in search.results -%}
+                      {%- render 'blog-post-card', 
+                        article: article, 
+                        heading_size: 'h5',
+                        show_category: section.settings.show_category,
+                        show_date: section.settings.show_date,
+                        show_reading_time: false,
+                        show_excerpt: section.settings.show_excerpt,
+                        position: forloop.index
+                      -%}
+                    {%- endfor -%}
+                  </blog-post-list>
+                </div>
+              {%- endpaginate -%}
+
+            {%- when 'page' -%}
+              {%- paginate search.results by 50 -%}
+                <div class="container container--narrow">
+                  <div class="max-w-sm">
+                    <ul class="unstyled-list divide-y border-t border-b">
+                      {%- for page in search.results -%}
+                        <li>
+                          <a href="{{ page.url }}" class="predictive-search-link">
+                            <span class="h7">{{- page.title -}}</span>
+                            {%- render 'icon' with 'big-arrow-right', width: 10, direction_aware: true -%}
+                          </a>
+                        </li>
+                      {%- endfor -%}
+                    </ul>
+                  </div>
+                </div>
+              {%- endpaginate -%}
+          {%- endcase -%}
+        </search-result-panel>
+      {%- else -%}
+        {%- comment -%}Otherwise, we have to do different Ajax requests for each resource type{%- endcomment -%}
+        {%- for type in search.types reversed -%}
+          {%- assign search_url_for_type = routes.search_url | append: '?type=' | append: type | append: '&q=' | append: search.terms -%}
+
+          <search-result-panel id="main-search-results-{{ type | escape }}" load-from-url="{{ search_url_for_type | escape }}" hidden>
+          </search-result-panel>
+        {%- endfor -%}
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+</div>
+
+{%- comment -%}
+-------------------------------------------------------------------------------------------------------------------------------
+We render the collection drawer all the time if we show filters, as the drawer is at least always used on mobile (and optionally)
+on desktop based on the settings
+-------------------------------------------------------------------------------------------------------------------------------
+{%- endcomment -%}
+
+{%- if section.settings.show_filters and search.filters.size > 0 -%}
+  <facets-drawer class="drawer drawer--narrow drawer--facets color-scheme color-scheme--{{ settings.default_color_scheme.id }}" id="facets-drawer">
+    <h2 class="h7" slot="header">{{ 'collection.faceting.filters' | t }}</h2>
+
+    {%- render 'facets', 
+      source: search,
+      show_sort_by: section.settings.show_sort_by, 
+      open_filters_by_default: section.settings.open_filters_by_default, 
+      swatch_selector_size: section.settings.swatch_selector_size, 
+      update_on_change: false,
+      hash: '#collection',
+      form_id: 'facets-drawer-form' 
+    -%}
+
+    <div slot="footer">
+      <div class="button-group button-group--same-width w-full">
+        {%- liquid
+          assign reset_button = 'collection.faceting.clear_filters' | t
+          render 'button', content: reset_button, style: 'outline', form: 'facets-drawer-form', type: 'reset'
+        
+          assign apply_button = 'collection.faceting.apply_filters' | t
+          render 'button', content: apply_button, form: 'facets-drawer-form', type: 'submit'
+        -%}
+      </div>
+    </div>
+  </facets-drawer>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.main_search.name",
+  "class": "shopify-section--main-search",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.main_search.product_results_category"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_sort_by",
+      "label": "t:global.faceting.show_sort_by",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "products_per_page",
+      "label": "t:global.faceting.products_per_page",
+      "min": 8,
+      "max": 50,
+      "step": 1,
+      "default": 24
+    },
+    {
+      "type": "header",
+      "content": "t:sections.main_search.product_filters_category"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_filters",
+      "label": "t:global.faceting.show_filters",
+      "info": "t:global.faceting.show_filters_info",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_filter_group_name",
+      "label": "t:global.faceting.show_group_name",
+      "info": "t:global.faceting.show_group_name_info",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_filter_values_count",
+      "label": "t:global.faceting.show_filter_values_count",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "open_filters_by_default",
+      "label": "t:global.faceting.open_filters_by_default",
+      "default": false
+    },
+    {
+      "type": "select",
+      "id": "swatch_selector_size",
+      "label": "t:global.faceting.swatch_selector_size",
+      "options": [
+        {
+          "value": "sm",
+          "label": "t:global.faceting.swatch_selector_size_options.small"
+        },
+        {
+          "value": "lg",
+          "label": "t:global.faceting.swatch_selector_size_options.large"
+        }
+      ],
+      "default": "lg"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.main_search.blog_post_results_category"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_category",
+      "label": "t:global.blog.show_category",
+      "info": "t:global.blog.show_category_info",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_date",
+      "label": "t:global.blog.show_date",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_excerpt",
+      "label": "t:global.blog.show_excerpt",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

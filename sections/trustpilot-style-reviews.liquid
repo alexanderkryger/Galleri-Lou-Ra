@@ -1,0 +1,281 @@
+<div class="section trustpilot-style-section color-scheme color-scheme--{{ section.settings.color_scheme }}"
+     style="padding-top: {{ section.settings.padding_top }}px; padding-bottom: {{ section.settings.padding_bottom }}px;">
+
+  <div class="{% if section.settings.add_horizontal_spacing %}container{% endif %}">
+
+    {% if section.settings.headline != blank %}
+      <h2 class="headline">{{ section.settings.headline }}</h2>
+    {% endif %}
+
+    {% if section.settings.subtext != blank %}
+      <p class="subtext">{{ section.settings.subtext }}</p>
+    {% endif %}
+
+    <div class="trustpilot-layout">
+
+<div class="left-badge-content">
+  <div class="left-badge-header">
+    <h2 class="headline">Fremragende<br>4,7 på Trustpilot</h2>
+  </div>
+
+  <div class="left-badge-bottom">
+    <p class="subtext">Baseret på +30 anmeldelser</p>
+    <div class="left-badge-stars">
+      {% for i in (1..5) %}
+        <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="25" height="25" fill="#00B67A"/>
+          <path d="M12.5 4L14.4084 9.87336L20.584 9.87336L15.5878 13.5033L17.4962 19.3766L12.5 15.7467L7.50383 19.3766L9.41219 13.5033L4.41602 9.87336L10.5916 9.87336L12.5 4Z" fill="white"/>
+        </svg>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+      <div class="reviews">
+        {% for block in section.blocks %}
+          {% if block.type == 'review' %}
+            <div class="review-card">
+
+              <p class="reviewer-name">{{ block.settings.reviewer_name }}</p>
+              <p class="review-text">{{ block.settings.review_text }}</p>
+
+              <div class="review-bottom">
+                <div class="review-stars">
+                  {% for i in (1..5) %}
+                    {% if i <= block.settings.rating %}
+                      <svg viewBox="0 0 24 24" aria-hidden="true" style="fill: {{ block.settings.star_color }};" width="18" height="18">
+                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                      </svg>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+                <span class="review-date">{{ block.settings.review_date }}</span>
+              </div>
+
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<style>
+/* Section titles */
+.headline {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.subtext {
+  font-size: 15px;
+  color: var(--color-foreground, #fff);
+}
+
+/* Main layout */
+.trustpilot-layout {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.left-badge-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  min-height:250px;
+  font-family: 'Inter', sans-serif;
+}
+
+.left-badge-header {
+  align-self: start;
+  padding-top: 5px;
+}
+
+.left-badge-bottom {
+  align-self: end;
+  text-align: right;
+  padding-bottom: 5px;
+}
+
+.left-badge-stars {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.trustpilot-logo-text {
+  font-size: 13px;
+  color: var(--color-text-subdued, #2e2e2e);
+  font-weight: 500;
+}
+
+/* Reviews grid */
+.reviews {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+/* Card */
+.review-card {
+  background: #5a6339;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: 250px;
+}
+
+/* Reviewer */
+.reviewer-name {
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+/* Review text */
+.review-text {
+  font-size: 14px;
+  color: var(--color-text);
+  margin-bottom: 16px;
+  flex-grow: 1;
+}
+
+/* Bottom row */
+.review-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Stars */
+.review-stars {
+  display: flex;
+  gap: 2px;
+}
+
+/* Date */
+.review-date {
+  font-size: 12px;
+  color: var(--color-text-subdued);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .trustpilot-layout {
+    flex-direction: column;
+  }
+  .left-image {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .left-image img {
+    max-width: 200px;
+  }
+  .reviews {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+{% schema %}
+{
+  "name": "Trustpilot Style Reviews",
+  "max_blocks": 5,
+  "settings": [
+    {
+      "type": "text",
+      "id": "headline",
+      "label": "Headline",
+      "default": "Fremragende 4,7 på Trustpilot"
+    },
+    {
+      "type": "text",
+      "id": "subtext",
+      "label": "Subtext",
+      "default": "Baseret på +30 anmeldelser"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_horizontal_spacing",
+      "label": "Add horizontal spacing",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Top spacing",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Bottom spacing",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Section color scheme",
+      "default": "scheme-1"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "review",
+      "name": "Review",
+      "settings": [
+        {
+          "type": "color",
+          "id": "star_color",
+          "label": "Star color",
+          "default": "#00B67A"
+        },
+        {
+          "type": "text",
+          "id": "reviewer_name",
+          "label": "Reviewer Name"
+        },
+        {
+          "type": "textarea",
+          "id": "review_text",
+          "label": "Review Text"
+        },
+        {
+          "type": "range",
+          "id": "rating",
+          "label": "Rating (1–5)",
+          "min": 1,
+          "max": 5,
+          "default": 5
+        },
+        {
+          "type": "text",
+          "id": "review_date",
+          "label": "Date (e.g. 02/09/23)"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Trustpilot Style Reviews",
+      "category": "Testimonials"
+    }
+  ]
+}
+{% endschema %}

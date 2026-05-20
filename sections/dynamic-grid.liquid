@@ -1,0 +1,302 @@
+<style>
+  #shopify-section-{{ section.id }} {
+    --dynamic-grid-explicit-row-count: max({% for block in section.blocks %}var(--dynamic-grid-mobile-row-max-track-line-{{ block.id }}, 0){% unless forloop.last %},{% endunless %}{% endfor %});
+    --dynamic-grid-gap: {{ section.settings.mobile_gap }}px;
+
+    {% if section.settings.background_image != blank and section.settings.show_background_image_parallax %}
+      clip-path: inset(0);
+    {% endif %}
+  }
+
+  @media screen and (min-width: 1000px) {
+    #shopify-section-{{ section.id }} {
+      --dynamic-grid-explicit-row-count: max({% for block in section.blocks %}var(--dynamic-grid-desktop-row-max-track-line-{{ block.id }}, 0){% unless forloop.last %},{% endunless %}{% endfor %});
+      --dynamic-grid-gap: {{ section.settings.gap }}px;
+    }
+  }
+</style>
+
+<div {% if section.settings.allow_transparent_header %}allow-transparent-header{% endif %} class="color-scheme color-scheme--{{ section.settings.color_scheme }} overflow-hidden">
+  {%- if section.settings.background_image != blank or section.settings.background_video != blank -%}
+    <div class="with-overlay" {% if section.settings.overlay_color != 'rgba(0,0,0,0)' %}style="--overlay: {{ section.settings.overlay_color.rgb }} / {{ section.settings.overlay_opacity | divided_by: 100.0 }}"{% endif %}>
+      {%- liquid
+        assign preload = false
+
+        if section.index < 2
+          assign preload = true
+        endif
+
+        if section.settings.background_video != blank
+          render 'media' with section.settings.background_video, mobile_media: section.settings.mobile_background_video, autoplay: true, playsinline: true, controls: false, loop: true, preload: preload, class: 'image-background'
+        else
+          if section.settings.show_background_image_parallax
+            assign background_image_class = 'image-background-fixed'
+          else
+            assign background_image_class = 'image-background'
+          endif
+
+          render 'media' with section.settings.background_image, mobile_media: section.settings.mobile_background_image, preload: preload, class: background_image_class
+        endif
+      -%}
+    </div>
+  {%- endif -%}
+
+  <div class="{% if section.settings.add_horizontal_spacing %}container{% endif %} {% if section.settings.add_vertical_spacing %}section-spacing{% endif %}">
+    <dynamic-grid class="dynamic-grid">
+      {%- liquid
+        # We reversed it instead of using content_for_blocks because we want to ensure that the
+        # block at the top renders on top of other elements, similar to layers on Photoshop
+        assign reversed_blocks = section.blocks | reverse
+        
+        for block in reversed_blocks
+          render block
+        endfor
+      -%}
+    </dynamic-grid>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.dynamic_grid.name",
+  "class": "shopify-section--dynamic-grid",
+  "tag": "section",
+  "disabled_on": {
+    "groups": ["header", "custom.overlay"]
+  },
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:sections.dynamic_grid.instructions"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:sections.dynamic_grid.instructions_second"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "checkbox",
+      "id": "allow_transparent_header",
+      "label": "t:global.section.allow_transparent_header",
+      "info": "t:global.section.allow_transparent_header_info",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "background_image",
+      "label": "t:global.image.background_image",
+      "info": "t:sections.dynamic_grid.background_image_recommendation"
+    },
+    {
+      "type": "image_picker",
+      "id": "mobile_background_image",
+      "label": "t:global.image.mobile_background_image",
+      "info": "t:sections.dynamic_grid.mobile_background_image_recommendation"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_background_image_parallax",
+      "label": "t:sections.dynamic_grid.show_background_image_parallax",
+      "default": false
+    },
+    {
+      "type": "video",
+      "id": "background_video",
+      "label": "t:global.video.background_video",
+      "info": "t:sections.dynamic_grid.background_video_recommendation"
+    },
+    {
+      "type": "video",
+      "id": "mobile_background_video",
+      "label": "t:global.video.mobile_background_video",
+      "info": "t:sections.dynamic_grid.mobile_background_video_recommendation"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_vertical_spacing",
+      "label": "t:global.spacing.add_vertical_spacing",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "add_horizontal_spacing",
+      "label": "t:global.spacing.add_horizontal_spacing",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "t:sections.dynamic_grid.desktop_grid_category",
+      "info": "t:sections.dynamic_grid.desktop_grid_category_info"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "min": 0,
+      "max": 48,
+      "step": 2,
+      "unit": "px",
+      "label": "t:sections.dynamic_grid.gap",
+      "default": 16
+    },
+    {
+      "type": "header",
+      "content": "t:sections.dynamic_grid.mobile_grid_category",
+      "info": "t:sections.dynamic_grid.mobile_grid_category_info"
+    },
+    {
+      "type": "range",
+      "id": "mobile_gap",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "label": "t:sections.dynamic_grid.gap",
+      "default": 10
+    },
+    {
+      "type": "header",
+      "content": "t:global.colors.category",
+      "visible_if": "{{ section.settings.background_image != blank or section.settings.background_video != blank }}"
+    },
+    {
+      "type": "color",
+      "id": "overlay_color",
+      "label": "t:global.colors.image_overlay_color",
+      "default": "#000000",
+      "visible_if": "{{ section.settings.background_image != blank or section.settings.background_video != blank }}"
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "label": "t:global.colors.image_overlay_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 20,
+      "visible_if": "{{ section.settings.background_image != blank or section.settings.background_video != blank }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "_dynamic-grid-item"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.dynamic_grid.name",
+      "category": "t:global.categories.storytelling",
+      "blocks": [
+        {
+          "type": "_dynamic-grid-item",
+          "settings": {
+            "text_alignment": "center",
+            "desktop_row_start": 6,
+            "desktop_column_start": 6,
+            "desktop_column_end": 12,
+            "mobile_row_start": 9,
+            "mobile_column_start": 1,
+            "mobile_column_end": 6
+          },
+          "blocks": [
+            {
+              "type": "rich-text",
+              "settings": {
+                "text": "<p>Use this text area to tell your customers about your brand and vision. You can change it in the theme editor, and position it easily onto the grid.<\/p>",
+              }
+            }
+          ]
+        },
+        {
+          "type": "_dynamic-grid-item",
+          "settings": {
+            "desktop_row_start": 1,
+            "desktop_column_start": 3,
+            "desktop_column_end": 4,
+            "mobile_row_start": 1,
+            "mobile_column_start": 1,
+            "mobile_column_end": 2,
+          },
+          "blocks": [
+            {
+              "type": "image-with-caption"
+            }
+          ]
+        },
+        {
+          "type": "_dynamic-grid-item",
+          "settings": {
+            "desktop_row_start": 1,
+            "desktop_column_start": 15,
+            "desktop_column_end": 16,
+            "mobile_row_start": 1,
+            "mobile_column_start": 6,
+            "mobile_column_end": 8
+          },
+          "blocks": [
+            {
+              "type": "image-with-caption"
+            }
+          ]
+        },
+        {
+          "type": "_dynamic-grid-item",
+          "settings": {
+            "desktop_row_start": 3,
+            "desktop_column_start": 1,
+            "desktop_column_end": 3,
+            "mobile_row_start": 12,
+            "mobile_column_start": 1,
+            "mobile_column_end": 3
+          },
+          "blocks": [
+            {
+              "type": "image-with-caption"
+            }
+          ]
+        },
+        {
+          "type": "_dynamic-grid-item",
+          "settings": {
+            "desktop_row_start": 3,
+            "desktop_column_start": 12,
+            "desktop_column_end": 14,
+            "mobile_row_start": 8,
+            "mobile_column_start": 6,
+            "mobile_column_end": 8
+          },
+          "blocks": [
+            {
+              "type": "image-with-caption"
+            }
+          ]
+        },
+        {
+          "type": "_dynamic-grid-item",
+          "settings": {
+            "desktop_row_start": 2,
+            "desktop_column_start": 5,
+            "desktop_column_end": 15,
+            "mobile_row_start": 4,
+            "mobile_column_start": 1,
+            "mobile_column_end": 8
+          },
+          "blocks": [
+            {
+              "type": "_dynamic-grid-heading",
+              "settings": {
+                "text": "Write some impactful text and position it onto the grid."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

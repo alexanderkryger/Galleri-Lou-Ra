@@ -1,0 +1,204 @@
+{%- if block.settings.text != blank -%}
+  {%- render 'heading', 
+    content: block.settings.text,
+    html_tag: block.settings.html_tag,
+    style: block.settings.heading_size,
+    highlight_effect: block.settings.highlight_effect, 
+    highlight_accent_color: block.settings.highlight_accent_color, 
+    highlight_text_color: block.settings.highlight_text_color,
+    indent: block.settings.indent,
+    block: block
+  -%}
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Heading",
+  "tag": null,
+  "settings": [
+    {
+      "type": "inline_richtext",
+      "id": "text",
+      "label": "t:global.text.text",
+      "default": "Heading"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "label": "t:global.text.size",
+      "options": [
+        {
+          "value": "display-xl",
+          "label": "Display XL"
+        },
+        {
+          "value": "display-l",
+          "label": "Display L"
+        },
+        {
+          "value": "display-m",
+          "label": "Display M"
+        },
+        {
+          "value": "h1",
+          "label": "XX-Large"
+        },
+        {
+          "value": "h2",
+          "label": "X-Large"
+        },
+        {
+          "value": "h3",
+          "label": "Large"
+        },
+        {
+          "value": "h4",
+          "label": "Medium"
+        },
+        {
+          "value": "h5",
+          "label": "Small"
+        },
+        {
+          "value": "h6",
+          "label": "X-Small"
+        },
+        {
+          "value": "h7",
+          "label": "XX-Small"
+        }
+      ],
+      "default": "h3"
+    },
+    {
+      "type": "select",
+      "id": "html_tag",
+      "label": "t:blocks.heading.html_tag",
+      "info": "t:blocks.heading.html_tag_info",
+      "options": [
+        {
+          "value": "p",
+          "label": "Paragraph"
+        },
+        {
+          "value": "h1",
+          "label": "H1"
+        },
+        {
+          "value": "h2",
+          "label": "H2"
+        },
+        {
+          "value": "h3",
+          "label": "H3"
+        },
+        {
+          "value": "h4",
+          "label": "H4"
+        },
+        {
+          "value": "h5",
+          "label": "H5"
+        },
+        {
+          "value": "h6",
+          "label": "H6"
+        }
+      ],
+      "default": "p"
+    },
+    {
+      "type": "select",
+      "id": "indent",
+      "label": "t:global.heading_effect.indent",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:global.heading_effect.indent_options.none"
+        },
+        {
+          "value": "empty_space",
+          "label": "t:global.heading_effect.indent_options.empty_space"
+        },
+        {
+          "value": "circle",
+          "label": "t:global.heading_effect.indent_options.circle"
+        },
+        {
+          "value": "square",
+          "label": "t:global.heading_effect.indent_options.square"
+        },
+        {
+          "value": "diamond",
+          "label": "t:global.heading_effect.indent_options.diamond"
+        }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "header",
+      "content": "t:global.heading_effect.category",
+      "info": "t:global.heading_effect.colors_info"
+    },
+    {
+      "type": "select",
+      "id": "highlight_effect",
+      "label": "t:global.heading_effect.effect",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:global.heading_effect.effect_options.none"
+        },
+        {
+          "value": "default",
+          "label": "t:global.heading_effect.effect_options.default"
+        },
+        {
+          "value": "italic",
+          "label": "t:global.heading_effect.effect_options.italic_font_override"
+        },
+        {
+          "value": "circle",
+          "label": "t:global.heading_effect.effect_options.circle"
+        },
+        {
+          "value": "circle_pencil",
+          "label": "t:global.heading_effect.effect_options.circle_pencil"
+        },
+        {
+          "value": "underline",
+          "label": "t:global.heading_effect.effect_options.underline"
+        },
+        {
+          "value": "underline_pencil",
+          "label": "t:global.heading_effect.effect_options.underline_pencil"
+        },
+        {
+          "value": "marker",
+          "label": "t:global.heading_effect.effect_options.marker"
+        },
+        {
+          "value": "tilted_marker",
+          "label": "t:global.heading_effect.effect_options.tilted_marker"
+        }
+      ],
+      "default": "default"
+    },
+    {
+      "type": "color",
+      "id": "highlight_accent_color",
+      "label": "t:global.heading_effect.accent_color"
+    },
+    {
+      "type": "color",
+      "id": "highlight_text_color",
+      "label": "t:global.heading_effect.text_color"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:blocks.heading.name"
+    }
+  ]
+}
+{% endschema %}

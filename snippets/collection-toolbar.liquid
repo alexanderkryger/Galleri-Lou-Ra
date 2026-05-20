@@ -1,0 +1,126 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+COLLECTION TOOLBAR COMPONENT
+----------------------------------------------------------------------------------------------------------------------
+
+This component is rendered at the top of the collection and show information about the current collection, as well as
+access to filters.
+{%- endcomment -%}
+
+{%- liquid
+  assign mobile_items_per_row = cart.attributes.product_card_mobile_items_per_row | default: section.settings.products_per_row_mobile
+  assign desktop_layout_mode = cart.attributes.product_card_desktop_layout | default: 'grid'
+-%}
+
+<div class="collection__toolbar">
+  <span class="subheading sm-max:hidden">{{ 'collection.products_count' | t: count: collection.products_count }}</span>
+
+  {%- if section.settings.show_sort_by or section.settings.show_filters and collection.filters.size > 0 or section.settings.quick_links_menu.links.size > 0 -%}
+    {%- render 'collection-faceting-button', data_source: collection, filter_layout: section.settings.filter_layout, show_count: true, class: 'sm:hidden', context: 'mobile' -%}
+  {%- endif -%}
+
+  {%- if section.settings.quick_links_menu.links.size > 0 -%}
+    {%- assign menu = section.settings.quick_links_menu -%}
+    
+    <div class="collection__toolbar-linklist md-max:hidden">
+      {%- for link in menu.links -%}
+        <a href="{{ link.url }}" class="subheading {% if link.current %}link{% else %}link-reversed{% endif %}">{{ link.title }}</a>
+      {%- endfor -%}
+    </div>
+  {%- endif -%}
+
+  <div class="vertically-separated-list">
+    {%- if section.settings.quick_links_menu.links.size > 0 -%}
+      {%- assign menu = section.settings.quick_links_menu -%}
+  
+      <div class="md:hidden">
+        {%- assign selected_link = menu.links | where: 'current' | first -%}
+  
+        <button type="button" class="h-stack gap-2" aria-controls="collection-toolbar-quick-links" aria-expanded="false">
+          <span class="subheading">{{ selected_link.title | default: menu.links.first.title }}</span>
+          {%- render 'icon' with 'chevron-down' -%}
+        </button>
+  
+        <x-popover id="collection-toolbar-quick-links" class="popover color-scheme color-scheme--{{ settings.default_color_scheme.id }}" role="dialog">
+          <p slot="header" class="subheading">{{ 'collection.quick_links.navigate_to' | t }}</p>
+  
+          <div class="popover__value-list">
+            {%- for link in menu.links -%}
+              <a href="{{ link.url }}" class="popover__value-option subheading">
+                {{- link.title -}}
+  
+                {%- if link.current -%}
+                  {%- render 'icon' with 'success-checkmark', width: 10 -%}
+                {%- endif -%}
+              </a>
+            {%- endfor -%}
+          </div>
+        </x-popover>
+      </div>
+    {%- endif -%}
+
+    {%- if section.settings.show_product_card_size_selector -%}
+      <div class="h-stack gap-3.5 sm:hidden">
+        {%- if section.settings.products_per_row_mobile == 1 -%}
+          <collection-layout-selector-button class="collection__layout-selector">
+            <input type="radio" value="1" class="sr-only" name="mobile-items-per-row" id="mobile-items-per-row-1" {% if mobile_items_per_row == 1 %}checked{% endif %}>
+            <label for="mobile-items-per-row-1">
+              <span class="sr-only">Show one card per row</span>
+              {%- render 'icon' with 'product-card-1x1' -%}
+            </label>
+          </collection-layout-selector-button>
+
+          <collection-layout-selector-button class="collection__layout-selector">
+            <input type="radio" value="2" class="sr-only" name="mobile-items-per-row" id="mobile-items-per-row-2" {% if mobile_items_per_row == 2 %}checked{% endif %}>
+            <label for="mobile-items-per-row-2">
+              <span class="sr-only">Show two cards per row</span>
+              {%- render 'icon' with 'product-card-2x2' -%}
+            </label>
+          </collection-layout-selector-button>
+        {%- else -%}
+          <collection-layout-selector-button class="collection__layout-selector">
+            <input type="radio" value="2" class="sr-only" name="mobile-items-per-row" id="mobile-items-per-row-2" {% if mobile_items_per_row == 2 %}checked{% endif %}>
+            <label for="mobile-items-per-row-2">
+              <span class="sr-only">Show two cards per row</span>
+              {%- render 'icon' with 'product-card-2x2' -%}
+            </label>
+          </collection-layout-selector-button>
+
+          <collection-layout-selector-button class="collection__layout-selector">
+            <input type="radio" value="3" class="sr-only" name="mobile-items-per-row" id="mobile-items-per-row-3" {% if mobile_items_per_row == 3 %}checked{% endif %}>
+            <label for="mobile-items-per-row-3">
+              <span class="sr-only">Show three cards per row</span>
+              {%- render 'icon' with 'product-card-3x3' -%}
+            </label>
+          </collection-layout-selector-button>
+        {%- endif -%}
+      </div>
+
+      <div class="h-stack gap-3.5 sm-max:hidden">
+        <collection-layout-selector-button class="collection__layout-selector">
+          <input type="radio" value="grid" class="sr-only" name="desktop-layout" id="desktop-layout-grid" {% if desktop_layout_mode == 'grid' %}checked{% endif %}>
+          <label for="desktop-layout-grid">
+            <span class="sr-only">Show cards bigger</span>
+            {%- render 'icon' with 'product-card-2x2' -%}
+          </label>
+        </collection-layout-selector-button>
+
+        <collection-layout-selector-button class="collection__layout-selector">
+          <input type="radio" value="thumbnails" class="sr-only" name="desktop-layout" id="desktop-layout-thumbnails" {% if desktop_layout_mode == 'thumbnails' %}checked{% endif %}>
+          <label for="desktop-layout-thumbnails">
+            <span class="sr-only">Show cards smaller</span>
+            {%- render 'icon' with 'product-card-4x4' -%}
+          </label>
+        </collection-layout-selector-button>
+      </div>
+    {%- endif -%}
+
+    {%- if section.settings.show_sort_by or section.settings.show_filters and collection.filters.size > 0 and section.settings.filter_layout == 'drawer' -%}
+      {%- if section.settings.show_product_card_size_selector -%}
+        <hr class="divider sm-max:hidden">
+      {%- endif -%}
+
+      {%- render 'collection-faceting-button', data_source: collection, filter_layout: section.settings.filter_layout, class: 'sm-max:hidden', context: 'desktop' -%}
+    {%- endif -%}
+  </div>
+</div>

@@ -1,0 +1,63 @@
+{%- if block.blocks.size > 0 -%}
+  <div class="multi-column__item color-scheme color-scheme--{{ block.settings.color_scheme.id }} group snap-start" {{ block.shopify_attributes }}>
+    <div class="prose prose-justify-{{ block.settings.text_alignment }} prose--compact">
+      {%- content_for 'blocks' -%}
+    </div>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.multi_column.blocks.column.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "text_alignment",
+      "id": "text_alignment",
+      "label": "t:global.text.alignment"
+    }
+  ],
+  "blocks": [
+    { "type": "image" },
+    { "type": "video" },
+    { "type": "icon" },
+    { "type": "subheading" },
+    { "type": "heading" },
+    { "type": "rich-text" },
+    { "type": "liquid" },
+    { "type": "button" },
+    { "type": "accordion" },
+    { "type": "separator" },
+    { "type": "spacer" }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.multi_column.blocks.column.name",
+      "blocks": [
+        {
+          "type": "image"
+        },
+        {
+          "type": "heading",
+          "settings": {
+            "text": "Column",
+            "heading_size": "h4"
+          }
+        },
+        {
+          "type": "rich-text",
+          "settings": {
+            "text": "<p>Pair text with an image to focus on your chosen product, collection, or blog post. Add details on availability, style, or even provide a review.</p>"
+          }
+        },
+      ]
+    }
+  ]
+}
+{% endschema %}

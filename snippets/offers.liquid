@@ -1,0 +1,90 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+OFFERS COMPONENT
+----------------------------------------------------------------------------------------------------------------------
+
+This component is used to render a list of "offers". As of today, this is used on product section, featured product
+section. It is therefore abstracted here to be reused in all these contexts.
+
+Because there are a lot of different use cases and positioning, you need to pass the full block as an argument, and
+you must ensure that the block contains the same settings as what the theme does. For more information, you can copy
+paste the settings coming from the "main-product.liquid" section
+
+********************************************
+Supported variables
+********************************************
+
+* block: the block containing all the settings
+{%- endcomment -%}
+
+{%- assign carousel_background = nil -%}
+{%- assign carousel_text_color = nil -%}
+{%- assign rendered_item_count = 0 -%}
+{%- assign alignment = block.settings.text_alignment | replace: 'left', 'start' | replace: 'right', 'end' -%}
+
+{%- capture offer_items -%}
+  {%- for i in (1..3) -%}
+    {%- liquid
+      assign icon_setting = 'offer_' | append: i | append: '_icon'
+      assign icon_width_setting = 'offer_' | append: i | append: '_icon_width'
+      assign subheading_setting = 'offer_' | append: i | append: '_subheading'
+      assign content_setting = 'offer_' | append: i | append: '_content'
+      assign background_setting = 'offer_' | append: i | append: '_background'
+      assign text_color_setting = 'offer_' | append: i | append: '_text_color'
+    -%}
+
+    {%- if block.settings[subheading_setting] != blank or block.settings[content_setting] != blank -%}
+      {%- assign carousel_background = carousel_background | default: block.settings[background_setting] -%}
+      {%- assign carousel_text_color = carousel_text_color | default: block.settings[text_color_setting] -%}
+      {%- assign rendered_item_count = rendered_item_count | plus: 1 -%}
+
+      {%- capture subheading -%}
+        {%- if block.settings[subheading_setting] != blank -%}
+          <p class="medium">{{ block.settings[subheading_setting] }}</p>
+        {%- endif -%}
+      {%- endcapture -%}
+
+      <div class="offer-item text-{{ alignment }} justify-items-{{ alignment }}" {% if block.settings.layout != 'carousel' %}style="{% render 'surface', background: block.settings[background_setting], text_color: block.settings[text_color_setting] %}"{% endif %}>
+        {%- if block.settings.icon_position == 'stacked' -%}
+          {%- render 'icon', image: block.settings[icon_setting], width: block.settings[icon_width_setting] -%}
+          {{- subheading -}}
+        {%- elsif subheading != blank or block.settings[icon_setting] != blank -%}
+          <div class="h-stack gap-2">
+            {%- render 'icon', image: block.settings[icon_setting], width: block.settings[icon_width_setting] -%}
+            {{- subheading -}}
+          </div>
+        {%- endif -%}
+
+        {%- if block.settings[content_setting] != blank -%}
+          <div class="prose">
+            <p>{{ block.settings[content_setting] }}</p>
+          </div>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+  {%- endfor -%}
+{%- endcapture -%}
+
+{%- if rendered_item_count > 0 -%}
+  {%- if block.settings.layout == 'carousel' -%}
+    <div class="offer-carousel {% if alignment == 'start' and rendered_item_count > 1 %}offer-carousel--navigation-inline{% endif %}" style="{% render 'surface', background: carousel_background, text_color: carousel_text_color %}">
+      <scroll-carousel id="carousel-{{ block.id }}" class="offer-carousel__scroller scroll-area">
+        {{- offer_items -}}
+      </scroll-carousel>
+
+      {%- if rendered_item_count > 1 -%}
+        <carousel-navigation class="scroll-marker-group scroll-marker-group--dots scroll-marker-group--dots-sm" aria-controls="carousel-{{ block.id }}">
+          {%- for i in (1..rendered_item_count) -%}
+            <button type="button" class="scroll-marker tap-area tap-area--sm" aria-current="{% if forloop.first %}true{% else %}false{% endif %}">
+              <span class="sr-only">{{ 'general.accessibility.go_to_item' | t: index: forloop.index }}</span>
+            </button>
+          {%- endfor -%}
+        </carousel-navigation>
+      {%- endif -%}
+    </div>
+  {%- else -%}
+    <div class="offer-list offer-list--{{ block.settings.layout }}">
+      {{- offer_items -}}
+    </div>
+  {%- endif -%}
+{%- endif -%}

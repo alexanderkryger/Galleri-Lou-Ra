@@ -1,0 +1,247 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+FACETING
+----------------------------------------------------------------------------------------------------------------------
+
+Display the facets for a given resource.
+
+********************************************
+Supported variables
+********************************************
+
+* source: either collection or search drop to extract the filters from [REQUIRED]
+* form_id: the form ID that can be used to attach other elements to the form (such as a submit or reset button) [REQUIRED]
+* show_sort_by: if set to true the sort by selectors is visible [OPTIONAL]
+* open_filters_by_default: if set to true all the filters are open by default [OPTIONAL]
+* swatch_selector_size: the size of color swatch (can be "sm" or "lg") [OPTIONAL]
+* update_on_change: if set to true the results will reload as soon as an option is changed [OPTIONAL]
+{%- endcomment -%}
+
+{%- assign color_label_list = 'general.label.color' | t | replace: ', ', ',' | downcase | split: ',' -%}
+{%- capture id_prefix -%}facets-{{ form_id }}{%- endcapture -%}
+
+{%- comment -%}--- Button-style filter CSS ---{%- endcomment -%}
+<style>
+  .facet-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .facet-button {
+    position: relative;
+  }
+
+  .facet-button input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
+
+  .facet-button label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.03);
+    font-size: 14px;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  .facet-button label:hover {
+    border-color: rgba(0, 0, 0, 0.25);
+    background-color: rgba(0, 0, 0, 0.06);
+  }
+
+  .facet-button input[type="checkbox"]:checked + label {
+    background-color: var(--facet-button-active-bg, #cd7628);
+    color: var(--facet-button-active-color, #ffffff);
+    border-color: var(--facet-button-active-bg, #cd7628);
+  }
+
+  .facet-button input[type="checkbox"]:checked + label:hover {
+    opacity: 0.9;
+  }
+
+  .facet-button input[type="checkbox"]:disabled + label {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+</style>
+
+<facets-form {% if update_on_change %}update-on-change{% endif %} section-id="{{ section.id }}">
+  <form id="{{ form_id }}" method="GET" action="{{ request.path }}" class="facets" {% if hash %}scroll-to="{{ hash }}"{% endif %}>
+    {%- render 'active-facets', source: collection, hash: hash -%}
+
+    {%- comment -%}We always reset to the first page so that when criteria change, the page is restored to the first one{%- endcomment -%}
+    <input type="hidden" name="page" value="">
+
+    {%- if source.current_type != blank or source.current_vendor != blank -%}
+      <input type="hidden" name="q" value="{{ source.current_vendor | default: source.current_type | escape }}">
+    {%- endif -%}
+
+    {%- if show_sort_by == false and source.sort_by != blank -%}
+      <input type="hidden" name="sort_by" value="{{ source.sort_by }}">
+    {%- endif -%}
+
+    {%- if request.page_type == 'search' -%}
+      <input type="hidden" name="q" value="{{ source.terms | escape }}">
+      <input type="hidden" name="type" value="product">
+    {%- endif -%}
+
+    {%- if show_sort_by -%}
+      {%- capture filter_content -%}
+        <div class="v-stack gap-2">
+          {%- liquid
+            assign sort_by = source.sort_by | default: source.default_sort_by
+
+            for sort_option in source.sort_options
+              assign value_id_prefix = id_prefix | append: '-' | append: forloop.index
+
+              if sort_by == sort_option.value
+                assign sort_by_active = true
+              else
+                assign sort_by_active = false
+              endif
+
+              render 'checkbox', type: 'radio', label: sort_option.name, name: 'sort_by', value: sort_option.value, checked: sort_by_active, id_prefix: value_id_prefix
+            endfor
+          -%}
+        </div>
+      {%- endcapture -%}
+
+      {%- assign sort_by_text = 'collection.faceting.sort_by' | t -%}
+      {%- render 'accordion', title: sort_by_text, content: filter_content, subheading_title: true -%}
+    {%- endif -%}
+
+    {%- for filter in source.filters -%}
+      {%- if filter.param_name == 'filter.v.availability' -%}
+        {%- comment -%}
+        IMPLEMENTATION NOTE: we are doing an exception for the availability filter, where we display it differently
+        {%- endcomment -%}
+
+        <div class="facets__availability-control">
+          <label for="{{ id_prefix }}-{{ filter.param_name }}" class="subheading">{{- 'collection.faceting.in_stock_only' | t -}}</label>
+          <input id="{{ id_prefix }}-{{ filter.param_name }}" type="checkbox" class="switch" role="switch" name="{{ filter.param_name }}" value="1" {% if filter.active_values.size > 0 %}checked{% endif %}>
+        </div>
+      {%- else -%}
+        {%- capture filter_content -%}
+          {%- if filter.type == 'boolean' -%}
+            <div class="v-stack gap-2.5">
+              {%- for filter_value in filter.values -%}
+                {%- liquid
+                  assign value_id_prefix = id_prefix | append: '-' | append: forloop.index
+
+                  if section.settings.show_filter_values_count
+                    assign label = filter_value.label | append: ' (' | append: filter_value.count | append: ')'
+                  else
+                    assign label = filter_value.label
+                  endif
+                -%}
+
+                {%- render 'checkbox', label: label, name: filter_value.param_name, value: filter_value.value, checked: filter_value.active, disabled: disabled, id_prefix: value_id_prefix -%}
+              {%- endfor -%}
+            </div>
+          {%- else -%}
+            {%- assign downcase_label = filter.label | downcase -%}
+
+            {%- case filter.type -%}
+              {%- when 'list' -%}
+                {%- liquid
+                  if filter.presentation == 'image'
+                    assign wrapper_class_list = 'image-filter-list'
+                  elsif filter.presentation == 'swatch' or color_label_list contains downcase_label
+                    case settings.color_swatch_shape
+                      when 'circle'
+                        if swatch_selector_size == 'sm'
+                          assign wrapper_class_list = 'h-stack gap-3 wrap'
+                        else
+                          assign wrapper_class_list = 'h-stack gap-4 wrap'
+                        endif
+
+                      else
+                        if swatch_selector_size == 'sm'
+                          assign wrapper_class_list = 'h-stack gap-3 wrap'
+                        else
+                          assign wrapper_class_list = 'h-stack gap-4 wrap'
+                        endif
+                    endcase
+                  else
+                    assign wrapper_class_list = 'facet-buttons'
+                  endif
+                -%}
+                
+                <div class="{{ wrapper_class_list }}">
+                  {% liquid
+                    for filter_value in filter.values
+                      assign value_id_prefix = id_prefix | append: '-' | append: forloop.index
+
+                      if filter.presentation == 'image'
+                        render 'option-value', type: 'image_filter', filter_value: filter_value, id_prefix: value_id_prefix
+                      elsif filter.presentation == 'swatch' or color_label_list contains downcase_label
+                        render 'option-value', type: 'swatch', filter_value: filter_value, show_tooltip: true, size: swatch_selector_size, id_prefix: value_id_prefix
+                      else
+                        if section.settings.show_filter_values_count
+                          assign label = filter_value.label | append: ' (' | append: filter_value.count | append: ')'
+                        else
+                          assign label = filter_value.label
+                        endif
+
+                        assign input_id = value_id_prefix | append: '-' | append: filter_value.param_name | handleize
+
+                        capture button_html
+                          echo '<div class="facet-button">'
+                          echo '<input type="checkbox" id="'
+                          echo input_id
+                          echo '" name="'
+                          echo filter_value.param_name
+                          echo '" value="'
+                          echo filter_value.value
+                          echo '"'
+                          if filter_value.active
+                            echo ' checked'
+                          endif
+                          if disabled
+                            echo ' disabled'
+                          endif
+                          echo '>'
+                          echo '<label for="'
+                          echo input_id
+                          echo '">'
+                          echo label
+                          echo '</label>'
+                          echo '</div>'
+                        endcapture
+
+                        echo button_html
+                      endif
+                    endfor
+                  %}
+                </div>
+
+              {%- when 'price_range' -%}
+                {%- render 'price-range', filter: filter -%}
+            {%- endcase -%}
+          {%- endif -%}
+        {%- endcapture -%}
+
+        {%- if filter_content != blank -%}
+          {%- render 'accordion', title: filter.label, content: filter_content, subheading_title: true, open: open_filters_by_default -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endfor -%}
+
+    <noscript style="display: block; margin-top: 12px;">
+      {%- assign button_content = 'collection.faceting.apply_filters' | t -%}
+      {%- render 'button', type: 'submit', content: button_content, stretch: true -%}
+    </noscript>
+  </form>
+</facets-form>

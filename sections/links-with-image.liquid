@@ -1,0 +1,307 @@
+{%- if section.blocks.size > 0 -%}
+  {%- liquid
+    assign first_block_with_image = nil
+
+    for block in section.blocks
+      if block.settings.image != blank
+        assign first_block_with_image = block
+        break
+      endif
+    endfor
+  -%}
+
+  <div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+    {%- comment -%}
+    ------------------------------------------------------------------------------------------------
+    DESKTOP MODE
+    ------------------------------------------------------------------------------------------------
+    {%- endcomment -%}
+
+    <links-with-image class="section-split {% if section.settings.image_position == 'end' %}section-split--reverse{% endif %} md-max:hidden">
+      <div class="section-split__column section-split__column--image section-split__column--flushed">
+        {%- if first_block_with_image == blank -%}
+          {{- 'collection-apparel-2' | placeholder_svg_tag: 'size-full min-h-screen' -}}
+        {%- else -%}
+          <div class="grid sticky isolate">
+            {%- assign has_outputted_first = false -%}
+
+            {%- for block in section.blocks -%}
+              {%- if block.settings.image != blank -%}
+                <div data-image-block-id="{{ block.id | escape }}" class="@container/content-box span-full mix-blend-plus-lighter {% if has_outputted_first %}opacity-0{% endif %}">
+                  <div class="content-box min-h-screen">
+                    <div class="content-box__background-media">
+                      {%- render 'media' with block.settings.image, mobile_media: block.settings.mobile_image, preload: forloop.first -%}
+                    </div>
+  
+                    {%- if block.settings.image_caption != blank -%}
+                      <div class="place-self-end-start">
+                        <div class="prose max-w-sm" style="color: #ffffff">
+                          <p>{{ block.settings.image_caption }}</p>
+                        </div>
+                      </div>
+                    {%- endif -%}
+                  </div>
+                </div>
+
+                {%- assign has_outputted_first = true -%}
+              {%- endif -%}
+            {%- endfor -%}
+          </div>
+        {%- endif -%}
+      </div>
+
+      <div class="section-split__column {% if section.settings.separate_subheading %}h-full{% endif %}">
+        {%- assign text_alignment = section.settings.text_alignment | replace: 'left', 'start' | replace: 'right', 'end' -%}
+
+        <div class="v-stack gap-12 justify-items-{{ text_alignment }} text-{{ text_alignment }} {% if section.settings.separate_subheading %}content-between h-full{% endif %}">
+          {%- if section.settings.title != blank -%}
+            {%- render 'subheading', content: section.settings.title -%}
+          {%- endif -%}
+
+          <div class="w-full divide-y">
+            {%- for block in section.blocks -%}
+              <a href="{{ block.settings.url | default: '#' }}" class="big-link big-link--opacity justify-{{ text_alignment }}" data-block-id="{{ block.id }}" {{ block.shopify_attributes }}>
+                <div class="v-stack gap-2">
+                  {%- render 'heading', content: block.settings.title, style: block.settings.heading_tag -%}
+
+                  {%- if block.settings.content != blank -%}
+                    <p>{{ block.settings.content }}</p>
+                  {%- endif -%}
+                </div>
+              </a>
+            {%- endfor -%}
+          </div>
+        </div>
+      </div>
+    </links-with-image>
+
+    {%- comment -%}
+    ------------------------------------------------------------------------------------------------
+    MOBILE MODE
+    ------------------------------------------------------------------------------------------------
+    {%- endcomment -%}
+
+    <div class="section-spacing container md:hidden">
+      <div class="section-stack">
+        {%- if section.settings.title != blank -%}
+          {%- render 'subheading', content: section.settings.title, class: 'justify-self-center' -%}
+        {%- endif -%}
+
+        {%- assign carousel_id = 'mobile-carousel-' | append: section.id -%}
+
+        <div class="v-stack gap-8">
+          {%- assign has_outputted_first = false -%}
+
+          <links-with-image-mobile-image-list class="grid isolate">
+            {%- for block in section.blocks -%}
+              {%- if block.settings.image != blank -%}
+                <div data-image-block-id="{{ block.id | escape }}" class="@container/content-box span-full mix-blend-plus-lighter {% if has_outputted_first %}opacity-0 visibility-hidden{% endif %}">
+                  <div class="content-box h-full">
+                    <div class="content-box__background-media">
+                      {%- render 'media' with block.settings.image, mobile_media: block.settings.mobile_image, preload: forloop.first -%}
+                    </div>
+
+                    {%- if block.settings.image_caption != blank -%}
+                      <div class="{% if section.settings.image_position == 'end' %}place-self-end-start{% else %}place-self-end{% endif %}">
+                        <div class="prose max-w-sm" style="color: #ffffff">
+                          <p>{{ block.settings.image_caption }}</p>
+                        </div>
+                      </div>
+                    {%- endif -%}
+                  </div>
+                </div>
+
+                {%- assign has_outputted_first = true -%}
+              {%- endif -%}
+            {%- endfor -%}
+          </links-with-image-mobile-image-list>
+
+          <links-with-image-carousel id="{{ carousel_id }}" allow-swipe class="links-with-image-carousel">
+            {%- for block in section.blocks -%}
+              <a href="{{ block.settings.url | default: '#' }}" data-block-id="{{ block.id }}" class="v-stack justify-center text-center gap-2.5 {% if forloop.first %}is-selected{% endif %}">
+                {%- render 'heading', content: block.settings.title, style: block.settings.heading_tag -%}
+
+                  {%- if block.settings.content != blank -%}
+                    <p>{{ block.settings.content }}</p>
+                  {%- endif -%}
+              </a>
+            {%- endfor -%}
+          </links-with-image-carousel>
+        </div>
+
+        {%- if section.blocks.size > 1 -%}
+          <carousel-navigation class="scroll-marker-group scroll-marker-group--lines justify-self-center" aria-controls="{{ carousel_id }}">
+            {%- for block in section.blocks -%}
+              <button class="scroll-marker tap-area tap-area--sm" aria-current="{% if forloop.first %}true{% else %}false{% endif %}">
+                <span class="sr-only">{{ 'general.accessibility.go_to_item' | t: index: forloop.index }}</span>
+              </button>
+            {%- endfor -%}
+          </carousel-navigation>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.links_with_image.name",
+  "class": "shopify-section--links-with-image",
+  "tag": "section",
+  "disabled_on": {
+    "groups": ["header", "custom.overlay"]
+  },
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "select",
+      "id": "image_position",
+      "label": "t:sections.links_with_image.image_position",
+      "options": [
+        {
+          "value": "start",
+          "label": "t:global.position.left"
+        },
+        {
+          "value": "end",
+          "label": "t:global.position.right"
+        }
+      ],
+      "default": "start"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "label": "t:global.text.subheading",
+      "default": "Our categories"
+    },
+    {
+      "type": "checkbox",
+      "id": "separate_subheading",
+      "label": "t:sections.links_with_image.separate_subheading",
+      "default": true
+    },
+    {
+      "type": "text_alignment",
+      "id": "text_alignment",
+      "label": "t:global.text.alignment"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "link",
+      "name": "t:sections.links_with_image.blocks.link.name",
+      "settings": [
+        {
+          "type": "header",
+          "content": "t:sections.links_with_image.blocks.link.image_category"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:global.image.image",
+          "info": "t:sections.links_with_image.blocks.link.image_size_recommendation"
+        },
+        {
+          "type": "image_picker",
+          "id": "mobile_image",
+          "label": "t:global.image.mobile_image",
+          "info": "t:sections.links_with_image.blocks.link.mobile_image_size_recommendation"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "image_caption",
+          "label": "t:global.image.caption"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.links_with_image.blocks.link.content_category"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "title",
+          "label": "t:global.text.heading",
+          "default": "Title"
+        },
+        {
+          "type": "text",
+          "id": "content",
+          "label": "t:global.text.content"
+        },
+        {
+          "type": "url",
+          "id": "url",
+          "label": "t:sections.links_with_image.blocks.link.url"
+        },
+        {
+          "type": "select",
+          "id": "heading_tag",
+          "label": "t:global.text.heading_size",
+          "options": [
+            {
+              "value": "h1",
+              "label": "XX-Large"
+            },
+            {
+              "value": "h2",
+              "label": "X-Large"
+            },
+            {
+              "value": "h3",
+              "label": "Large"
+            },
+            {
+              "value": "h4",
+              "label": "Medium"
+            },
+            {
+              "value": "h5",
+              "label": "Small"
+            },
+            {
+              "value": "h6",
+              "label": "X-Small"
+            },
+            {
+              "value": "h7",
+              "label": "XX-Small"
+            }
+          ],
+          "default": "h3"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.links_with_image.name",
+      "category": "t:global.categories.media",
+      "blocks": [
+        {
+          "type": "link",
+          "settings": {
+            "title": "Category 1"
+          }
+        },
+        {
+          "type": "link",
+          "settings": {
+            "title": "Category 2"
+          }
+        },
+        {
+          "type": "link",
+          "settings": {
+            "title": "Category 3"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,701 @@
+{%- if section.blocks.size > 0 -%}
+  <div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+    {%- capture section_header -%}
+      {%- if section.settings.subheading != blank or section.settings.title != blank or section.settings.content != blank -%}
+        <div class="prose {% if section.settings.layout == 'stacked' and section.settings.image == blank %}prose-justify-center{% endif %}">
+          {%- render 'subheading', content: section.settings.subheading -%}
+          {%- render 'heading', content: section.settings.title, balance_text: true, style: section.settings.heading_size, html_tag: 'h2' -%}
+
+          {%- if section.settings.content != blank -%}
+            <div class="max-w-sm">
+              {{- section.settings.content -}}
+            </div>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+    {%- endcapture -%}
+
+    {%- capture section_content -%}
+      {%- if section.settings.collapse_attributes -%}
+        {%- comment -%}
+        ---------------------------------------------------------------------------------------------
+        RENDER THE ACCORDION STYLE
+        ---------------------------------------------------------------------------------------------
+        {%- endcomment -%}
+        <div class="accordion-list">
+          {%- for block in section.blocks -%}
+            {%- render 'accordion', 
+              title: block.settings.title, 
+              icon: block.settings.icon,
+              custom_icon: block.settings.custom_icon,
+              content: block.settings.content,
+              uppercase_title: section.settings.uppercase_attribute_title, 
+              large: true,
+              block: block 
+            -%}
+            {%- endfor -%}
+        </div>
+      {%- else -%}
+        {%- comment -%}
+        ---------------------------------------------------------------------------------------------
+        RENDER THE GRID STYLE
+        ---------------------------------------------------------------------------------------------
+        {%- endcomment -%}
+        <table class="specification-table">
+          <tbody class="divide-y">
+            {%- for block in section.blocks -%}
+              <tr class="specification-table__row" {{ block.shopify_attributes }}>
+                <th scope="row" class="specification-table__row-name {% if section.settings.uppercase_attribute_title %}uppercase{% endif %}">
+                  <div class="text-with-icon {% if section.settings.show_attribute_icon_on_top %}text-with-icon--stacked{% endif %}">
+                    {%- if block.settings.custom_icon != blank -%}
+                      {%- render 'icon', image: block.settings.custom_icon, width: 20, mobile_width: 16 -%}
+                    {%- elsif block.settings.icon != 'none' -%}
+                      {%- render 'icon' with block.settings.icon, width: 20, mobile_width: 16 -%}
+                    {%- endif -%}
+
+                    {{- block.settings.title -}}
+                  </div>
+                </th>
+
+                <td class="specification-table__row-value prose">
+                  {{- block.settings.content -}}
+                </td>
+              </tr>
+            {%- endfor -%}
+          </tbody>
+        </table>
+      {%- endif -%}
+    {%- endcapture -%}
+
+    {%- if section.settings.image != blank -%}
+      <div class="section-split {% if section.settings.image_position == 'end' %}section-split--reverse{% endif %}">
+        <div class="section-split__column section-split__column--image {% unless section.settings.add_image_spacing %}section-split__column--flushed{% endunless %}">
+          {{- section.settings.image | image_url: width: section.settings.image.width | image_tag: sizes: '(max-width: 699px) 100vw, 50vw', widths: '300,400,500,600,800,1000,1200,1400,1600,1800,2000', class: 'size-full' -}}
+        </div>
+
+        <div class="section-split__column align-self-start">
+          <div class="section-stack">
+            {{- section_header -}}
+            {{- section_content -}}
+          </div>
+        </div>
+      </div>
+    {%- else -%}
+      {%- if section.settings.layout == 'split' -%}
+        <div class="section-split">
+          <div class="section-split__column">
+            {{- section_header -}}
+          </div>
+
+          <div class="section-split__column">
+            {{- section_content -}}
+          </div>
+        </div>
+      {%- else -%}
+        <div class="container section-spacing">
+          <div class="section-stack max-w-md mx-auto">
+            {{- section_header -}}
+            {{- section_content -}}
+          </div>
+        </div>
+      {%- endif -%}
+    {%- endif -%}
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.specifications.name",
+  "class": "shopify-section--specifications",
+  "tag": "section",
+  "disabled_on": {
+    "groups": ["header", "custom.overlay"]
+  },
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:global.image.image",
+      "info": "t:sections.specifications.image_size_recommendation"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "t:global.layout.layout",
+      "options": [
+        {
+          "value": "split",
+          "label": "t:global.layout.layout_options.split"
+        },
+        {
+          "value": "stacked",
+          "label": "t:global.layout.layout_options.stacked"
+        }
+      ],
+      "default": "stacked",
+      "visible_if": "{{ section.settings.image == blank }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_image_spacing",
+      "label": "t:sections.specifications.add_image_spacing",
+      "default": false,
+      "visible_if": "{{ section.settings.image != blank }}"
+    },
+    {
+      "type": "select",
+      "id": "image_position",
+      "label": "t:sections.specifications.image_position",
+      "options": [
+        {
+          "value": "start",
+          "label": "t:global.position.left"
+        },
+        {
+          "value": "end",
+          "label": "t:global.position.right"
+        }
+      ],
+      "default": "start",
+      "visible_if": "{{ section.settings.image != blank }}"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "subheading",
+      "label": "t:global.text.subheading",
+      "default": "Learn more"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "label": "t:global.text.heading",
+      "default": "Specifications"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "label": "t:global.text.heading_size",
+      "options": [
+        {
+          "value": "display-xl",
+          "label": "Display XL"
+        },
+        {
+          "value": "display-l",
+          "label": "Display L"
+        },
+        {
+          "value": "display-m",
+          "label": "Display M"
+        },
+        {
+          "value": "h1",
+          "label": "XX-Large"
+        },
+        {
+          "value": "h2",
+          "label": "X-Large"
+        },
+        {
+          "value": "h3",
+          "label": "Large"
+        },
+        {
+          "value": "h4",
+          "label": "Medium"
+        },
+        {
+          "value": "h5",
+          "label": "Small"
+        },
+        {
+          "value": "h6",
+          "label": "X-Small"
+        },
+        {
+          "value": "h7",
+          "label": "XX-Small"
+        }
+      ],
+      "default": "h3"
+    },
+    {
+      "type": "richtext",
+      "id": "content",
+      "label": "t:global.text.content",
+      "default": "<p>Add specification attributes to help your customers choose the most appropriate product or to share brand values.</p>"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.specifications.attributes_category"
+    },
+    {
+      "type": "checkbox",
+      "id": "collapse_attributes",
+      "label": "t:sections.specifications.collapse_attributes",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_attribute_icon_on_top",
+      "label": "t:sections.specifications.show_attribute_icon_on_top",
+      "default": false,
+      "visible_if": "{{ section.settings.collapse_attributes == false }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "uppercase_attribute_title",
+      "label": "t:sections.specifications.uppercase_attribute_title",
+      "default": false
+    }
+  ],
+  "blocks": [
+    {
+      "type": "attribute",
+      "name": "t:sections.specifications.blocks.attribute.name",
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "t:global.icons.icon",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:global.icons.icon_options.none"
+            },
+            {
+              "value": "picto-heart",
+              "label": "t:global.icons.icon_options.heart",
+              "group": "t:global.icons.icon_options.shopping_and_products_category"
+            },
+            {
+              "value": "picto-star",
+              "label": "t:global.icons.icon_options.star",
+              "group": "t:global.icons.icon_options.shopping_and_products_category"
+            },
+            {
+              "value": "picto-like",
+              "label": "t:global.icons.icon_options.like",
+              "group": "t:global.icons.icon_options.shopping_and_products_category"
+            },
+            {
+              "value": "picto-sparkle",
+              "label": "t:global.icons.icon_options.sparkle",
+              "group": "t:global.icons.icon_options.shopping_and_products_category"
+            },
+            {
+              "value": "picto-store",
+              "label": "t:global.icons.icon_options.store",
+              "group": "t:global.icons.icon_options.shopping_and_products_category"
+            },
+            {
+              "value": "picto-price-tag",
+              "label": "t:global.icons.icon_options.price_tag",
+              "group": "t:global.icons.icon_options.shopping_and_products_category"
+            },
+            {
+              "value": "picto-discount-coupon",
+              "label": "t:global.icons.icon_options.discount_coupon",
+              "group": "t:global.icons.icon_options.shopping_and_products_category"
+            },
+            {
+              "value": "picto-discount-badge",
+              "label": "t:global.icons.icon_options.discount_badge",
+              "group": "t:global.icons.icon_options.shopping_and_products_category"
+            },
+            {
+              "value": "picto-ticket-star",
+              "label": "t:global.icons.icon_options.ticket_star",
+              "group": "t:global.icons.icon_options.shopping_and_products_category"
+            },
+            {
+              "value": "picto-gift-card",
+              "label": "t:global.icons.icon_options.gift_card",
+              "group": "t:global.icons.icon_options.shopping_and_products_category"
+            },
+            {
+              "value": "picto-happy",
+              "label": "t:global.icons.icon_options.happy",
+              "group": "t:global.icons.icon_options.shopping_and_products_category"
+            },
+            {
+              "value": "picto-checked",
+              "label": "t:global.icons.icon_options.checked",
+              "group": "t:global.icons.icon_options.shopping_and_products_category"
+            },
+            {
+              "value": "picto-gift-box",
+              "label": "t:global.icons.icon_options.gift_box",
+              "group": "t:global.icons.icon_options.shopping_and_products_category"
+            },
+            {
+              "value": "picto-credit-card",
+              "label": "t:global.icons.icon_options.credit_card",
+              "group": "t:global.icons.icon_options.payments_category"
+            },
+            {
+              "value": "picto-wallet",
+              "label": "t:global.icons.icon_options.wallet",
+              "group": "t:global.icons.icon_options.payments_category"
+            },
+            {
+              "value": "picto-secure",
+              "label": "t:global.icons.icon_options.secure",
+              "group": "t:global.icons.icon_options.payments_category"
+            },
+            {
+              "value": "picto-refund",
+              "label": "t:global.icons.icon_options.refund",
+              "group": "t:global.icons.icon_options.payments_category"
+            },
+            {
+              "value": "picto-invoice",
+              "label": "t:global.icons.icon_options.invoice",
+              "group": "t:global.icons.icon_options.payments_category"
+            },
+            {
+              "value": "picto-loyalty-points",
+              "label": "t:global.icons.icon_options.loyalty_points",
+              "group": "t:global.icons.icon_options.payments_category"
+            },
+            {
+              "value": "picto-location-pin",
+              "label": "t:global.icons.icon_options.location_pin",
+              "group": "t:global.icons.icon_options.shipping_and_delivery_category"
+            },
+            {
+              "value": "picto-truck",
+              "label": "t:global.icons.icon_options.truck",
+              "group": "t:global.icons.icon_options.shipping_and_delivery_category"
+            },
+            {
+              "value": "picto-express-delivery",
+              "label": "t:global.icons.icon_options.express_delivery",
+              "group": "t:global.icons.icon_options.shipping_and_delivery_category"
+            },
+            {
+              "value": "picto-package",
+              "label": "t:global.icons.icon_options.package",
+              "group": "t:global.icons.icon_options.shipping_and_delivery_category"
+            },
+            {
+              "value": "picto-shipping-protection",
+              "label": "t:global.icons.icon_options.shipping_protection",
+              "group": "t:global.icons.icon_options.shipping_and_delivery_category"
+            },
+            {
+              "value": "picto-return-box",
+              "label": "t:global.icons.icon_options.return_box",
+              "group": "t:global.icons.icon_options.shipping_and_delivery_category"
+            },
+            {
+              "value": "picto-return",
+              "label": "t:global.icons.icon_options.return",
+              "group": "t:global.icons.icon_options.shipping_and_delivery_category"
+            },
+            {
+              "value": "picto-fragile",
+              "label": "t:global.icons.icon_options.fragile",
+              "group": "t:global.icons.icon_options.shipping_and_delivery_category"
+            },
+            {
+              "value": "picto-warehouse",
+              "label": "t:global.icons.icon_options.warehouse",
+              "group": "t:global.icons.icon_options.shipping_and_delivery_category"
+            },
+            {
+              "value": "picto-analytics-graph",
+              "label": "t:global.icons.icon_options.analytics_graph",
+              "group": "t:global.icons.icon_options.marketing_category"
+            },
+            {
+              "value": "picto-social-media",
+              "label": "t:global.icons.icon_options.social_media",
+              "group": "t:global.icons.icon_options.marketing_category"
+            },
+            {
+              "value": "picto-magnifying-glass",
+              "label": "t:global.icons.icon_options.magnifying_glass",
+              "group": "t:global.icons.icon_options.marketing_category"
+            },
+            {
+              "value": "picto-trending",
+              "label": "t:global.icons.icon_options.trending",
+              "group": "t:global.icons.icon_options.marketing_category"
+            },
+            {
+              "value": "picto-megaphone",
+              "label": "t:global.icons.icon_options.megaphone",
+              "group": "t:global.icons.icon_options.marketing_category"
+            },
+            {
+              "value": "picto-recycle",
+              "label": "t:global.icons.icon_options.recycle",
+              "group": "t:global.icons.icon_options.nature_and_ecology_category"
+            },
+            {
+              "value": "picto-leaf",
+              "label": "t:global.icons.icon_options.leaf",
+              "group": "t:global.icons.icon_options.nature_and_ecology_category"
+            },
+            {
+              "value": "picto-tree",
+              "label": "t:global.icons.icon_options.tree",
+              "group": "t:global.icons.icon_options.nature_and_ecology_category"
+            },
+            {
+              "value": "picto-science",
+              "label": "t:global.icons.icon_options.science",
+              "group": "t:global.icons.icon_options.nature_and_ecology_category"
+            },
+            {
+              "value": "picto-earth",
+              "label": "t:global.icons.icon_options.earth",
+              "group": "t:global.icons.icon_options.nature_and_ecology_category"
+            },
+            {
+              "value": "picto-sun",
+              "label": "t:global.icons.icon_options.sun",
+              "group": "t:global.icons.icon_options.nature_and_ecology_category"
+            },
+            {
+              "value": "picto-summit",
+              "label": "t:global.icons.icon_options.summit",
+              "group": "t:global.icons.icon_options.nature_and_ecology_category"
+            },
+            {
+              "value": "picto-feather",
+              "label": "t:global.icons.icon_options.feather",
+              "group": "t:global.icons.icon_options.nature_and_ecology_category"
+            },
+            {
+              "value": "picto-drop-of-water",
+              "label": "t:global.icons.icon_options.drop_of_water",
+              "group": "t:global.icons.icon_options.nature_and_ecology_category"
+            },
+            {
+              "value": "picto-email",
+              "label": "t:global.icons.icon_options.email",
+              "group": "t:global.icons.icon_options.communication_category"
+            },
+            {
+              "value": "picto-inbox",
+              "label": "t:global.icons.icon_options.inbox",
+              "group": "t:global.icons.icon_options.communication_category"
+            },
+            {
+              "value": "picto-plane",
+              "label": "t:global.icons.icon_options.plane",
+              "group": "t:global.icons.icon_options.communication_category"
+            },
+            {
+              "value": "picto-mobile-phone",
+              "label": "t:global.icons.icon_options.mobile_phone",
+              "group": "t:global.icons.icon_options.communication_category"
+            },
+            {
+              "value": "picto-phone",
+              "label": "t:global.icons.icon_options.phone",
+              "group": "t:global.icons.icon_options.communication_category"
+            },
+            {
+              "value": "picto-chat",
+              "label": "t:global.icons.icon_options.chat",
+              "group": "t:global.icons.icon_options.communication_category"
+            },
+            {
+              "value": "picto-customer-support",
+              "label": "t:global.icons.icon_options.customer_support",
+              "group": "t:global.icons.icon_options.communication_category"
+            },
+            {
+              "value": "picto-comment",
+              "label": "t:global.icons.icon_options.comment",
+              "group": "t:global.icons.icon_options.communication_category"
+            },
+            {
+              "value": "picto-date",
+              "label": "t:global.icons.icon_options.date",
+              "group": "t:global.icons.icon_options.communication_category"
+            },
+            {
+              "value": "picto-info",
+              "label": "t:global.icons.icon_options.info",
+              "group": "t:global.icons.icon_options.communication_category"
+            },
+            {
+              "value": "picto-text",
+              "label": "t:global.icons.icon_options.text",
+              "group": "t:global.icons.icon_options.communication_category"
+            },
+            {
+              "value": "picto-ai-spark",
+              "label": "t:global.icons.icon_options.ai_spark",
+              "group": "t:global.icons.icon_options.communication_category"
+            },
+            {
+              "value": "picto-user",
+              "label": "t:global.icons.icon_options.user",
+              "group": "t:global.icons.icon_options.communication_category"
+            },
+            {
+              "value": "picto-news",
+              "label": "t:global.icons.icon_options.news",
+              "group": "t:global.icons.icon_options.communication_category"
+            },
+            {
+              "value": "picto-glasses",
+              "label": "t:global.icons.icon_options.glasses",
+              "group": "t:global.icons.icon_options.objects_category"
+            },
+            {
+              "value": "picto-craft",
+              "label": "t:global.icons.icon_options.craft",
+              "group": "t:global.icons.icon_options.objects_category"
+            },
+            {
+              "value": "picto-compass",
+              "label": "t:global.icons.icon_options.compass",
+              "group": "t:global.icons.icon_options.objects_category"
+            },
+            {
+              "value": "picto-asterisk",
+              "label": "t:global.icons.icon_options.asterisk",
+              "group": "t:global.icons.icon_options.objects_category"
+            },
+            {
+              "value": "picto-microscope",
+              "label": "t:global.icons.icon_options.microscope",
+              "group": "t:global.icons.icon_options.objects_category"
+            },
+            {
+              "value": "picto-weight",
+              "label": "t:global.icons.icon_options.weight",
+              "group": "t:global.icons.icon_options.objects_category"
+            },
+            {
+              "value": "picto-pyramide",
+              "label": "t:global.icons.icon_options.pyramide",
+              "group": "t:global.icons.icon_options.objects_category"
+            },
+            {
+              "value": "picto-sports",
+              "label": "t:global.icons.icon_options.sports",
+              "group": "t:global.icons.icon_options.objects_category"
+            },
+            {
+              "value": "picto-wrap",
+              "label": "t:global.icons.icon_options.wrap",
+              "group": "t:global.icons.icon_options.objects_category"
+            },
+            {
+              "value": "picto-expand",
+              "label": "t:global.icons.icon_options.expand",
+              "group": "t:global.icons.icon_options.objects_category"
+            },
+            {
+              "value": "picto-measure",
+              "label": "t:global.icons.icon_options.measure",
+              "group": "t:global.icons.icon_options.objects_category"
+            },
+            {
+              "value": "picto-cut",
+              "label": "t:global.icons.icon_options.cut",
+              "group": "t:global.icons.icon_options.objects_category"
+            },
+            {
+              "value": "picto-furniture",
+              "label": "t:global.icons.icon_options.furniture",
+              "group": "t:global.icons.icon_options.objects_category"
+            },
+            {
+              "value": "picto-music",
+              "label": "t:global.icons.icon_options.music",
+              "group": "t:global.icons.icon_options.objects_category"
+            },
+            {
+              "value": "picto-drink",
+              "label": "t:global.icons.icon_options.drink",
+              "group": "t:global.icons.icon_options.food_and_drink_category"
+            },
+            {
+              "value": "picto-burger",
+              "label": "t:global.icons.icon_options.burger",
+              "group": "t:global.icons.icon_options.food_and_drink_category"
+            },
+            {
+              "value": "picto-pizza",
+              "label": "t:global.icons.icon_options.pizza",
+              "group": "t:global.icons.icon_options.food_and_drink_category"
+            },
+            {
+              "value": "picto-fork-knife",
+              "label": "t:global.icons.icon_options.fork_knife",
+              "group": "t:global.icons.icon_options.food_and_drink_category"
+            },
+            {
+              "value": "picto-chef",
+              "label": "t:global.icons.icon_options.chef",
+              "group": "t:global.icons.icon_options.food_and_drink_category"
+            },
+          ],
+          "default": "none"
+        },
+        {
+          "type": "image_picker",
+          "id": "custom_icon",
+          "label": "t:global.icons.custom_icon",
+          "info": "t:global.icons.custom_icon_info"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "title",
+          "label": "t:global.text.title",
+          "default": "Attribute"
+        },
+        {
+          "type": "richtext",
+          "id": "content",
+          "label": "t:global.text.content",
+          "default": "<p>Write some content.</p>"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.specifications.name",
+      "category": "t:global.categories.content",
+      "blocks": [
+        {
+          "type": "attribute",
+          "settings": {
+            "title": "Attribute 1",
+            "content": "<p>Write some content.</p>"
+          }
+        },
+        {
+          "type": "attribute",
+          "settings": {
+            "title": "Attribute 2",
+            "content": "<p>Write some content.</p>"
+          }
+        },
+        {
+          "type": "attribute",
+          "settings": {
+            "title": "Attribute 3",
+            "content": "<p>Write some content.</p>"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

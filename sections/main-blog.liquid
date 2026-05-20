@@ -1,0 +1,349 @@
+<style>
+  #shopify-section-{{ section.id }} {
+    --blog-post-list-grid: auto / minmax(0, 1fr);
+    --blog-post-list-gap: 2.5rem;
+  }
+
+  @media screen and (min-width: 700px) {
+    #shopify-section-{{ section.id }} {
+      --blog-post-list-grid: auto-flow dense / repeat(2, minmax(0, 1fr));
+      --blog-post-list-gap: var(--container-gutter);
+    }
+  }
+
+  @media screen and (min-width: 1000px) {
+    #shopify-section-{{ section.id }} {
+      --blog-post-list-grid: auto-flow dense / repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media screen and (min-width: 1400px) {
+    #shopify-section-{{ section.id }} {
+      --blog-post-list-grid: auto-flow dense / repeat(4, minmax(0, 1fr));
+    }
+  }
+</style>
+
+<div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+  <div class="container">
+    {%- if blog.articles_count == 0 -%}
+      <div class="empty-state">
+        <div class="prose prose-justify-center">
+          <h1 class="h3">{{ 'blog.general.empty_blog' | t }}</h1>
+
+          {%- assign button_content = 'blog.general.back_to_home' | t -%}
+          {%- render 'button', content: button_content, href: routes.root_url -%}
+        </div>
+      </div>
+    {%- else -%}
+      {%- if section.settings.show_tags and blog.all_tags.size > 0 -%}
+        <ul class="blog-tags unstyled-list scroll-area bleed" role="list">
+          <li class="link-reversed subheading" aria-current="{% if current_tags == blank %}true{% else %}false{% endif %}">
+            <a href="{{ blog.url }}">{{- 'blog.general.all_posts' | t -}}</a>
+          </li>
+
+          {%- for tag in blog.all_tags -%}
+            {%- if current_tags contains tag -%}
+              <li class="link-reversed subheading" aria-current="true">{{- tag | link_to_remove_tag: tag -}}</li>
+            {%- else -%}
+              <li class="link-reversed subheading" aria-current="false">{{- tag | link_to_tag: tag -}}</li>
+            {%- endif -%}
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+
+      {%- paginate blog.articles by section.settings.posts_per_page -%}
+        <div class="blog-post-list-wrapper v-stack gap-8 sm:gap-12">
+          <blog-post-list class="blog-post-list">
+            {%- assign newsletter_block = section.blocks | where: 'type', 'newsletter' | first -%}
+            {%- assign current_index_position = 0 -%}
+
+            {%- for article in blog.articles -%}
+              {%- assign current_index_position = current_index_position | plus: 1 -%}
+
+              {%- if newsletter_block.settings.position == current_index_position -%}
+                {%- assign current_index_position = current_index_position | plus: 1 -%}
+
+                <div class="blog-post-list__newsletter" {% if settings.stagger_blog_posts %}reveal-on-scroll="true"{% endif %} {{ newsletter_block.shopify_attributes }}>
+                  <div class="blog-post-list__newsletter-inner color-scheme color-scheme--{{ newsletter_block.settings.color_scheme.id }}">
+                    <div class="v-stack gap-8">
+                      <div class="prose prose--compact prose-justify-center">
+                        {%- if newsletter_block.settings.icon != 'none' -%}
+                          {%- render 'icon' with newsletter_block.settings.icon, width: 34, mobile_width: 28 -%}
+                        {%- endif -%}
+
+                        {%- if newsletter_block.settings.title != blank -%}
+                          <p class="h6">{{ newsletter_block.settings.title }}</p>
+                        {%- endif -%}
+
+                        {{- newsletter_block.settings.content -}}
+                      </div>
+
+                      <div class="v-stack gap-3.5">
+                        {%- assign has_form_posted_successfully = false -%}
+
+                        {%- form 'customer', id: 'main-blog-newsletter-form', class: 'form' -%}
+                          {%- if form.posted_successfully? -%}
+                            {%- assign success_message = 'general.newsletter.subscribed_successfully' | t -%}
+                            {%- assign has_form_posted_successfully = true -%}
+
+                            {%- render 'banner', content: success_message, status: 'success', text_alignment: 'center' -%}
+                          {%- else -%}
+                            {%- if form.errors -%}
+                              {%- capture error_message -%}{{ form.errors.translated_fields['email'] }} {{ form.errors.messages['email'] }}{%- endcapture -%}
+                              {%- render 'banner', content: error_message, status: 'error' -%}
+                            {%- endif -%}
+                      
+                            <input type="hidden" name="contact[tags]" value="newsletter">
+                      
+                            {%- assign input_label = 'general.newsletter.email' | t -%}
+                            
+                            <div class="fieldset fieldset--tight">
+                              {%- render 'input', name: 'contact[email]', label: input_label, type: 'email', required: true, autocomplete: 'email', enterkeyhint: 'send' -%}
+                              {%- render 'button', type: 'submit', content: newsletter_block.settings.button_text, icon: 'arrow-right' -%}
+                            </div>
+                          {%- endif -%}
+                        {%- endform -%}
+
+                        {%- if newsletter_block.settings.privacy_policy_text != blank and has_form_posted_successfully == false -%}
+                          <p class="text-sm text-subdued">
+                            {{- newsletter_block.settings.privacy_policy_text -}}
+                          </p>
+                        {%- endif -%}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {%- endif -%}
+
+              {%- if current_index_position == section.settings.highlight_blog_post_position and article.image != blank -%}
+                {%- capture meta_content -%}
+                  {%- if section.settings.show_category and article.tags.size > 0 -%}
+                    <span>{{ article.tags | first }}</span>
+                  {%- endif -%}
+
+                  {%- if section.settings.show_date -%}
+                    <span>{{ article.published_at | date: format: 'abbreviated_date' }}</span>
+                  {%- endif -%}
+
+                  {%- if section.settings.show_reading_time -%}
+                    {%- assign reading_time = article.content | strip_html | split: ' ' | size | times: 1.0 | divided_by: 250 | ceil -%}
+                    <span>{{ 'blog.post.reading_time' | t: time: reading_time }}</span>
+                  {%- endif -%}
+                {%- endcapture -%}
+
+                <a href="{{ article.url }}" class="blog-post-list__highlighted-article group full-bleed">
+                  <div class="content-box overflow-clip min-h-md">
+                    {% assign image = article.metafields.custom.secondary_image | default: article.image -%}
+
+                    <div class="content-box__background-media with-overlay">
+                      {{- image | image_url: width: image.width | image_tag: loading: 'lazy', sizes: '100vw', widths: '200,300,400,600,800,1000,1200,1400,1600,1800,2000,2200,2400', class: 'size-full zoom-image group-hover:zoom' -}}
+                    </div>
+
+                    <div class="place-self-end-start" style="color: #ffffff">
+                      <div class="prose">
+                        {%- if meta_content != blank -%}
+                          <div class="meta-information subheading">
+                            {%- if settings.subheading_icon != blank -%}
+                              <span class="shape shape--{{ settings.subheading_icon }}"></span>
+                            {%- endif -%}
+                            
+                            {{- meta_content -}}
+                          </div>
+                        {%- endif -%}
+
+                        <span class="h2">{{ article.title }}</span>
+
+                        {%- if section.settings.show_excerpt and article.excerpt_or_content != blank -%}
+                          <p>{{ article.excerpt_or_content | strip_html | truncate: 200 }}</p>
+                        {%- endif -%}
+                      </div>
+                    </div>
+                  </div>
+                </a>
+              {%- else -%}
+                {%- render 'blog-post-card', 
+                  article: article, 
+                  heading_size: section.settings.blog_post_card_heading_size,
+                  show_category: section.settings.show_category,
+                  show_date: section.settings.show_date,
+                  show_reading_time: section.settings.show_reading_time,
+                  show_excerpt: section.settings.show_excerpt,
+                  position: forloop.index
+                -%}
+              {%- endif -%}
+            {%- endfor -%}
+          </blog-post-list>
+
+          {%- render 'pagination', paginate: paginate -%}
+        </div>
+      {%- endpaginate -%}
+    {%- endif -%}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.main_blog.name",
+  "class": "shopify-section--main-blog",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_tags",
+      "label": "t:sections.main_blog.show_tags",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "posts_per_page",
+      "label": "t:sections.main_blog.blog_posts_per_page",
+      "min": 3,
+      "max": 48,
+      "step": 3,
+      "default": 9
+    },
+    {
+      "type": "range",
+      "id": "highlight_blog_post_position",
+      "label": "t:sections.main_blog.highlight_blog_post_position",
+      "info": "t:sections.main_blog.highlight_blog_post_position_info",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "t:sections.main_blog.blog_post_category"
+    },
+    {
+      "type": "select",
+      "id": "blog_post_card_heading_size",
+      "label": "t:global.text.heading_size",
+      "options": [
+        {
+          "value": "h4",
+          "label": "Medium"
+        },
+        {
+          "value": "h5",
+          "label": "Small"
+        },
+        {
+          "value": "h6",
+          "label": "X-Small"
+        },
+        {
+          "value": "h7",
+          "label": "XX-Small"
+        }
+      ],
+      "default": "h5"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_category",
+      "label": "t:global.blog.show_category",
+      "info": "t:global.blog.show_category_info",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_date",
+      "label": "t:global.blog.show_date",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_reading_time",
+      "label": "t:global.blog.show_reading_time",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_excerpt",
+      "label": "t:global.blog.show_excerpt",
+      "default": true
+    }
+  ],
+  "blocks": [
+    {
+      "type": "newsletter",
+      "name": "t:sections.main_blog.blocks.newsletter.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "color_scheme",
+          "id": "color_scheme",
+          "label": "t:global.colors.scheme",
+          "default": "scheme-2"
+        },
+        {
+          "type": "range",
+          "id": "position",
+          "label": "t:sections.main_blog.blocks.newsletter.position",
+          "info": "t:sections.main_blog.blocks.newsletter.position_info",
+          "min": 1,
+          "max": 50,
+          "default": 1
+        },
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "t:sections.main_blog.blocks.newsletter.icon",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.main_blog.blocks.newsletter.icon_options.none"
+            },
+            {
+              "value": "envelope",
+              "label": "t:sections.main_blog.blocks.newsletter.icon_options.envelope"
+            },
+            {
+              "value": "inbox",
+              "label": "t:sections.main_blog.blocks.newsletter.icon_options.inbox"
+            },
+            {
+              "value": "plane",
+              "label": "t:sections.main_blog.blocks.newsletter.icon_options.plane"
+            }
+          ],
+          "default": "envelope"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "title",
+          "label": "t:global.text.heading",
+          "default": "Newsletter"
+        },
+        {
+          "type": "richtext",
+          "id": "content",
+          "label": "t:global.text.content",
+          "default": "<p>Subscribe for inspiring stories, offers, and news.</p>"
+        },
+        {
+          "type": "text",
+          "id": "button_text",
+          "label": "t:global.text.button_text",
+          "default": "Subscribe"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "privacy_policy_text",
+          "label": "t:sections.main_blog.blocks.newsletter.privacy_policy_text",
+          "default": "By signing up, I agree with the privacy policy."
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

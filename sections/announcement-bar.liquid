@@ -1,0 +1,128 @@
+{%- if section.blocks.size > 0 -%}
+  {%- unless request.page_type != 'index' and section.settings.show_on_homepage_only -%}
+    <style>
+      :root {
+        --announcement-bar-is-sticky: {% if section.settings.enable_sticky %}1{% else %}0{% endif %};
+      }
+
+      {%- if section.settings.enable_sticky -%}
+        #shopify-section-{{ section.id }} {
+          position: sticky;
+          top: 0;
+        }
+
+        .shopify-section--header ~ #shopify-section-{{ section.id }} {
+          top: calc(var(--header-is-sticky, 0) * var(--header-is-visible, 0) * var(--header-height, 0px));
+        }
+      {%- endif -%}
+    </style>
+
+    <div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
+      <height-observer variable="announcement-bar">
+        {%- assign carousel_id = 'carousel-' | append: section.id -%}
+
+        <announcement-bar id="{{ carousel_id }}" allow-swipe cell-selector=".announcement-bar__message-list > *" {% if section.settings.autoplay %}autoplay="{{ section.settings.cycle_speed }}"{% endif %} class="announcement-bar">
+          {%- if section.blocks.size > 1 -%}
+            <carousel-prev-button aria-controls="{{ carousel_id }}">
+              <button type="button" class="tap-area">
+                <span class="sr-only">{{ 'general.accessibility.previous' | t }}</span>
+                {%- render 'icon' with 'arrow-left', direction_aware: true -%}
+              </button>
+            </carousel-prev-button>
+          {%- endif -%}
+
+          <div class="announcement-bar__message-list">
+            {%- for block in section.blocks -%}
+              {%- if block.settings.text != blank -%}
+                <div class="{% if forloop.first %}is-selected{% endif %} prose prose-justify-center" {{ block.shopify_attributes }}>
+                  <p class="subheading subheading-xs">{{ block.settings.text }}</p>
+                </div>
+              {%- endif -%}
+            {%- endfor -%}
+          </div>
+
+          {%- if section.blocks.size > 1 -%}
+            <carousel-next-button aria-controls="{{ carousel_id }}">
+              <button type="button" class="tap-area">
+                <span class="sr-only">{{ 'general.accessibility.next' | t }}</span>
+                {%- render 'icon' with 'arrow-right', direction_aware: true -%}
+              </button>
+            </carousel-next-button>
+          {%- endif -%}
+        </announcement-bar>
+      </height-observer>
+    </div>
+
+    <script>
+      document.documentElement.style.setProperty('--announcement-bar-height', `${Math.round(document.getElementById('shopify-section-{{ section.id }}').clientHeight)}px`);
+    </script>
+  {%- endunless -%}
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.announcement_bar.name",
+  "class": "shopify-section--announcement-bar",
+  "max_blocks": 5,
+  "tag": "aside",
+  "enabled_on": {
+    "groups": ["header"]
+  },
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:global.colors.scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_sticky",
+      "label": "t:sections.announcement_bar.enable_sticky",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_on_homepage_only",
+      "label": "t:sections.announcement_bar.show_on_homepage_only",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "autoplay",
+      "label": "t:sections.announcement_bar.auto_rotate_between_messages",
+      "default": false
+    },
+    {
+      "type": "range",
+      "min": 3,
+      "max": 20,
+      "step": 1,
+      "unit": "s",
+      "id": "cycle_speed",
+      "label": "t:sections.announcement_bar.cycle_speed",
+      "default": 5,
+      "visible_if": "{{ section.settings.autoplay }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "message",
+      "name": "t:sections.announcement_bar.blocks.message.name",
+      "settings": [
+        {
+          "type": "inline_richtext",
+          "id": "text",
+          "label": "t:sections.announcement_bar.blocks.message.text",
+          "default": "Announce something here"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.announcement_bar.name"
+    }
+  ]
+}
+{% endschema %}

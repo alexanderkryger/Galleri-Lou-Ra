@@ -1,0 +1,53 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+MEGA MENU COMPONENT
+----------------------------------------------------------------------------------------------------------------------
+
+Render the mega-menu. The mega-menu is a kind of menu optimized for showing a large number of items into several
+columns.
+
+********************************************
+Supported variables
+********************************************
+
+* link: the link from which we need to render the mega-menu. The link must always be a second level link, but it can
+        also be empty (no links), which is the case if the merchant only want to show images, for instance.
+* color_scheme: the color scheme to use
+* id: the ID of the menu
+* block: the block containing all the information about the menu to render
+{%- endcomment -%}
+
+<header-mega-menu id="{{ id }}" class="mega-menu {{ block.settings.mega_menu_justify_content }} color-scheme color-scheme--{{ color_scheme.id }}" {{ block.shopify_attributes }}>
+  {%- if link.links.size > 0 -%}
+    {%- comment -%}When there is only one level, we just show the links stacked{%- endcomment -%}
+    <div class="mega-menu__navigation">
+      {%- if link.levels == 1 -%}
+        <ul class="mega-menu__linklist unstyled-list">
+          {%- for sub_link in link.links -%}
+            <li>
+              <a href="{{ sub_link.url }}" class="link-faded-reverse">{{ sub_link.title }}</a>
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- else -%}
+        {%- for sub_link in link.links -%}
+          <div class="v-stack gap-4">
+            <a href="{{ sub_link.url }}" class="subheading link-faded">{{ sub_link.title }}</a>
+
+            {%- if sub_link.links.size > 0 -%}
+              <ul class="mega-menu__linklist unstyled-list">
+                {%- for sub_sub_link in sub_link.links -%}
+                  <li>
+                    <a href="{{ sub_sub_link.url }}" class="link-reversed">{{ sub_sub_link.title }}</a>
+                  </li>
+                {%- endfor -%}
+              </ul>
+            {%- endif -%}
+          </div>
+        {%- endfor -%}
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+
+  {%- render 'menu-promo', block: block, context: 'mega-menu' -%}
+</header-mega-menu>

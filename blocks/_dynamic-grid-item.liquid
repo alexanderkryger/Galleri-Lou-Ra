@@ -1,0 +1,227 @@
+{%- liquid
+  assign visibility_class = ''
+
+  if block.settings.visibility == 'mobile_only'
+    assign visibility_class = 'md:hidden'
+  elsif block.settings.visibility == 'desktop_only'
+    assign visibility_class = 'md-max:hidden'
+  endif
+-%}
+
+<div id="shopify-block-{{ block.id }}" class="dynamic-grid__cell {{ visibility_class }}" data-parallax-direction="{{ block.settings.parallax_direction }}" style="--parallax-speed: {{ block.settings.parallax_speed }}" {{ block.shopify_attributes }}>
+  <style>
+    #shopify-section-{{ section.id }} {
+      {%- if block.settings.visibility != 'desktop_only' -%}
+        --dynamic-grid-mobile-row-max-track-line-{{ block.id }}: {{ block.settings.mobile_row_start }};
+      {%- endif -%}
+
+      {%- if block.settings.visibility != 'mobile_only' -%}
+        --dynamic-grid-desktop-row-max-track-line-{{ block.id }}: {{ block.settings.desktop_row_start }};
+      {%- endif -%}
+    }
+
+    #shopify-block-{{ block.id }} {
+      --dynamic-grid-grid-area: {{ block.settings.mobile_row_start }} / {{ block.settings.mobile_column_start }} / -1 / {{ block.settings.mobile_column_end | plus: 1 }};
+      --dynamic-grid-horizontal-adjustment: {{ block.settings.mobile_horizontal_adjustment }}vw;
+      --dynamic-grid-vertical-adjustment: {{ block.settings.mobile_vertical_adjustment }}vw;
+    }
+
+    @media screen and (min-width: 1000px) {
+      #shopify-block-{{ block.id }} {
+        --dynamic-grid-grid-area: {{ block.settings.desktop_row_start }} / {{ block.settings.desktop_column_start }} / -1 / {{ block.settings.desktop_column_end | plus: 1 }};
+        --dynamic-grid-horizontal-adjustment: {{ block.settings.desktop_horizontal_adjustment }}vw;
+        --dynamic-grid-vertical-adjustment: {{ block.settings.desktop_vertical_adjustment }}vw;
+      }
+    }
+  </style>
+
+  {%- if section.blocks.size > 0 -%}
+    <div class="prose prose-justify-{{ block.settings.text_alignment | replace: 'left', 'start' | replace: 'right', 'end' }}">
+      {%- content_for 'blocks' -%}
+    </div>
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "Grid item",
+  "tag": null,
+  "settings": [
+    {
+      "type": "select",
+      "id": "visibility",
+      "label": "t:sections.dynamic_grid.blocks.cell.visibility",
+      "options": [
+        {
+          "value": "both",
+          "label": "t:sections.dynamic_grid.blocks.cell.visibility_options.both"
+        },
+        {
+          "value": "mobile_only",
+          "label": "t:sections.dynamic_grid.blocks.cell.visibility_options.mobile_only"
+        },
+        {
+          "value": "desktop_only",
+          "label": "t:sections.dynamic_grid.blocks.cell.visibility_options.desktop_only"
+        }
+      ],
+      "default": "both"
+    },
+    {
+      "type": "text_alignment",
+      "id": "text_alignment",
+      "label": "t:global.text.alignment"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.dynamic_grid.blocks.cell.desktop"
+    },
+    {
+      "type": "range",
+      "min": 1,
+      "max": 99,
+      "id": "desktop_row_start",
+      "label": "t:sections.dynamic_grid.blocks.cell.row_start",
+      "info": "t:sections.dynamic_grid.blocks.cell.row_start_info",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "min": 1,
+      "max": 16,
+      "id": "desktop_column_start",
+      "label": "t:sections.dynamic_grid.blocks.cell.column_start",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "min": 1,
+      "max": 16,
+      "id": "desktop_column_end",
+      "label": "t:sections.dynamic_grid.blocks.cell.column_end",
+      "default": 4
+    },
+    {
+      "type": "range",
+      "min": -5,
+      "max": 5,
+      "step": 0.5,
+      "unit": "%",
+      "id": "desktop_horizontal_adjustment",
+      "label": "t:sections.dynamic_grid.blocks.cell.horizontal_adjustment",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "min": -5,
+      "max": 5,
+      "step": 0.5,
+      "unit": "%",
+      "id": "desktop_vertical_adjustment",
+      "label": "t:sections.dynamic_grid.blocks.cell.vertical_adjustment",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "t:sections.dynamic_grid.blocks.cell.mobile"
+    },
+    {
+      "type": "range",
+      "min": 1,
+      "max": 99,
+      "id": "mobile_row_start",
+      "label": "t:sections.dynamic_grid.blocks.cell.row_start",
+      "info": "t:sections.dynamic_grid.blocks.cell.row_start_info",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "min": 1,
+      "max": 8,
+      "id": "mobile_column_start",
+      "label": "t:sections.dynamic_grid.blocks.cell.column_start",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "min": 1,
+      "max": 8,
+      "id": "mobile_column_end",
+      "label": "t:sections.dynamic_grid.blocks.cell.column_end",
+      "default": 3
+    },
+    {
+      "type": "range",
+      "min": -5,
+      "max": 5,
+      "step": 0.5,
+      "unit": "%",
+      "id": "mobile_horizontal_adjustment",
+      "label": "t:sections.dynamic_grid.blocks.cell.horizontal_adjustment",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "min": -5,
+      "max": 5,
+      "step": 0.5,
+      "unit": "%",
+      "id": "mobile_vertical_adjustment",
+      "label": "t:sections.dynamic_grid.blocks.cell.vertical_adjustment",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "t:sections.dynamic_grid.blocks.cell.animation_category"
+    },
+    {
+      "type": "range",
+      "min": -25,
+      "max": 25,
+      "id": "parallax_speed",
+      "label": "t:sections.dynamic_grid.blocks.cell.parallax_speed",
+      "info": "t:sections.dynamic_grid.blocks.cell.parallax_speed_info",
+      "default": 0
+    },
+    {
+      "type": "select",
+      "id": "parallax_direction",
+      "label": "t:sections.dynamic_grid.blocks.cell.parallax_direction",
+      "options": [
+        {
+          "value": "vertical",
+          "label": "t:sections.dynamic_grid.blocks.cell.parallax_direction_options.vertical"
+        },
+        {
+          "value": "horizontal",
+          "label": "t:sections.dynamic_grid.blocks.cell.parallax_direction_options.horizontal"
+        }
+      ],
+      "default": "vertical",
+      "visible_if": "{{ block.settings.parallax_speed != 0 }}"
+    }
+  ],
+  "blocks": [
+    { "type": "@app" },
+    { "type": "_dynamic-grid-heading" },
+    { "type": "button" },
+    { "type": "button-group" },
+    { "type": "icon" },
+    { "type": "image-with-caption" },
+    { "type": "video-with-caption" },
+    { "type": "subheading" },
+    { "type": "rich-text" },
+    { "type": "liquid" }
+  ],
+  "presets": [
+    {
+      "name": "Grid item",
+      "blocks": [
+        {
+          "type": "image-with-caption"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
