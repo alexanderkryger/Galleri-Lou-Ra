@@ -575,6 +575,44 @@
     ]
   },
   {
+  "name": "Gift",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Free Gift Configuration"
+    },
+    {
+      "type": "paragraph",
+      "content": "Automatically add a free gift to the customer's cart when they reach a minimum spend threshold."
+    },
+    {
+      "type": "checkbox",
+      "id": "free_gift_enabled",
+      "label": "Enable free gift",
+      "default": false
+    },
+    {
+      "type": "product",
+      "id": "free_gift_product",
+      "label": "Gift product",
+      "info": "Select the product to give as a free gift. Make sure it has at least one available variant."
+    },
+    {
+      "type": "number",
+      "id": "free_gift_threshold",
+      "label": "Minimum cart value",
+      "info": "Enter the minimum cart total (in your store's currency, e.g. 500 for 500 DKK) required to trigger the free gift. The gift product itself does not count toward this threshold.",
+      "default": 500
+    },
+    {
+      "type": "text",
+      "id": "free_gift_message",
+      "label": "Optional message shown when gift is added",
+      "default": "🎁 You have qualified for a free gift!"
+    }
+  ]
+},
+  {
     "name": "t:theme_settings.heading_effect.name",
     "settings": [
       {

@@ -1,3 +1,12 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin language editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
 {
   "global": {
     "categories": {
@@ -1484,6 +1493,10 @@
           "progress_bar_max_value": "Progress bar max value",
           "progress_bar_max_value_info": "Advancement is calculated according to this value."
         },
+        "urgency": {
+  "name": "Urgency message",
+  "instructions": "Displays the value selected in the product metafield \"custom.urgency\". The metafield can be a plain text field or a metaobject reference."
+},
         "buy_buttons": {
           "name": "Buy buttons",
           "quantity_category": "Quantity selector",

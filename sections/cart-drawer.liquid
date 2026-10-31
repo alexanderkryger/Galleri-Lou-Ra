@@ -99,7 +99,7 @@
           <div class="v-stack gap-4">
             {%- comment -%}TRUST BADGES{%- endcomment -%}
             {%- assign trust_badges_block = section.blocks | where: 'type', 'trust_badges' | first -%}
-            
+
             {%- if trust_badges_block != blank -%}
               {%- assign rendered_item_count = 0 -%}
 
@@ -184,7 +184,7 @@
                       {%- endfor -%}
                     </scroll-carousel>
                   {%- endcapture -%}
-                  
+
                   {%- if recommendations_count > 0 -%}
                     <div class="cart-drawer__cross-sell">
                       <div class="h-stack justify-between gap-2">
@@ -222,20 +222,102 @@
       {%- endif -%}
     {%- endcapture -%}
 
+    {%- comment -%}STATUS BAR{%- endcomment -%}
+    {%- if section.settings.static_text != blank -%}
+      {%- assign status_bar_type = section.settings.static_text_type -%}
+
+      <style>
+        .cart-status-bar {
+          display: flex;
+          align-items: flex-start;
+          align-self: start;
+          flex: 0 0 auto;
+          gap: 0.5rem;
+          margin-bottom: 1rem;
+          padding: 0.75rem 0.875rem;
+          border: 1px solid transparent;
+          border-radius: 8px;
+          font-size: 0.8125rem;
+          line-height: 1.45;
+        }
+
+        .cart-status-bar__icon {
+          display: inline-flex;
+          flex-shrink: 0;
+          margin-top: 0.05rem;
+        }
+
+        .cart-status-bar__icon svg {
+          width: 18px;
+          height: 18px;
+        }
+
+        .cart-status-bar__text {
+          color: #303030;
+        }
+
+        .cart-status-bar__text.prose {
+          --prose-spacing: 0.25rem;
+        }
+
+        .cart-status-bar--alert {
+          background: #fef1f0;
+          border-color: #f2b8b1;
+        }
+
+        .cart-status-bar--alert .cart-status-bar__icon {
+          color: #d72c0d;
+        }
+
+        .cart-status-bar--notification {
+          background: #fdf5e6;
+          border-color: #ecca7f;
+        }
+
+        .cart-status-bar--notification .cart-status-bar__icon {
+          color: #b98900;
+        }
+
+        .cart-status-bar--success {
+          background: #edf7f0;
+          border-color: #a7d9b9;
+        }
+
+        .cart-status-bar--success .cart-status-bar__icon {
+          color: #0e7c4a;
+        }
+      </style>
+
+      <div class="cart-status-bar cart-status-bar--{{ status_bar_type }}">
+        <span class="cart-status-bar__icon">
+          {%- case status_bar_type -%}
+            {%- when 'alert' -%}
+              {%- render 'icon' with 'error-cross', width: 18 -%}
+            {%- when 'success' -%}
+              {%- render 'icon' with 'success-checkmark', width: 18 -%}
+            {%- else -%}
+              {%- render 'icon' with 'bell', width: 18 -%}
+          {%- endcase -%}
+        </span>
+
+        <div class="cart-status-bar__text prose prose--compact">{{ section.settings.static_text }}</div>
+      </div>
+    {%- endif -%}
+
     {%- if offers_content != blank -%}
       <x-tabs class="tab-pills">
         <button type="button" slot="tab">
           {%- render 'icon' with 'cart' -%}
           <span class="subheading">{{ 'cart.general.title' | t }}</span>
         </button>
-    
+
         <div slot="tabpanel" {% if cart.empty? %}class="align-self-center"{% endif %}>{{- cart_content -}}</div>
-    
+
         <button type="button" slot="tab">
           {%- render 'icon' with 'gift' -%}
           <span class="subheading tab-pills__dot-indicator">{{- 'cart.general.offers' | t -}}</span>
         </button>
-    
+
         <div slot="tabpanel">{{- offers_content -}}</div>
       </x-tabs>
     {%- else -%}
@@ -251,7 +333,7 @@
               {%- if section.settings.show_cart_note -%}
                 <x-drawer-popover class="drawer-popover" id="cart-drawer-order-note-popover">
                   <p slot="header" class="subheading">{{ 'cart.general.order_note' | t }}</p>
-                  
+
                   <div class="form">
                     {%- assign field_label = 'cart.general.add_order_note' | t -%}
 
@@ -275,7 +357,7 @@
               {%- if section.settings.show_shipping_estimator -%}
                 <x-drawer-popover class="drawer-popover" id="cart-drawer-shipping-estimator-popover">
                   <p slot="header" class="subheading">{{ 'cart.shipping_estimator.estimate_shipping' | t }}</p>
-                  
+
                   {%- render 'shipping-estimator' -%}
                 </x-drawer-popover>
 
@@ -388,7 +470,7 @@
       "type": "paragraph",
       "content": "t:sections.cart_drawer.page_info"
     },
-   { 
+   {
       "type": "paragraph",
       "content": "t:sections.cart_drawer.free_shipping_bar_info"
     },
@@ -397,6 +479,37 @@
       "id": "color_scheme",
       "label": "t:global.colors.scheme",
       "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Status bar"
+    },
+    {
+      "type": "richtext",
+      "id": "static_text",
+      "label": "Text",
+      "info": "Shown as a bar at the top of the cart drawer. Leave empty to hide."
+    },
+    {
+      "type": "select",
+      "id": "static_text_type",
+      "label": "Type",
+      "options": [
+        {
+          "value": "alert",
+          "label": "Alert (red)"
+        },
+        {
+          "value": "notification",
+          "label": "Notification (yellow)"
+        },
+        {
+          "value": "success",
+          "label": "Success (green)"
+        }
+      ],
+      "default": "notification",
+      "visible_if": "{{ section.settings.static_text != blank }}"
     },
     {
       "type": "checkbox",

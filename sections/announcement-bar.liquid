@@ -1,3 +1,10 @@
+{%- liquid
+  assign show_button = false
+  if section.settings.show_button and section.settings.button_text != blank
+    assign show_button = true
+  endif
+-%}
+
 {%- if section.blocks.size > 0 -%}
   {%- unless request.page_type != 'index' and section.settings.show_on_homepage_only -%}
     <style>
@@ -15,13 +22,41 @@
           top: calc(var(--header-is-sticky, 0) * var(--header-is-visible, 0) * var(--header-height, 0px));
         }
       {%- endif -%}
+
+      {%- if show_button -%}
+        #shopify-section-{{ section.id }} .announcement-bar--with-button {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: nowrap;
+          gap: 1rem;
+        }
+
+        #shopify-section-{{ section.id }} .announcement-bar--with-button .announcement-bar__message-list {
+          flex: 1 1 auto;
+          min-width: 0;
+        }
+
+        #shopify-section-{{ section.id }} .announcement-bar--with-button .announcement-bar__message-list .prose {
+          justify-items: start;
+        }
+
+        #shopify-section-{{ section.id }} .announcement-bar--with-button .announcement-bar__message-list p {
+          text-align: left;
+        }
+
+        #shopify-section-{{ section.id }} .announcement-bar__button {
+          flex: 0 0 auto;
+          white-space: nowrap;
+        }
+      {%- endif -%}
     </style>
 
     <div class="color-scheme color-scheme--{{ section.settings.color_scheme.id }}">
       <height-observer variable="announcement-bar">
         {%- assign carousel_id = 'carousel-' | append: section.id -%}
 
-        <announcement-bar id="{{ carousel_id }}" allow-swipe cell-selector=".announcement-bar__message-list > *" {% if section.settings.autoplay %}autoplay="{{ section.settings.cycle_speed }}"{% endif %} class="announcement-bar">
+        <announcement-bar id="{{ carousel_id }}" allow-swipe cell-selector=".announcement-bar__message-list > *" {% if section.settings.autoplay %}autoplay="{{ section.settings.cycle_speed }}"{% endif %} class="announcement-bar{% if show_button %} announcement-bar--with-button{% endif %}">
           {%- if section.blocks.size > 1 -%}
             <carousel-prev-button aria-controls="{{ carousel_id }}">
               <button type="button" class="tap-area">
@@ -48,6 +83,12 @@
                 {%- render 'icon' with 'arrow-right', direction_aware: true -%}
               </button>
             </carousel-next-button>
+          {%- endif -%}
+
+          {%- if show_button -%}
+            <div class="announcement-bar__button">
+              {%- render 'button', content: section.settings.button_text, href: section.settings.button_link, size: 'sm' -%}
+            </div>
           {%- endif -%}
         </announcement-bar>
       </height-observer>
@@ -103,6 +144,28 @@
       "label": "t:sections.announcement_bar.cycle_speed",
       "default": 5,
       "visible_if": "{{ section.settings.autoplay }}"
+    },
+    {
+      "type": "header",
+      "content": "Button"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_button",
+      "label": "Show button",
+      "default": false
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button label",
+      "visible_if": "{{ section.settings.show_button }}"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Button link",
+      "visible_if": "{{ section.settings.show_button }}"
     }
   ],
   "blocks": [

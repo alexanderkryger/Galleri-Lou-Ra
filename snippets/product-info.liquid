@@ -353,6 +353,11 @@ Supported variables
                 low_threshold: block.settings.low_inventory_threshold
             -%}
 
+            {%- when 'urgency' -%}
+            {%- if product != blank -%}
+              {%- render 'product-urgency', product: product, alignment: alignment -%}
+            {%- endif -%}
+
           {%- when 'buy_buttons' -%}
             {%- render 'buy-buttons',
                 product: product,

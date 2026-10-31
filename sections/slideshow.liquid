@@ -7,6 +7,26 @@
     </style>
   {%- endif -%}
 
+<style>
+  /* Vis cover-billedet når videoen er indlæst men ikke spiller. */
+  #shopify-section-{{ section.id }} video-media[loaded]:not([playing]) > img {
+    opacity: 1;
+  }
+
+  /* Skjul play-knappen som udgangspunkt. */
+  #shopify-section-{{ section.id }} video-media::part(play-button) {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Vis play-knappen ØVERST når videoen er stoppet/blokeret. */
+  #shopify-section-{{ section.id }} video-media[loaded]:not([playing])::part(play-button) {
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 3;
+  }
+</style>
+
   <slideshow-carousel id="slideshow-{{ section.id }}" allow-swipe cell-selector=".slideshow__slide" {% if section.settings.allow_transparent_header %}allow-transparent-header{% endif %} class="slideshow" transition="{{ section.settings.transition_type }}" {% if section.settings.autoplay %}autoplay="{{ section.settings.cycle_speed }}" {% if section.settings.pause_auto_rotate_on_hover %}pause-on-hover{% endif %}{% endif %} role="region">
     {%- content_for 'blocks' -%}
 

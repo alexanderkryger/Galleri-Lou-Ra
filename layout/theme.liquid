@@ -52,6 +52,9 @@
     {{ content_for_header }}
 
     {{- 'theme.css' | asset_url | stylesheet_tag: preload: true -}}
+    {%- comment -%} Free Gift module {%- endcomment -%}
+{% render 'free-gift-config' %}
+<script src="{{ 'free-gift.js' | asset_url }}" defer="defer"></script>
   </head>
 
   {% liquid

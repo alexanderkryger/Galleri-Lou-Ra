@@ -19,7 +19,7 @@
             assign loop_video = true
           endif
 
-          render 'media', media: block.settings.video, mobile_media: block.settings.mobile_video, playsinline: true, autoplay: false, loop: loop_video, muted: true, controls: false, preload: is_first, show_play_button: false
+          render 'media', media: block.settings.video, mobile_media: block.settings.mobile_video, playsinline: true, autoplay: false, loop: loop_video, muted: true, controls: false, preload: is_first, show_play_button: true
         else
           echo 'hero-apparel-1' | placeholder_svg_tag: 'size-full'
         endif

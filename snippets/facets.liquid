@@ -32,7 +32,7 @@ Supported variables
     position: relative;
   }
 
-  .facet-button input[type="checkbox"] {
+  .facet-button input {
     position: absolute;
     opacity: 0;
     width: 0;
@@ -61,17 +61,17 @@ Supported variables
     background-color: rgba(0, 0, 0, 0.06);
   }
 
-  .facet-button input[type="checkbox"]:checked + label {
+  .facet-button input:checked + label {
     background-color: var(--facet-button-active-bg, #cd7628);
     color: var(--facet-button-active-color, #ffffff);
     border-color: var(--facet-button-active-bg, #cd7628);
   }
 
-  .facet-button input[type="checkbox"]:checked + label:hover {
+  .facet-button input:checked + label:hover {
     opacity: 0.9;
   }
 
-  .facet-button input[type="checkbox"]:disabled + label {
+  .facet-button input:disabled + label {
     opacity: 0.4;
     cursor: not-allowed;
   }
@@ -98,21 +98,54 @@ Supported variables
     {%- endif -%}
 
     {%- if show_sort_by -%}
-      {%- capture filter_content -%}
-        <div class="v-stack gap-2">
-          {%- liquid
+     {%- capture filter_content -%}
+        <div class="facet-buttons">
+                  {%- liquid
             assign sort_by = source.sort_by | default: source.default_sort_by
 
-            for sort_option in source.sort_options
-              assign value_id_prefix = id_prefix | append: '-' | append: forloop.index
+            # ----------------------------------------------------------------
+            # HVIDLISTE FOR SORTERING
+            # Styrer hvilke sorteringsmuligheder der vises + deres rækkefølge.
+            # Rediger strengen for at ændre udvalg/rækkefølge.
+            # Vil du vise ALLE igen: kommentér de 3 linjer under "HVIDLISTE" ud
+            # og skift "for option_value in allowed_sort_options" til
+            # "for matched_option in source.sort_options" (fjern så også
+            # "matched_option = ... where ..." og "if matched_option == blank"-linjerne).
+            # Mulige værdier: manual, relevance, best-selling, title-ascending,
+            # title-descending, price-ascending, price-descending,
+            # created-ascending, created-descending
+            # ----------------------------------------------------------------
+            assign allowed_sort_options = 'manual,price-ascending,price-descending,title-ascending,title-descending,created-descending' | split: ','
 
-              if sort_by == sort_option.value
-                assign sort_by_active = true
-              else
-                assign sort_by_active = false
+            for option_value in allowed_sort_options
+              assign matched_option = source.sort_options | where: 'value', option_value | first
+
+              if matched_option == blank
+                continue
               endif
 
-              render 'checkbox', type: 'radio', label: sort_option.name, name: 'sort_by', value: sort_option.value, checked: sort_by_active, id_prefix: value_id_prefix
+              assign input_id = id_prefix | append: '-sort-by-' | append: forloop.index
+
+              capture button_html
+                echo '<div class="facet-button">'
+                echo '<input type="radio" id="'
+                echo input_id
+                echo '" name="sort_by" value="'
+                echo matched_option.value
+                echo '"'
+                if sort_by == matched_option.value
+                  echo ' checked'
+                endif
+                echo '>'
+                echo '<label for="'
+                echo input_id
+                echo '">'
+                echo matched_option.name
+                echo '</label>'
+                echo '</div>'
+              endcapture
+
+              echo button_html
             endfor
           -%}
         </div>

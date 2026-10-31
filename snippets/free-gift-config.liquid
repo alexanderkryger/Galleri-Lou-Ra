@@ -1,0 +1,44 @@
+{%- comment -%}
+  Free Gift configuration exposed to JavaScript.
+  Outputs a JSON blob and a small init script.
+{%- endcomment -%}
+
+{%- if settings.free_gift_enabled and settings.free_gift_product != blank -%}
+  {%- assign gift_product = all_products[settings.free_gift_product] -%}
+
+  {%- comment -%} Find the first available variant {%- endcomment -%}
+  {%- assign gift_variant = nil -%}
+  {%- for variant in gift_product.variants -%}
+    {%- if variant.available -%}
+      {%- assign gift_variant = variant -%}
+      {%- break -%}
+    {%- endif -%}
+  {%- endfor -%}
+
+  {%- if gift_variant != nil -%}
+    <script id="free-gift-config" type="application/json">
+      {
+        "enabled": true,
+        "variantId": {{ gift_variant.id | json }},
+        "productId": {{ gift_product.id | json }},
+        "productTitle": {{ gift_product.title | json }},
+        "productHandle": {{ gift_product.handle | json }},
+        "variantPrice": {{ gift_variant.price | json }},
+        "threshold": {{ settings.free_gift_threshold | times: 100 | json }},
+        "thresholdDisplay": {{ settings.free_gift_threshold | json }},
+        "currency": {{ cart.currency.iso_code | json }},
+        "message": {{ settings.free_gift_message | json }},
+        "propertyKey": "_free_gift",
+        "propertyValue": "true"
+      }
+    </script>
+  {%- else -%}
+    <script id="free-gift-config" type="application/json">
+      { "enabled": false, "reason": "no_available_variant" }
+    </script>
+  {%- endif -%}
+{%- else -%}
+  <script id="free-gift-config" type="application/json">
+    { "enabled": false }
+  </script>
+{%- endif -%}

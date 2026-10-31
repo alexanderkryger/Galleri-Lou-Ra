@@ -1,0 +1,52 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+PRODUCT URGENCY COMPONENT
+----------------------------------------------------------------------------------------------------------------------
+
+This component renders an urgency message on the product page based on the value of the product metafield
+"custom.urgency". The metafield can be:
+
+  * A plain text value (single_line_text_field, multi_line_text_field).
+  * A metaobject reference whose entry exposes the message in one of the following fields (resolved in order):
+    "urgency", "message", "text", "label", "value", "title", "name".
+  * A list of metaobject references (the first entry is used).
+
+If the metafield is empty or no text can be resolved, the snippet renders nothing.
+
+********************************************
+Supported variables
+********************************************
+
+* product: the product from which the urgency metafield is read (required)
+* alignment: can be "start", "center" or "end" (default to "start")
+{%- endcomment -%}
+
+{%- liquid
+  assign urgency_metafield = product.metafields.custom.urgency
+  assign urgency_message = ''
+
+  if urgency_metafield != blank
+    case urgency_metafield.type
+      when 'metaobject_reference'
+        assign urgency_object = urgency_metafield.value
+        assign urgency_message = urgency_object.urgency | default: urgency_object.message | default: urgency_object.text | default: urgency_object.label | default: urgency_object.value | default: urgency_object.title | default: urgency_object.name
+
+      when 'list.metaobject_reference'
+        assign urgency_object = urgency_metafield.value | first
+
+        if urgency_object != blank
+          assign urgency_message = urgency_object.urgency | default: urgency_object.message | default: urgency_object.text | default: urgency_object.label | default: urgency_object.value | default: urgency_object.title | default: urgency_object.name
+        endif
+
+      else
+        assign urgency_message = urgency_metafield.value
+    endcase
+  endif
+-%}
+
+{%- if urgency_message != blank -%}
+  <div class="product-urgency h-stack align-center justify-{{ alignment | default: 'start' }} gap-2.5">
+    <span class="product-urgency__dot" aria-hidden="true"></span>
+    <span class="product-urgency__text">{{- urgency_message | escape -}}</span>
+  </div>
+{%- endif -%}
